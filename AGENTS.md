@@ -1,6 +1,6 @@
 # CitePilot — Agent Guide
 
-This is a **documentation-only planning repository** for the CitePilot academic citation checker. No code, package manifests, CI configs, or lockfiles live here.
+This is the CitePilot monorepo containing code for the web frontend (`citepilot-web/`), API gateway (`citepilot-gateway/`), and AI service (`citepilot-ai/`).
 
 ## Repo structure vs README
 
@@ -45,3 +45,9 @@ For system understanding, read in this order:
 - Update `Last Updated` and increment `Version` on substantive changes
 - Cross-references use relative paths; keep them valid
 - ADRs live in `04-engineering-standards/18-architecture-decision-records.md`
+
+## Deployment automation rules
+
+- **Always set missing env vars** — when a deployment error points to a missing or incorrect environment variable, set it immediately via CLI (e.g., `vercel env add`, Railway dashboard). Do not leave it for later.
+- **Always redeploy after env changes** — after setting or updating environment variables, trigger a redeploy immediately. For Vercel: `npx vercel --prod` from `citepilot-web/`. For Railway: trigger via dashboard or `railway up`.
+- **Verify CORS allowlist** — when changing API URLs or domains, ensure the gateway CORS config (`citepilot-gateway/src/server.ts`) includes the new origin.
