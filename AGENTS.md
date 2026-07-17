@@ -2,6 +2,8 @@
 
 This is the CitePilot monorepo containing code for the web frontend (`citepilot-web/`), API gateway (`citepilot-gateway/`), and AI service (`citepilot-ai/`).
 
+**Read [`LEARNING.md`](LEARNING.md) for project-specific gotchas, past root causes, and deployment quirks.**
+
 ## Repo structure vs README
 
 The **README's document index and directory tree are stale**. Trust the on-disk structure:
