@@ -3,10 +3,6 @@ name = "citepilot-ai"
 version = "0.1.0"
 description = "CitePilot AI processing service — citation extraction, reference parsing, and matching"
 requires-python = ">=3.12"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
 dependencies = [
     "fastapi>=0.115.0",
     "uvicorn[standard]>=0.30.0",
@@ -19,6 +15,10 @@ dependencies = [
     "python-multipart>=0.0.9",
     "pypdf2>=3.0.0",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project.optional-dependencies]
 dev = [
