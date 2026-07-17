@@ -13,7 +13,20 @@ import analysisRoutes from "./modules/analysis/analysis.routes.js";
 const app = express();
 
 app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN ?? "http://localhost:3000", credentials: true }));
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "https://citepilot-lac.vercel.app",
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : []),
+];
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+}));
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+  next();
+});
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
