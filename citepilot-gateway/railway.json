@@ -6,7 +6,7 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "startCommand": "node --import tsx src/server.ts",
+    "startCommand": "npx tsx src/server.ts",
     "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE"
   }
