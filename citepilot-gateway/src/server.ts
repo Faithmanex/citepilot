@@ -1,3 +1,4 @@
+import fs from "fs";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
@@ -9,6 +10,10 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import documentRoutes from "./modules/documents/documents.routes.js";
 import resultRoutes from "./modules/results/results.routes.js";
 import analysisRoutes from "./modules/analysis/analysis.routes.js";
+
+if (!fs.existsSync(config.upload.dir)) {
+  fs.mkdirSync(config.upload.dir, { recursive: true });
+}
 
 const app = express();
 
