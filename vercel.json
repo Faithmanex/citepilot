@@ -1,6 +1,0 @@
-{
-  "installCommand": "cd citepilot-web && pnpm install",
-  "buildCommand": "cd citepilot-web && pnpm build",
-  "outputDirectory": "citepilot-web/.next",
-  "framework": "nextjs"
-}
