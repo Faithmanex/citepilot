@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS references (
+CREATE TABLE IF NOT EXISTS "references" (
   id TEXT PRIMARY KEY DEFAULT ('ref_' || encode(gen_random_bytes(12), 'hex')),
   document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   list_index SMALLINT NOT NULL DEFAULT 0,
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS references (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS idx_references_document ON references (document_id);
-CREATE INDEX IF NOT EXISTS idx_references_document_list ON references (document_id, list_index, position);
-CREATE INDEX IF NOT EXISTS idx_references_doi ON references (parsed_doi) WHERE parsed_doi IS NOT NULL;
-CREATE UNIQUE INDEX IF NOT EXISTS uq_references_doc_list_pos ON references (document_id, list_index, position);
+CREATE INDEX IF NOT EXISTS idx_references_document ON "references" (document_id);
+CREATE INDEX IF NOT EXISTS idx_references_document_list ON "references" (document_id, list_index, position);
+CREATE INDEX IF NOT EXISTS idx_references_doi ON "references" (parsed_doi) WHERE parsed_doi IS NOT NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS uq_references_doc_list_pos ON "references" (document_id, list_index, position);

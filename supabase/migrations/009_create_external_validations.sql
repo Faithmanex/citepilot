@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS external_validations (
   id TEXT PRIMARY KEY DEFAULT ('ev_' || encode(gen_random_bytes(12), 'hex')),
-  reference_id TEXT NOT NULL REFERENCES references(id) ON DELETE CASCADE,
+  reference_id TEXT NOT NULL REFERENCES "references"(id) ON DELETE CASCADE,
   document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   source VARCHAR(20) NOT NULL CHECK (source IN ('crossref', 'openalex', 'pubmed', 'doi_org')),
   query_type VARCHAR(20) NOT NULL,

@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_citation_results_match_type ON citation_results (
 
 CREATE TABLE IF NOT EXISTS reference_results (
   id TEXT PRIMARY KEY DEFAULT ('rr_' || encode(gen_random_bytes(12), 'hex')),
-  reference_id TEXT NOT NULL UNIQUE REFERENCES references(id) ON DELETE CASCADE,
+  reference_id TEXT NOT NULL UNIQUE REFERENCES "references"(id) ON DELETE CASCADE,
   document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   is_orphaned BOOLEAN NOT NULL DEFAULT FALSE,
   is_retracted BOOLEAN NOT NULL DEFAULT FALSE,

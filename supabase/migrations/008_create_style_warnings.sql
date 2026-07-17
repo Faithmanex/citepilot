@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS style_warnings (
   id TEXT PRIMARY KEY DEFAULT ('sw_' || encode(gen_random_bytes(12), 'hex')),
   document_id TEXT NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
   citation_id TEXT REFERENCES citations(id) ON DELETE SET NULL,
-  reference_id TEXT REFERENCES references(id) ON DELETE SET NULL,
+  reference_id TEXT REFERENCES "references"(id) ON DELETE SET NULL,
   code VARCHAR(50) NOT NULL,
   category VARCHAR(30) NOT NULL CHECK (category IN ('punctuation', 'formatting', 'ordering', 'completeness', 'capitalisation')),
   message TEXT NOT NULL,
