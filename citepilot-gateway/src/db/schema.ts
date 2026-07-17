@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer, smallint, real, jsonb, uniqueIndex, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, smallint, real, jsonb, uniqueIndex, index, bigint } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
@@ -215,7 +215,7 @@ export const subscriptions = pgTable("subscriptions", {
 });
 
 export const usageLogs = pgTable("usage_logs", {
-  id: text("id").primaryKey().$defaultFn(() => `ul_${crypto.randomUUID().slice(0, 20)}`),
+  id: bigint("id", { mode: "number" }).generatedAlwaysAsIdentity().primaryKey(),
   userId: text("user_id").notNull().references(() => users.id),
   action: text("action").notNull(),
   documentId: text("document_id"),
