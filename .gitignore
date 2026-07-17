@@ -1,0 +1,12 @@
+node_modules/
+.next/
+dist/
+.env
+*.log
+uploads/
+__pycache__/
+*.pyc
+.venv/
+*.egg-info/
+.terraform/
+*.tfstate
