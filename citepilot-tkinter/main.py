@@ -19,33 +19,60 @@ CITATION_STYLES = [
 ]
 
 SYSTEM_PROMPTS = {
-    "citations": """You are an expert academic citation parser.
-Extract ALL in-text citations from the body text only.
-Return a JSON object with a "citations" array. Each citation has:
-  raw_text, paragraph_index (0-based), char_start, char_end,
-  context, extracted_authors (array of strings),
-  extracted_year (int or null), citation_type ("parenthetical"|"narrative"|"numeric"|"footnote")""",
+    "citations": """You are an absolute, deterministic academic citation parser.
+Extract ALL in-text citations from the body text only in sequential appearance order.
+Do NOT omit any citations. Do NOT add subjective comments.
+Return a JSON object with a "citations" array sorted by paragraph_index and char_start.
+Each citation object MUST contain:
+  "raw_text": exact citation text,
+  "paragraph_index": int (0-based),
+  "char_start": int,
+  "char_end": int,
+  "context": string (~80 chars around citation),
+  "extracted_authors": array of author family surnames,
+  "extracted_year": int or null,
+  "citation_type": "parenthetical" | "narrative" | "numeric" | "footnote" """,
 
-    "references": """You are an expert bibliographic reference parser.
-Parse each entry in the reference list.
-Return a JSON object with a "references" array. Each reference has:
-  raw_entry, position (0-based), parsed_authors (array of {family,given}),
-  parsed_year (int or null), parsed_title, parsed_journal,
-  parsed_volume, parsed_issue, parsed_pages, parsed_doi,
-  parsed_url (null or string), reference_type""",
+    "references": """You are an absolute, deterministic bibliographic reference parser.
+Parse every reference entry in the bibliography in strict sequential order.
+Return a JSON object with a "references" array sorted by position.
+Each reference object MUST contain:
+  "raw_entry": exact full reference text,
+  "position": int (0-based position in reference list),
+  "parsed_authors": array of {"family": string, "given": string},
+  "parsed_year": int or null,
+  "parsed_title": string or null,
+  "parsed_journal": string or null,
+  "parsed_volume": string or null,
+  "parsed_issue": string or null,
+  "parsed_pages": string or null,
+  "parsed_doi": string or null,
+  "parsed_url": string or null,
+  "reference_type": "journal_article" | "book" | "chapter" | "conference" | "thesis" | "website" | "report" | "other" """,
 
-    "matching": """You are an expert citation matching system.
-Match each in-text citation to its corresponding reference entry.
-Return a JSON object with a "matches" array. Each match has:
-  citation_raw_text, matched_reference_index (int),
-  matched_reference_text, match_type ("exact"|"fuzzy"|"ai_verified"|"none"),
-  confidence (0-1), issues (array of {type, code, message, severity})""",
+    "matching": """You are an absolute, deterministic citation matching system.
+Perform exact and fuzzy bidirectional matching between in-text citations and reference list items.
+Return a JSON object with a "matches" array. Each match MUST contain:
+  "citation_raw_text": exact string,
+  "matched_reference_index": int (0-based index in references array, or null if missing),
+  "matched_reference_text": string or null,
+  "match_type": "exact" | "fuzzy" | "ai_verified" | "none",
+  "confidence": float (0.0 to 1.0),
+  "issues": array of {"type": string, "code": string, "message": string, "severity": "error"|"warning"|"info"} """,
 
-    "style": """You are an expert citation style checker.
-Check the document for citation style consistency issues.
-Return a JSON object with a "style_warnings" array. Each warning has:
-  code, category, message, suggestion (or null), severity ("error"|"warning"|"info"),
-  paragraph_index (int), char_start (int), char_end (int)""",
+    "style": """You are an absolute, deterministic citation style compliance auditor.
+Audit the manuscript strictly against the specified citation style manual rules.
+Only issue warnings for clear style violations or structural guidelines.
+Return a JSON object with a "style_warnings" array sorted deterministically by category and message.
+Each warning object MUST contain:
+  "code": string rule identifier,
+  "category": "missing_reference" | "uncited_reference" | "author_spelling_mismatch" | "year_mismatch" | "style_warning" | "document_structure",
+  "message": concise explanation of rule,
+  "suggestion": actionable correction text or null,
+  "severity": "error" | "warning" | "info",
+  "paragraph_index": int,
+  "char_start": int,
+  "char_end": int """,
 }
 
 
@@ -76,7 +103,7 @@ def call_deepseek(prompt: str, system: str, api_key: str) -> dict:
                 {"role": "system", "content": system},
                 {"role": "user", "content": prompt},
             ],
-            temperature=0.1,
+            temperature=0.0,
             max_tokens=384000,
             response_format={"type": "json_object"},
         )

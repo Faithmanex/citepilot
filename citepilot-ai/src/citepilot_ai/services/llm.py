@@ -29,21 +29,21 @@ def call_gemini(prompt: str, system_instruction: Optional[str] = None, response_
     if system_instruction:
         kwargs["config"] = genai_types.GenerateContentConfig(
             system_instruction=system_instruction,
-            temperature=0.1,
-            top_p=0.95,
+            temperature=0.0,
+            top_p=1.0,
         )
     else:
         kwargs["config"] = genai_types.GenerateContentConfig(
-            temperature=0.1,
-            top_p=0.95,
+            temperature=0.0,
+            top_p=1.0,
         )
 
     if response_schema:
         kwargs["config"] = genai_types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=response_schema,
-            temperature=0.1,
-            top_p=0.95,
+            temperature=0.0,
+            top_p=1.0,
         )
 
     try:
