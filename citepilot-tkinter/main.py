@@ -60,44 +60,22 @@ Return a JSON object with a "matches" array. Each match MUST contain:
   "confidence": float (0.0 to 1.0),
   "issues": array of {"type": string, "code": string, "message": string, "severity": "error"|"warning"|"info"} """,
 
-    "style": """You are an absolute, deterministic citation style & manuscript structure compliance auditor.
-Audit the manuscript strictly against the specified citation style rules and the following STANDARDIZED RULES CATALOG:
+    "style": """You are a dynamic, context-aware academic document auditor and style compliance system.
+Perform a holistic context-aware evaluation of the manuscript text for the specified style guide.
 
-1. TITLE PAGE RULES:
-   - Code: "title_page_missing_author", Category: "formatting", Severity: "error"
-     Message: "Title page missing author name and institutional affiliation."
-     Suggestion: "Add author name(s) and affiliation below the title."
-   - Code: "title_page_missing_course", Category: "formatting", Severity: "warning"
-     Message: "Title page missing course title, instructor name, or due date."
-     Suggestion: "Include course number/title, instructor, and due date."
+DYNAMIC ANALYSIS GUIDELINES (Zero Hardcoded Rules):
+1. Document Structure & Front Matter:
+   - Dynamically evaluate if title page or front matter elements are incomplete (e.g., paper title present but author name or institutional affiliation omitted).
+   - Detect placeholder text, template markers, or bracketed instructions (e.g., "[Insert Table of Contents here]", "[Author Name]", "TBD").
+2. Citation & Bibliography Syntax:
+   - Audit style-specific "et al." usage rules, citation ordering inside parenthetical citations, bibliography alphabetization, and quote page numbers.
 
-2. CONTENT & PLACEHOLDER RULES:
-   - Code: "placeholder_text_detected", Category: "content", Severity: "warning"
-     Message: "Placeholder text found in document. Replace with actual content or remove."
-     Suggestion: "Insert actual content or delete this placeholder."
-   - Code: "abstract_length_exceeded", Category: "content", Severity: "warning"
-     Message: "Abstract length exceeds the 250-word APA limit."
-     Suggestion: "Shorten abstract to between 150 and 250 words."
-
-3. DOCUMENT STRUCTURE RULES:
-   - Code: "toc_in_student_paper", Category: "document_structure", Severity: "info"
-     Message: "Section 'Table of Contents' is not standard in APA 7 student papers. Consider removing or formatting as a separate page if required."
-     Suggestion: "Remove Table of Contents or format per institutional guidelines."
-
-4. CITATION & SYNTAX RULES:
-   - Code: "direct_quote_missing_page", Category: "style_warning", Severity: "warning"
-     Message: "Direct quotation is missing a page or paragraph number citation."
-     Suggestion: "Add page number (p. X or pp. X-Y) or paragraph number (para. X)."
-   - Code: "et_al_format_error", Category: "style_warning", Severity: "warning"
-     Message: "Non-standard usage of 'et al.' for specified citation style."
-     Suggestion: "Format 'et al.' according to style author count rules."
-
-Return a JSON object with a "style_warnings" array sorted deterministically by category and code.
+Return a JSON object with a "style_warnings" array sorted deterministically by category and message.
 Each warning object MUST contain:
-  "code": string rule identifier,
-  "category": "formatting" | "content" | "document_structure" | "style_warning" | "missing_reference" | "uncited_reference" | "author_spelling_mismatch" | "year_mismatch",
-  "message": string exact standardized message,
-  "suggestion": string exact standardized suggestion or null,
+  "code": string rule code synthesized dynamically from context,
+  "category": "formatting" | "content" | "style_warning" | "document_structure" | "missing_reference" | "author_spelling_mismatch" | "year_mismatch",
+  "message": clear context-aware description of the observed issue,
+  "suggestion": actionable educational recommendation explaining how to resolve it,
   "severity": "error" | "warning" | "info",
   "paragraph_index": int,
   "char_start": int,

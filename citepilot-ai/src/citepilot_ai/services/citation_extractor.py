@@ -30,39 +30,32 @@ Rules:
 - Retain entry position (0-based)
 - If a metadata field is not present, set it to null"""
 
-MATCHING_AND_AUDIT_SYSTEM_PROMPT = """You are an expert, deterministic citation matching and manuscript consistency auditing system.
-Perform a dynamic, context-aware bidirectional audit between in-text citations, reference entries, and manuscript structure for {citation_style} using the following STANDARDIZED RULES CATALOG:
+MATCHING_AND_AUDIT_SYSTEM_PROMPT = """You are an expert citation matching and consistency auditing system.
+Perform a dynamic, context-aware bidirectional audit between in-text citations and reference list entries for the specified citation style: {citation_style}.
 
-1. BIDIRECTIONAL MATCHING RULES:
-   - Code: "missing_reference", Category: "missing_reference", Severity: "error"
-     Message: "In-text citation is missing from the reference list."
-   - Code: "uncited_reference", Category: "uncited_reference", Severity: "warning"
-     Message: "Reference list entry is never cited anywhere in the manuscript body."
+AUDIT RULES:
+1. BIDIRECTIONAL MATCHING:
+   - Match each in-text citation to its corresponding reference list item.
+   - Flag in-text citations that have NO matching bibliography entry (Category: "missing_reference", Severity: "error").
+   - Flag bibliography items that are NEVER cited anywhere in the manuscript body (Category: "uncited_reference", Severity: "warning").
 
-2. AUTHOR SPELLING & ACCENT DISCREPANCY RULES:
-   - Code: "author_spelling_mismatch", Category: "author_spelling_mismatch", Severity: "error"
-     Message: "Author surname spelling discrepancy between in-text citation and reference list."
+2. AUTHOR SPELLING & ACCENT AUDIT:
+   - Contextually check for author surname spelling variations, typos, or accent discrepancies between body citations and reference entries (e.g. "Smyth" vs "Smith", "Müller" vs "Muller"). Flag these as Category: "author_spelling_mismatch", Severity: "error".
 
-3. PUBLICATION YEAR DISCREPANCY RULES:
-   - Code: "year_mismatch", Category: "year_mismatch", Severity: "error"
-     Message: "Publication year mismatch between in-text citation and reference list."
+3. YEAR DISCREPANCY AUDIT:
+   - Semantically identify mismatches between the publication year cited in the body text vs the year stated in the reference list item. Flag as Category: "year_mismatch", Severity: "error".
 
-4. MANUSCRIPT FORMATTING & STRUCTURE RULES:
-   - Code: "title_page_missing_author", Category: "formatting", Severity: "error"
-     Message: "Title page missing author name and institutional affiliation."
-     Suggestion: "Add author name(s) and affiliation below the title."
-   - Code: "placeholder_text_detected", Category: "content", Severity: "warning"
-     Message: "Placeholder text found in document. Replace with actual content or remove."
-     Suggestion: "Insert actual content or delete this placeholder."
-   - Code: "toc_in_student_paper", Category: "document_structure", Severity: "info"
-     Message: "Section 'Table of Contents' is not standard in APA 7 student papers. Consider removing or formatting as a separate page if required."
-     Suggestion: "Remove Table of Contents or format per institutional guidelines."
-   - Code: "direct_quote_missing_page", Category: "style_warning", Severity: "warning"
-     Message: "Direct quotation is missing a page or paragraph number citation."
+4. STYLE & DOCUMENT STRUCTURE COMPLIANCE:
+   - Audit style-specific "et al." usage rules for {citation_style} (e.g., author count thresholds).
+   - Audit in-text citation ordering inside parenthetical citations (e.g. chronological or alphabetical rules).
+   - Audit reference list alphabetical sorting and missing page numbers (p. / pp.) for direct quote citations.
+   - Dynamically evaluate document structure & front matter (e.g., paper title present but missing author/affiliation, or placeholder text such as "[Insert TOC here]" or "TBD").
+   Flag issues as Category: "formatting" | "content" | "style_warning" | "document_structure", Severity: "error" | "warning" | "info".
 
 5. CONFIDENCE & REASONING:
    - Match type: "exact", "fuzzy", "ai_verified", or "none".
-   - Confidence score between 0.0 and 1.0."""
+   - Confidence score between 0.0 and 1.0.
+   - Provide clear, actionable educational feedback explaining the style manual rule."""
 
 UNCITED_CLAIM_DETECTION_SYSTEM_PROMPT = """You are an academic writing auditor. Scan manuscript body paragraphs to identify sweeping factual, statistical, empirical, or theoretical assertions that lack any supporting citation.
 
