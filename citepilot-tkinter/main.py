@@ -152,29 +152,36 @@ def calculate_year_stats(refs: list) -> dict:
 def analyze_document(text: str, citation_style: str, api_key: str,
                      progress: callable, done: callable):
     try:
+        print(f"\n[CitePilot Terminal Log] === Starting Manuscript Audit ({citation_style.upper()}) ===", flush=True)
         progress("Sending to AI Model...")
         text_truncated = text[:80000]
 
+        print(f"[CitePilot Terminal Log] 1/4 Extracting in-text citations...", flush=True)
         progress("Extracting in-text citations...")
         cit_result = call_deepseek(
             f"Extract all in-text citations from this {citation_style} document:\n\n{text_truncated}",
             SYSTEM_PROMPTS["citations"], api_key)
         citations = cit_result.get("citations", [])
+        print(f"[CitePilot Terminal Log] -> Extracted {len(citations)} in-text citations.", flush=True)
         time.sleep(0.3)
 
+        print(f"[CitePilot Terminal Log] 2/4 Parsing reference list...", flush=True)
         progress("Parsing reference list...")
         ref_result = call_deepseek(
             f"Find and parse the reference list from this {citation_style} document:\n\n{text_truncated}",
             SYSTEM_PROMPTS["references"], api_key)
         refs = ref_result.get("references", [])
+        print(f"[CitePilot Terminal Log] -> Parsed {len(refs)} reference entries.", flush=True)
         time.sleep(0.3)
 
+        print(f"[CitePilot Terminal Log] 3/4 Bidirectional citation matching...", flush=True)
         progress("Matching citations to references...")
         if citations and refs:
             match_result = call_deepseek(
                 json.dumps({"citations": citations, "references": refs}),
                 SYSTEM_PROMPTS["matching"], api_key)
             matches = match_result.get("matches", [])
+            print(f"[CitePilot Terminal Log] -> Matched {len(matches)} citations to bibliography items.", flush=True)
             match_by_text = {m.get("citation_raw_text", "").strip().lower(): m for m in matches}
             for c in citations:
                 key = c.get("raw_text", "").strip().lower()
@@ -195,29 +202,37 @@ def analyze_document(text: str, citation_style: str, api_key: str,
                     r["status"] = "orphaned"
         time.sleep(0.3)
 
+        print(f"[CitePilot Terminal Log] 4/4 Auditing citation style compliance...", flush=True)
         progress("Auditing citation style...")
         style_result = call_deepseek(
             f"Check style of this {citation_style} document:\n\n{text_truncated[:20000]}",
             SYSTEM_PROMPTS["style"], api_key)
         warnings = style_result.get("style_warnings", [])
+        print(f"[CitePilot Terminal Log] -> Identified {len(warnings)} diagnostic style issues.", flush=True)
 
         progress("Done!")
+        print(f"[CitePilot Terminal Log] === Audit Complete ===\n", flush=True)
         done(citations, refs, warnings)
     except Exception as e:
+        print(f"[CitePilot Terminal Log ERROR] Analysis failed: {e}", flush=True)
         done(None, None, None, str(e))
 
 
 def analyze_references_only(text: str, citation_style: str, api_key: str,
                             progress: callable, done: callable):
     try:
+        print(f"\n[CitePilot Terminal Log] === Starting Reference-Only Audit ({citation_style.upper()}) ===", flush=True)
         progress("Parsing standalone reference list...")
         ref_result = call_deepseek(
             f"Parse the following standalone reference list for {citation_style}:\n\n{text[:40000]}",
             SYSTEM_PROMPTS["references"], api_key)
         refs = ref_result.get("references", [])
+        print(f"[CitePilot Terminal Log] -> Parsed {len(refs)} standalone reference entries.", flush=True)
         progress("Done!")
+        print(f"[CitePilot Terminal Log] === Reference Audit Complete ===\n", flush=True)
         done([], refs, [])
     except Exception as e:
+        print(f"[CitePilot Terminal Log ERROR] Reference audit failed: {e}", flush=True)
         done(None, None, None, str(e))
 
 
