@@ -303,7 +303,7 @@ class CitePilotApp:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("CitePilot Academic Auditor")
-        self.root.geometry("1000, 750")
+        self.root.geometry("1000x750")
         self.root.minsize(800, 600)
         self.filename = None
         self.citations = []
