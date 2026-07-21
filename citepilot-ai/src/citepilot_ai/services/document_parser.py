@@ -1,8 +1,7 @@
-import io
 import logging
 import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 import pdfplumber
 from docx import Document as DocxDocument
@@ -10,129 +9,157 @@ from docx import Document as DocxDocument
 logger = logging.getLogger(__name__)
 
 
-def parse_document(file_path: str, mime_type: str) -> str:
+def parse_document(file_path: str, mime_type: str, mode: str = "full") -> Tuple[str, str, List[Dict]]:
+    """
+    Parses a document file (.docx, .pdf, or text) and returns:
+      - body_text: string containing body paragraphs
+      - reference_text: string containing reference list text
+      - paragraph_metadata: list of structured paragraph dictionaries
+    Mode can be 'full' or 'reference_only'.
+    """
     path = Path(file_path)
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
 
-    if mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        return _parse_docx_text(path)
-    elif mime_type == "application/pdf":
-        return _parse_pdf_text(path)
-    elif mime_type == "text/plain":
-        return path.read_text(encoding="utf-8")
+    mime_clean = (mime_type or "").lower()
+    if mime_clean == "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or path.suffix.lower() == ".docx":
+        raw_text, paragraphs_meta = _parse_docx_structured(path)
+    elif mime_clean == "application/pdf" or path.suffix.lower() == ".pdf":
+        raw_text, paragraphs_meta = _parse_pdf_structured(path)
     else:
-        return _parse_fallback_text(path)
+        raw_text = path.read_text(encoding="utf-8", errors="replace")
+        paragraphs_meta = _parse_txt_structured(raw_text)
+
+    mode_clean = (mode or "full").strip().lower()
+    if mode_clean in ("reference_only", "references_only", "references"):
+        return "", raw_text.strip(), paragraphs_meta
+
+    body_text, ref_text = split_body_and_references(raw_text)
+    return body_text, ref_text, paragraphs_meta
 
 
-def parse_document_structured(file_path: str, mime_type: str) -> List[Dict[str, Any]]:
-    path = Path(file_path)
-    if not path.exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
-
-    if mime_type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        return _parse_docx_structured(path)
-    elif mime_type == "application/pdf":
-        return _parse_pdf_structured(path)
-    else:
-        return _parse_txt_structured(path)
-
-
-def split_body_and_references(paragraphs: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
-    ref_patterns = [
-        r"^\s*(?:References|Bibliography|Works\s+Cited)\s*$",
-        r"^\s*(?:REFERENCES|BIBLIOGRAPHY|WORKS\s+CITED)\s*$"
+def split_body_and_references(text: str) -> Tuple[str, str]:
+    """
+    Splits full document text into body and reference section using robust regex patterns.
+    Handles 'References:', '10. References', 'Chapter X: References', starting at top, etc.
+    """
+    patterns = [
+        r"(?:^|\n)\s*(?:\d+[\.\s]+|Chapter\s+\d+[:\s]+)?(?:References|Bibliography|Works\s+Cited|Reference\s+List)\b:?\s*(?:\n|$)",
+        r"(?:^|\n)\s*(?:\d+[\.\s]+)?(?:REFERENCES|BIBLIOGRAPHY|WORKS\s+CITED|REFERENCE\s+LIST)\b:?",
     ]
-    ref_start_idx = -1
-    for idx, p in enumerate(paragraphs):
-        text = p.get("text", "")
-        for pat in ref_patterns:
-            if re.search(pat, text, re.IGNORECASE):
-                ref_start_idx = idx
-                break
-        if ref_start_idx != -1:
-            break
+    for pat in patterns:
+        parts = re.split(pat, text, maxsplit=1, flags=re.IGNORECASE)
+        if len(parts) == 2 and len(parts[1].strip()) > 10:
+            return parts[0].strip(), parts[1].strip()
 
-    if ref_start_idx != -1:
-        body = paragraphs[:ref_start_idx]
-        refs = paragraphs[ref_start_idx:]
-        return body, refs
-    return paragraphs, []
+    return text.strip(), ""
 
 
-def _parse_docx_text(path: Path) -> str:
+def _parse_docx_structured(path: Path) -> Tuple[str, List[Dict]]:
     doc = DocxDocument(str(path))
-    paragraphs = [p.text.strip() for p in doc.paragraphs if p.text.strip()]
-    return "\n\n".join(paragraphs)
+    paragraphs_meta = []
+    text_parts = []
 
-
-def _parse_docx_structured(path: Path) -> List[Dict[str, Any]]:
-    doc = DocxDocument(str(path))
-    structured = []
-    para_idx = 0
-    for p in doc.paragraphs:
-        text = p.text.strip()
-        if not text:
+    idx = 0
+    for para in doc.paragraphs:
+        txt = para.text.strip()
+        if not txt:
             continue
-        style_name = p.style.name if p.style else "Normal"
-        is_heading = style_name.lower().startswith("heading") or style_name.lower() in ["title", "subtitle"]
-        structured.append({
-            "paragraph_index": para_idx,
-            "text": text,
+
+        style_name = para.style.name if para.style else "Normal"
+        is_heading = style_name.startswith("Heading") or bool(re.match(r"^\d+(\.\d+)*\s+[A-Z]", txt))
+
+        paragraphs_meta.append({
+            "paragraph_index": idx,
+            "text": txt,
             "style_name": style_name,
             "is_heading": is_heading,
+            "char_count": len(txt)
         })
-        para_idx += 1
-    return structured
+        text_parts.append(txt)
+        idx += 1
+
+    return "\n\n".join(text_parts), paragraphs_meta
 
 
-def _parse_pdf_text(path: Path) -> str:
+def _parse_pdf_structured(path: Path) -> Tuple[str, List[Dict]]:
+    paragraphs_meta = []
     text_parts = []
-    with pdfplumber.open(str(path)) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text and text.strip():
-                text_parts.append(text.strip())
-    return "\n\n".join(text_parts)
+    idx = 0
 
-
-def _parse_pdf_structured(path: Path) -> List[Dict[str, Any]]:
-    structured = []
-    para_idx = 0
     with pdfplumber.open(str(path)) as pdf:
         for page_num, page in enumerate(pdf.pages, start=1):
             text = page.extract_text()
-            if not text:
+            if not text or not text.strip():
                 continue
+
             lines = text.split("\n")
+            current_para = []
+
             for line in lines:
-                t = line.strip()
-                if not t:
-                    continue
-                structured.append({
-                    "paragraph_index": para_idx,
+                l_str = line.strip()
+                if not l_str:
+                    if current_para:
+                        p_text = " ".join(current_para)
+                        paragraphs_meta.append({
+                            "paragraph_index": idx,
+                            "page_number": page_num,
+                            "text": p_text,
+                            "style_name": "Normal",
+                            "is_heading": False,
+                            "char_count": len(p_text)
+                        })
+                        text_parts.append(p_text)
+                        idx += 1
+                        current_para = []
+                else:
+                    # If line looks like a heading or new paragraph (e.g. starts with indent or number)
+                    # and current_para ends with a period, flush current paragraph
+                    if current_para and current_para[-1].endswith((".", ":", ";")) and (l_str[0].isupper() or l_str.startswith(("[", "(", "1", "2", "3", "4", "5", "6", "7", "8", "9"))):
+                        p_text = " ".join(current_para)
+                        paragraphs_meta.append({
+                            "paragraph_index": idx,
+                            "page_number": page_num,
+                            "text": p_text,
+                            "style_name": "Normal",
+                            "is_heading": False,
+                            "char_count": len(p_text)
+                        })
+                        text_parts.append(p_text)
+                        idx += 1
+                        current_para = [l_str]
+                    else:
+                        current_para.append(l_str)
+
+            if current_para:
+                p_text = " ".join(current_para)
+                paragraphs_meta.append({
+                    "paragraph_index": idx,
                     "page_number": page_num,
-                    "text": t,
-                    "style_name": "Body Text",
+                    "text": p_text,
+                    "style_name": "Normal",
                     "is_heading": False,
+                    "char_count": len(p_text)
                 })
-                para_idx += 1
-    return structured
+                text_parts.append(p_text)
+                idx += 1
+
+    return "\n\n".join(text_parts), paragraphs_meta
 
 
-def _parse_txt_structured(path: Path) -> List[Dict[str, Any]]:
-    content = path.read_text(encoding="utf-8", errors="replace")
-    paragraphs = [p.strip() for p in content.split("\n\n") if p.strip()]
-    structured = []
-    for idx, text in enumerate(paragraphs):
-        structured.append({
-            "paragraph_index": idx,
-            "text": text,
-            "style_name": "Normal",
-            "is_heading": False,
-        })
-    return structured
-
-
-def _parse_fallback_text(path: Path) -> str:
-    return path.read_text(encoding="utf-8", errors="replace")
+def _parse_txt_structured(raw_text: str) -> List[Dict]:
+    paragraphs = raw_text.split("\n\n")
+    meta = []
+    idx = 0
+    for p in paragraphs:
+        txt = p.strip()
+        if txt:
+            meta.append({
+                "paragraph_index": idx,
+                "text": txt,
+                "style_name": "Normal",
+                "is_heading": False,
+                "char_count": len(txt)
+            })
+            idx += 1
+    return meta

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CitePilot — Audit Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sidebar:#14181F;
+    --sidebar-line:#252B36;
+    --sidebar-text:#9CA3B0;
+    --sidebar-text-active:#FAFAF7;
+    --paper:#F4F3EE;
+    --card:#FFFFFF;
+    --ink:#14181F;
+    --ink-soft:#4A5160;
+    --ink-faint:#8A8F99;
+    --line:#E4E2D8;
+    --verified:#2F6F5E;
+    --verified-bg:#E7F0EC;
+    --warning:#B4740E;
+    --warning-bg:#F6EEDD;
+    --error:#B23A2E;
+    --error-bg:#F5E7E3;
+    --brand:#2C3E8C;
+    --brand-bg:#E7E9F5;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Manrope', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    font-size:14px;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  button{font-family:inherit;}
+
+  .app{display:grid; grid-template-columns:236px 1fr; min-height:100vh;}
+
+  /* ---------- SIDEBAR ---------- */
+  .sidebar{
+    background:var(--sidebar);
+    color:var(--sidebar-text);
+    padding:20px 14px;
+    position:sticky; top:0; height:100vh; overflow-y:auto;
+  }
+  .brand{
+    display:flex; align-items:center; gap:9px;
+    padding:6px 10px 22px;
+    font-weight:800; font-size:16px; color:#fff;
+  }
+  .brand .mark{
+    width:8px;height:8px;border-radius:1px;background:var(--verified);
+    box-shadow:10px 0 0 var(--warning), 20px 0 0 var(--error);
+    margin-right:12px;
+  }
+  .nav-group{margin-bottom:4px;}
+  .nav-label{
+    font-family:'JetBrains Mono', monospace; font-size:10.5px; letter-spacing:0.07em;
+    text-transform:uppercase; color:#5A6070; padding:16px 10px 8px;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:10px;
+    width:100%; text-align:left; padding:9px 10px; border-radius:5px;
+    background:none; border:none; color:var(--sidebar-text);
+    font-size:13.5px; font-weight:500; cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+    margin-bottom:2px;
+  }
+  .nav-item .ic{
+    width:16px; height:16px; flex:none; border-radius:3px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:10px; background:rgba(255,255,255,0.06); color:#7C8494;
+  }
+  .nav-item:hover{background:rgba(255,255,255,0.05); color:#fff;}
+  .nav-item.active{background:rgba(255,255,255,0.09); color:#fff;}
+  .nav-item.active .ic{background:var(--brand); color:#fff;}
+  .nav-item .badge{
+    margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:10.5px;
+    padding:1px 6px; border-radius:10px; background:rgba(255,255,255,0.08); color:#B7BCC6;
+  }
+  .nav-item .badge.err{background:var(--error); color:#fff;}
+  .nav-item .badge.warn{background:var(--warning); color:#fff;}
+
+  /* ---------- MAIN ---------- */
+  main{min-width:0;}
+  .topbar{
+    position:sticky; top:0; z-index:20;
+    background:rgba(244,243,238,0.92); backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--line);
+    padding:14px 28px;
+  }
+  .topbar-row{display:flex; align-items:center; gap:18px; flex-wrap:wrap;}
+  .doc-chip{
+    display:flex; align-items:center; gap:8px;
+    font-size:13px; font-weight:600; color:var(--ink);
+    background:var(--card); border:1px solid var(--line);
+    padding:8px 12px; border-radius:6px;
+  }
+  .doc-chip .dot{width:6px;height:6px;border-radius:50%; background:var(--verified);}
+  .seg{
+    display:flex; background:var(--card); border:1px solid var(--line); border-radius:6px; padding:3px;
+  }
+  .seg button{
+    border:none; background:none; padding:6px 12px; font-size:12.5px; font-weight:600;
+    color:var(--ink-soft); border-radius:4px; cursor:pointer; transition:all .15s ease;
+  }
+  .seg button.active{background:var(--ink); color:#fff;}
+  select.style-select{
+    font-family:'Manrope',sans-serif; font-size:12.5px; font-weight:600;
+    padding:9px 12px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--ink);
+  }
+  .run-btn{
+    margin-left:auto;
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--ink); color:#fff; border:none; border-radius:6px;
+    padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .run-btn:hover{background:var(--brand); transform:translateY(-1px);}
+  .run-btn:disabled{opacity:0.6; cursor:default; transform:none;}
+
+  .progress-wrap{margin-top:14px; display:none;}
+  .progress-wrap.show{display:block;}
+  .progress-bar{
+    height:5px; background:var(--line); border-radius:4px; overflow:hidden;
+  }
+  .progress-bar-fill{
+    height:100%; width:0%; background:var(--brand); border-radius:4px;
+    transition:width .35s ease;
+  }
+  .progress-label{
+    display:flex; justify-content:space-between; margin-top:7px;
+    font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--ink-soft);
+  }
+
+  .content{padding:26px 28px 64px;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .page-head{margin-bottom:22px;}
+  .page-head h1{font-size:19px; font-weight:800; margin:0 0 4px;}
+  .page-head p{font-size:13.5px; color:var(--ink-soft); margin:0; max-width:64ch;}
+
+  /* cards grid (overview) */
+  .stat-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px;}
+  .stat-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px 18px 16px;
+  }
+  .stat-card .label{font-size:12px; color:var(--ink-faint); margin-bottom:8px;}
+  .stat-card .value{font-family:'JetBrains Mono',monospace; font-size:26px; font-weight:600;}
+  .stat-card .value.warn{color:var(--warning);}
+  .stat-card .value.err{color:var(--error);}
+  .stat-card .value.ok{color:var(--verified);}
+  .stat-card .sub{font-size:11.5px; color:var(--ink-faint); margin-top:6px;}
+
+  .two-col{display:grid; grid-template-columns:1.4fr 1fr; gap:16px;}
+
+  .card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:20px;}
+  .card + .card{margin-top:16px;}
+  .card h2{font-size:14.5px; font-weight:700; margin:0 0 4px;}
+  .card .card-sub{font-size:12.5px; color:var(--ink-faint); margin:0 0 16px;}
+
+  ul.checklist{list-style:none; margin:0; padding:0;}
+  ul.checklist li{
+    display:flex; gap:10px; align-items:flex-start;
+    padding:10px 0; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  ul.checklist li:last-child{border-bottom:none;}
+  .status-icon{
+    width:18px;height:18px;border-radius:50%; flex:none; margin-top:1px;
+    display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff;
+  }
+  .status-icon.ok{background:var(--verified);}
+  .status-icon.warn{background:var(--warning);}
+  .status-icon.err{background:var(--error);}
+  li .li-title{font-weight:600; margin-bottom:2px;}
+  li .li-sub{color:var(--ink-soft); font-size:12.5px; line-height:1.5;}
+
+  /* tables */
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em;
+    color:var(--ink-faint); font-weight:700; padding:0 10px 10px; border-bottom:1px solid var(--line);
+  }
+  td{padding:11px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  tr:last-child td{border-bottom:none;}
+  .pill{
+    display:inline-flex; align-items:center; gap:5px;
+    font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:20px;
+  }
+  .pill.ok{background:var(--verified-bg); color:var(--verified);}
+  .pill.warn{background:var(--warning-bg); color:var(--warning);}
+  .pill.err{background:var(--error-bg); color:var(--error);}
+  .link-btn{
+    background:none; border:none; color:var(--brand); font-weight:700; font-size:12.5px; cursor:pointer; padding:0;
+  }
+  .link-btn:hover{text-decoration:underline;}
+  .cite-mono{font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--ink-soft);}
+
+  /* claims */
+  .claim-card{border:1px solid var(--line); border-radius:6px; padding:16px 18px; margin-bottom:12px; background:var(--paper);}
+  .claim-card:last-child{margin-bottom:0;}
+  .claim-text{font-size:13.5px; font-style:italic; color:var(--ink); margin-bottom:10px; line-height:1.55;}
+  .claim-meta{display:flex; gap:14px; font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--ink-faint); margin-bottom:10px;}
+  .claim-explain{font-size:12.5px; color:var(--ink-soft); line-height:1.6; padding-top:10px; border-top:1px dashed var(--line);}
+
+  /* recency */
+  .donut-wrap{display:flex; align-items:center; gap:26px;}
+  .donut-legend{flex:1; display:flex; flex-direction:column; gap:10px;}
+  .donut-legend .row{display:flex; align-items:center; gap:10px; font-size:13px;}
+  .donut-legend i{width:10px;height:10px;border-radius:2px; flex:none;}
+  .donut-legend .pct{margin-left:auto; font-family:'JetBrains Mono',monospace; font-weight:600;}
+  .kv-row{display:flex; justify-content:space-between; padding:9px 0; border-bottom:1px solid var(--line); font-size:13px;}
+  .kv-row:last-child{border-bottom:none;}
+  .kv-row .k{color:var(--ink-soft);}
+  .kv-row .v{font-family:'JetBrains Mono',monospace; font-weight:600;}
+
+  /* export */
+  .export-row{display:flex; gap:14px; flex-wrap:wrap; margin-top:6px;}
+  .export-btn{
+    display:flex; align-items:center; gap:12px;
+    border:1px solid var(--line); background:var(--card); border-radius:8px;
+    padding:16px 18px; cursor:pointer; flex:1; min-width:240px; text-align:left;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .export-btn:hover{border-color:var(--ink-soft); transform:translateY(-1px);}
+  .export-btn .ic{
+    width:36px;height:36px;border-radius:8px; background:var(--brand-bg); color:var(--brand);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex:none;
+  }
+  .export-btn .t{font-weight:700; font-size:13.5px; margin-bottom:2px;}
+  .export-btn .s{font-size:12px; color:var(--ink-faint);}
+
+  .dismiss-row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 0; border-bottom:1px solid var(--line); font-size:13px;
+  }
+  .dismiss-row:last-child{border-bottom:none;}
+  .toggle{
+    width:38px; height:22px; border-radius:12px; background:var(--line); position:relative; cursor:pointer; border:none; flex:none;
+  }
+  .toggle.on{background:var(--verified);}
+  .toggle::after{
+    content:""; position:absolute; top:2px; left:2px; width:18px;height:18px; border-radius:50%;
+    background:#fff; transition:transform .15s ease;
+  }
+  .toggle.on::after{transform:translateX(16px);}
+
+  .toast{
+    position:fixed; bottom:24px; right:28px; background:var(--ink); color:#fff;
+    padding:14px 20px; border-radius:8px; font-size:13px; font-weight:600;
+    display:flex; align-items:center; gap:10px; box-shadow:0 8px 24px rgba(0,0,0,0.2);
+    transform:translateY(20px); opacity:0; pointer-events:none; transition:all .3s ease; z-index:100;
+  }
+  .toast.show{transform:translateY(0); opacity:1;}
+  .toast .dot{width:8px;height:8px;border-radius:50%; background:var(--verified);}
+
+  @media (max-width: 980px){
+    .app{grid-template-columns:1fr;}
+    .sidebar{position:static; height:auto; display:flex; flex-wrap:wrap; gap:4px;}
+    .nav-group{display:flex; flex-wrap:wrap; gap:4px;}
+    .nav-label{display:none;}
+    .stat-grid{grid-template-columns:1fr 1fr;}
+    .two-col{grid-template-columns:1fr;}
+    table{font-size:12px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="brand"><span class="mark"></span>CitePilot</div>
+
+    <div class="nav-group">
+      <div class="nav-label">Audit</div>
+      <button class="nav-item active" data-panel="overview"><span class="ic">◆</span>Overview</button>
+      <button class="nav-item" data-panel="matching"><span class="ic">↔</span>Citation Matching<span class="badge err">9</span></button>
+      <button class="nav-item" data-panel="crossref"><span class="ic">✓</span>Crossref &amp; Retraction<span class="badge err">2</span></button>
+      <button class="nav-item" data-panel="style"><span class="ic">§</span>Style Rules<span class="badge warn">7</span></button>
+      <button class="nav-item" data-panel="claims"><span class="ic">!</span>Uncited Claims<span class="badge warn">5</span></button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Analytics</div>
+      <button class="nav-item" data-panel="recency"><span class="ic">◔</span>Recency Analytics</button>
+      <button class="nav-item" data-panel="structure"><span class="ic">▤</span>Document Structure</button>
+    </div>
+
+    <div class="nav-group">
+      <div class="nav-label">Output</div>
+      <button class="nav-item" data-panel="export"><span class="ic">⇩</span>Feedback &amp; Export</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div class="topbar">
+      <div class="topbar-row">
+        <div class="doc-chip"><span class="dot"></span>ch3_literature_review.docx</div>
+
+        <div class="seg" id="audit-mode">
+          <button class="active" data-mode="full">Full Manuscript Audit</button>
+          <button data-mode="refs">Reference-List-Only</button>
+        </div>
+
+        <select class="style-select" id="style-select">
+          <option>APA 7th</option>
+          <option>APA 6th</option>
+          <option>MLA 9th</option>
+          <option>Chicago 17th (Author-Date)</option>
+          <option>Harvard</option>
+          <option>IEEE</option>
+          <option>Vancouver</option>
+          <option>Turabian</option>
+        </select>
+
+        <button class="run-btn" id="run-btn">Run audit</button>
+      </div>
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar"><div class="progress-bar-fill" id="progress-fill"></div></div>
+        <div class="progress-label"><span id="progress-phase">Parsing document…</span><span id="progress-pct">0%</span></div>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- OVERVIEW -->
+      <section class="panel active" id="panel-overview">
+        <div class="page-head">
+          <h1>Audit overview</h1>
+          <p>Full manuscript audit — APA 7th. 142 citations parsed, 47 reference entries, last run just now.</p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Citations found</div><div class="value">142</div><div class="sub">across 9 sections</div></div>
+          <div class="stat-card"><div class="label">Issues flagged</div><div class="value err">23</div><div class="sub">4 critical · 12 moderate · 7 minor</div></div>
+          <div class="stat-card"><div class="label">Bidirectional match rate</div><div class="value ok">94%</div><div class="sub">9 unresolved links</div></div>
+          <div class="stat-card"><div class="label">Recency compliance</div><div class="value warn">Below target</div><div class="sub">53% within 5 years · target 60%</div></div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <h2>Highest-priority findings</h2>
+            <p class="card-sub">Pulled from Crossref validation, matching, and retraction checks.</p>
+            <ul class="checklist">
+              <li><span class="status-icon err">✕</span><div><div class="li-title">Retracted source cited — Whitfield (2016)</div><div class="li-sub">Retracted by publisher, March 2023. Still cited on page 14 to support a core claim.</div></div></li>
+              <li><span class="status-icon err">✕</span><div><div class="li-title">No Crossref record found — Alavi &amp; Reyes (2021)</div><div class="li-sub">Unable to verify this source exists. Check the citation manually.</div></div></li>
+              <li><span class="status-icon warn">!</span><div><div class="li-title">Publication year mismatch — Okafor</div><div class="li-sub">Cited as 2019 in text; reference list and Crossref both list 2020.</div></div></li>
+              <li><span class="status-icon warn">!</span><div><div class="li-title">4 in-text citations missing from reference list</div><div class="li-sub">See Citation Matching for the full list.</div></div></li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <h2>Audit coverage</h2>
+            <p class="card-sub">What this run checked.</p>
+            <ul class="checklist">
+              <li><span class="status-icon ok">✓</span><div><div class="li-title">Bidirectional citation matching</div></div></li>
+              <li><span class="status-icon ok">✓</span><div><div class="li-title">Crossref metadata cross-check</div></div></li>
+              <li><span class="status-icon ok">✓</span><div><div class="li-title">Retraction Watch lookup</div></div></li>
+              <li><span class="status-icon ok">✓</span><div><div class="li-title">APA 7th style rules</div></div></li>
+              <li><span class="status-icon ok">✓</span><div><div class="li-title">Uncited factual claims scan</div></div></li>
+              <li><span class="status-icon ok">✓</span><div><div class="li-title">Recency &amp; structure analytics</div></div></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- CITATION MATCHING -->
+      <section class="panel" id="panel-matching">
+        <div class="page-head">
+          <h1>Citation &amp; reference matching</h1>
+          <p>Bidirectional matching between in-text citations and reference list entries, with spelling and year discrepancy detection.</p>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="label">Missing references</div><div class="value err">4</div><div class="sub">cited, no entry found</div></div>
+          <div class="stat-card"><div class="label">Uncited references</div><div class="value warn">3</div><div class="sub">listed, never cited</div></div>
+          <div class="stat-card"><div class="label">Author spelling mismatches</div><div class="value warn">1</div></div>
+          <div class="stat-card"><div class="label">Year mismatches</div><div class="value warn">1</div></div>
+        </div>
+        <div class="card">
+          <h2>Match table</h2>
+          <p class="card-sub">Click a reference to jump directly to its entry in the bibliography.</p>
+          <table>
+            <thead><tr><th>In-text citation</th><th>Reference match</th><th>Issue</th><th></th></tr></thead>
+            <tbody>
+              <tr><td class="cite-mono">(Alavi &amp; Reyes, 2021)</td><td>No match found</td><td><span class="pill err">Missing reference</span></td><td><button class="link-btn">Flag</button></td></tr>
+              <tr><td class="cite-mono">(Smyth, 2019)</td><td>Smith, K. (2019)</td><td><span class="pill warn">Spelling mismatch (Smyth vs Smith)</span></td><td><button class="link-btn">View entry</button></td></tr>
+              <tr><td class="cite-mono">(Okafor, 2019)</td><td>Okafor, T. (2020)</td><td><span class="pill warn">Year mismatch (2019 vs 2020)</span></td><td><button class="link-btn">View entry</button></td></tr>
+              <tr><td class="cite-mono">(Chen &amp; Park, 2022)</td><td>Chen, L., &amp; Park, J. (2022)</td><td><span class="pill ok">Matched</span></td><td><button class="link-btn">View entry</button></td></tr>
+              <tr><td class="cite-mono">— (reference list only)</td><td>Whitfield, R. (2016)</td><td><span class="pill warn">Uncited reference</span></td><td><button class="link-btn">Flag</button></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CROSSREF -->
+      <section class="panel" id="panel-crossref">
+        <div class="page-head">
+          <h1>Crossref &amp; retraction validation</h1>
+          <p>Every reference checked against Crossref for title, author, year, journal, volume, issue, page range and DOI accuracy — plus a Retraction Watch lookup.</p>
+        </div>
+        <div class="card">
+          <table>
+            <thead><tr><th>Reference</th><th>Crossref match</th><th>DOI</th><th>Retraction status</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>Chen, L., &amp; Park, J. (2022)</td>
+                <td><span class="pill ok">Title, author, year match</span></td>
+                <td class="cite-mono">10.1016/j.jpsych.2022.03.011</td>
+                <td><span class="pill ok">Not retracted</span></td>
+              </tr>
+              <tr>
+                <td>Alavi, S., &amp; Reyes, M. (2021)</td>
+                <td><span class="pill err">No Crossref record found</span></td>
+                <td class="cite-mono">—</td>
+                <td><span class="pill err">Unable to verify</span></td>
+              </tr>
+              <tr>
+                <td>Okafor, T. (2020)</td>
+                <td><span class="pill warn">Journal name mismatch (listed: J. Behav. Studies)</span></td>
+                <td class="cite-mono">10.1080/2020.4471</td>
+                <td><span class="pill ok">Not retracted</span></td>
+              </tr>
+              <tr>
+                <td>Whitfield, R. (2016)</td>
+                <td><span class="pill ok">Title, author match</span></td>
+                <td class="cite-mono">10.1037/whit.2016.014</td>
+                <td><span class="pill err">Retracted — Mar 2023</span> &nbsp;<button class="link-btn">View notice</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- STYLE RULES -->
+      <section class="panel" id="panel-style">
+        <div class="page-head">
+          <h1>Style rules auditing</h1>
+          <p>APA 7th formatting rules applied across the bibliography and in-text citations.</p>
+        </div>
+        <div class="card">
+          <ul class="checklist">
+            <li><span class="status-icon warn">!</span><div><div class="li-title">Et al. usage — 2 violations</div><div class="li-sub">"Alavi, Reyes &amp; Kim (2021)" should read "Alavi et al. (2021)" for 3+ authors under APA 7th.</div></div></li>
+            <li><span class="status-icon err">✕</span><div><div class="li-title">Alphabetical order — bibliography out of sequence</div><div class="li-sub">Okafor, T. (2020) appears before Chen, L. (2022) in the reference list.</div></div></li>
+            <li><span class="status-icon warn">!</span><div><div class="li-title">DOI &amp; URL validation — 3 missing, 1 broken</div><div class="li-sub">3 reference entries have no DOI on file; one listed URL returns a 404.</div></div></li>
+            <li><span class="status-icon warn">!</span><div><div class="li-title">Page numbers on direct quotes — 1 missing</div><div class="li-sub">A direct quote on page 9 is missing a required "p." page reference.</div></div></li>
+            <li><span class="status-icon ok">✓</span><div><div class="li-title">In-text citation punctuation</div><div class="li-sub">No issues found.</div></div></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- UNCITED CLAIMS -->
+      <section class="panel" id="panel-claims">
+        <div class="page-head">
+          <h1>AI uncited factual claims</h1>
+          <p>Factual, empirical, or statistical assertions in the body text that lack a citation marker.</p>
+        </div>
+        <div class="claim-card">
+          <div class="claim-text">"Approximately 68% of graduate students report difficulty locating primary sources."</div>
+          <div class="claim-meta"><span>PARAGRAPH 12</span><span>PAGE 6</span><span>STATISTICAL CLAIM</span></div>
+          <div class="claim-explain">This is a specific statistic presented as established fact. Without a citation, a reader has no way to verify the figure or trace it to its source study.</div>
+        </div>
+        <div class="claim-card">
+          <div class="claim-text">"This approach has become the dominant framework in the field since 2015."</div>
+          <div class="claim-meta"><span>PARAGRAPH 18</span><span>PAGE 8</span><span>TREND CLAIM</span></div>
+          <div class="claim-explain">Claims about a field-wide shift or consensus require a supporting citation — otherwise the assertion reads as the author's opinion rather than a documented trend.</div>
+        </div>
+        <div class="claim-card">
+          <div class="claim-text">"Early intervention reduces relapse rates by nearly half."</div>
+          <div class="claim-meta"><span>PARAGRAPH 24</span><span>PAGE 11</span><span>EMPIRICAL CLAIM</span></div>
+          <div class="claim-explain">A causal, quantified outcome like this needs a direct citation to the study it's drawn from.</div>
+        </div>
+      </section>
+
+      <!-- RECENCY -->
+      <section class="panel" id="panel-recency">
+        <div class="page-head">
+          <h1>Publication recency analytics</h1>
+          <p>How current your source list is, measured against typical university recency standards.</p>
+        </div>
+        <div class="two-col">
+          <div class="card">
+            <h2>Recency breakdown</h2>
+            <p class="card-sub">47 sources, by age at time of writing.</p>
+            <div class="donut-wrap">
+              <svg width="150" height="150" viewBox="0 0 150 150">
+                <circle cx="75" cy="75" r="58" fill="none" stroke="#E4E2D8" stroke-width="20"/>
+                <circle cx="75" cy="75" r="58" fill="none" stroke="#2F6F5E" stroke-width="20"
+                  stroke-dasharray="80.4 284.2" stroke-dashoffset="0" transform="rotate(-90 75 75)"/>
+                <circle cx="75" cy="75" r="58" fill="none" stroke="#4C6FCB" stroke-width="20"
+                  stroke-dasharray="113.2 284.2" stroke-dashoffset="-80.4" transform="rotate(-90 75 75)"/>
+                <circle cx="75" cy="75" r="58" fill="none" stroke="#B4740E" stroke-width="20"
+                  stroke-dasharray="102.3 284.2" stroke-dashoffset="-193.6" transform="rotate(-90 75 75)"/>
+                <circle cx="75" cy="75" r="58" fill="none" stroke="#B23A2E" stroke-width="20"
+                  stroke-dasharray="69.4 284.2" stroke-dashoffset="-295.9" transform="rotate(-90 75 75)"/>
+                <text x="75" y="70" text-anchor="middle" font-family="JetBrains Mono" font-size="20" font-weight="700" fill="#14181F">47</text>
+                <text x="75" y="88" text-anchor="middle" font-family="Manrope" font-size="10" fill="#8A8F99">sources</text>
+              </svg>
+              <div class="donut-legend">
+                <div class="row"><i style="background:#2F6F5E"></i>Within 3 years<span class="pct">22%</span></div>
+                <div class="row"><i style="background:#4C6FCB"></i>3–5 years<span class="pct">31%</span></div>
+                <div class="row"><i style="background:#B4740E"></i>5–10 years<span class="pct">28%</span></div>
+                <div class="row"><i style="background:#B23A2E"></i>10+ years<span class="pct">19%</span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Age statistics</h2>
+            <div class="kv-row"><span class="k">Average publication year</span><span class="v">2018</span></div>
+            <div class="kv-row"><span class="k">Average source age</span><span class="v">7.4 yrs</span></div>
+            <div class="kv-row"><span class="k">Within 5 years</span><span class="v">53%</span></div>
+            <div class="kv-row"><span class="k">University standard</span><span class="v">≥ 60%</span></div>
+            <div class="kv-row"><span class="k">Compliance rating</span><span class="v" style="color:var(--warning)">Below standard</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STRUCTURE -->
+      <section class="panel" id="panel-structure">
+        <div class="page-head">
+          <h1>Document structure &amp; layout audit</h1>
+          <p>Heading hierarchy, front matter sequencing, and caption/spacing rules.</p>
+        </div>
+        <div class="card">
+          <ul class="checklist">
+            <li><span class="status-icon err">✕</span><div><div class="li-title">Heading hierarchy</div><div class="li-sub">Section 2.3 uses an H3 directly after an H1 — no intervening H2. Numbering also skips from 2.1 to 2.3.</div></div></li>
+            <li><span class="status-icon ok">✓</span><div><div class="li-title">Front matter sequencing</div><div class="li-sub">Title Page → Abstract → Acknowledgements → Table of Contents, in correct order.</div></div></li>
+            <li><span class="status-icon warn">!</span><div><div class="li-title">Captions &amp; spacing</div><div class="li-sub">Figure 3 caption has 0pt spacing below the image; house style calls for 6pt.</div></div></li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- EXPORT -->
+      <section class="panel" id="panel-export">
+        <div class="page-head">
+          <h1>Feedback &amp; export</h1>
+          <p>Dismiss false positives, then export your findings.</p>
+        </div>
+        <div class="card">
+          <h2>Recently dismissed suggestions</h2>
+          <div class="dismiss-row"><span>Et al. usage flag — "Chen, Park &amp; Osei (2019)"</span><button class="toggle on"></button></div>
+          <div class="dismiss-row"><span>DOI missing — Whitfield, R. (2016)</span><button class="toggle"></button></div>
+          <div class="dismiss-row"><span>Uncited claim — paragraph 6, "widely accepted view"</span><button class="toggle"></button></div>
+        </div>
+        <div class="card">
+          <h2>Export findings</h2>
+          <p class="card-sub">Download the full audit in the format you need.</p>
+          <div class="export-row">
+            <button class="export-btn">
+              <span class="ic">PDF</span>
+              <span><span class="t" style="display:block;">Diagnostic report</span><span class="s">All 23 findings, organized by category</span></span>
+            </button>
+            <button class="export-btn">
+              <span class="ic">DOC</span>
+              <span><span class="t" style="display:block;">Tracked Changes export</span><span class="s">.docx with Word Track Changes applied</span></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-text">Audit complete — 23 issues found</span></div>
+
+<script>
+  // sidebar navigation
+  const navItems = document.querySelectorAll('.nav-item');
+  const panels = document.querySelectorAll('.panel');
+  navItems.forEach(btn => {
+    btn.addEventListener('click', () => {
+      navItems.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      panels.forEach(p => p.classList.remove('active'));
+      document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+    });
+  });
+
+  // audit mode segmented control
+  document.querySelectorAll('#audit-mode button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#audit-mode button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // dismiss toggles
+  document.querySelectorAll('.toggle').forEach(t => {
+    t.addEventListener('click', () => t.classList.toggle('on'));
+  });
+
+  // run audit + progress simulation
+  const phases = [
+    'Parsing document…',
+    'Matching citations…',
+    'Validating against Crossref…',
+    'Checking retraction records…',
+    'Auditing style rules…',
+    'Scanning for uncited claims…',
+    'Computing recency analytics…',
+    'Checking document structure…',
+    'Complete'
+  ];
+  const runBtn = document.getElementById('run-btn');
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressFill = document.getElementById('progress-fill');
+  const progressPhase = document.getElementById('progress-phase');
+  const progressPct = document.getElementById('progress-pct');
+  const toast = document.getElementById('toast');
+
+  runBtn.addEventListener('click', () => {
+    runBtn.disabled = true;
+    runBtn.textContent = 'Running…';
+    progressWrap.classList.add('show');
+    let i = 0;
+    const total = phases.length - 1;
+    const tick = () => {
+      const pct = Math.round((i / total) * 100);
+      progressFill.style.width = pct + '%';
+      progressPct.textContent = pct + '%';
+      progressPhase.textContent = phases[i];
+      if (i < total) {
+        i++;
+        setTimeout(tick, 420);
+      } else {
+        runBtn.disabled = false;
+        runBtn.textContent = 'Run audit';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3200);
+        setTimeout(() => progressWrap.classList.remove('show'), 1200);
+      }
+    };
+    tick();
+  });
+</script>
+
+</body>
+</html>

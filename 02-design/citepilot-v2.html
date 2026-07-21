@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CitePilot — Verify every citation before your reader does</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F1EBDC;
+    --paper-card:#FAF6EC;
+    --ink:#221D16;
+    --ink-soft:#5C5344;
+    --ink-faint:#948A76;
+    --rule:#D9CFB8;
+    --red:#A32B21;
+    --red-bg:#F3DCD6;
+    --ochre:#93650F;
+    --ochre-bg:#F1E4C8;
+    --green:#3B6647;
+    --green-bg:#DEE8DD;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:.001ms !important; transition-duration:.001ms !important; scroll-behavior:auto !important;}
+  }
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(180deg, rgba(34,29,22,0.028) 0px, rgba(34,29,22,0.028) 1px, transparent 1px, transparent 34px),
+      var(--paper);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .type{font-family:'Courier Prime', monospace;}
+  .hand{font-family:'Caveat', cursive;}
+  a{color:inherit;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 32px;}
+
+  /* stamp component */
+  .stamp{
+    width:92px; height:92px; border-radius:50%;
+    border:3px double currentColor;
+    display:flex; align-items:center; justify-content:center;
+    text-align:center; font-weight:700; font-size:10.5px;
+    letter-spacing:0.05em; text-transform:uppercase;
+    line-height:1.3; padding:6px;
+    mix-blend-mode:multiply;
+    flex:none;
+  }
+  .stamp::after{
+    content:"";
+    position:absolute;
+  }
+  .stamp.red{color:var(--red); transform:rotate(-10deg);}
+  .stamp.green{color:var(--green); transform:rotate(-6deg);}
+  .stamp.ochre{color:var(--ochre); transform:rotate(7deg);}
+
+  /* header */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(241,235,220,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--rule);
+  }
+  .nav{display:flex; align-items:center; justify-content:space-between; padding:16px 32px; max-width:1080px; margin:0 auto;}
+  .logo{display:flex; align-items:center; gap:10px; font-weight:700; font-size:18px;}
+  .logo .mark{
+    width:22px;height:22px;border:2px solid var(--red); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; color:var(--red); transform:rotate(-8deg); font-weight:700;
+  }
+  nav.links{display:flex; gap:28px; font-size:14px; color:var(--ink-soft);}
+  nav.links a{text-decoration:none; border-bottom:1px dashed transparent; padding-bottom:2px; transition:border-color .15s ease, color .15s ease;}
+  nav.links a:hover{color:var(--ink); border-color:var(--ink-soft);}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 18px; font-size:14px; font-weight:600;
+    text-decoration:none; cursor:pointer; border-radius:2px;
+    transition:transform .15s ease, background .15s ease, color .15s ease;
+    border:1.5px solid var(--ink);
+  }
+  .btn-primary{background:var(--ink); color:var(--paper-card);}
+  .btn-primary:hover{background:var(--red); border-color:var(--red); transform:translateY(-1px);}
+  .btn-ghost{background:transparent; color:var(--ink);}
+  .btn-ghost:hover{background:var(--ink); color:var(--paper-card);}
+  a:focus-visible, button:focus-visible{outline:2px solid var(--red); outline-offset:2px;}
+
+  /* hero */
+  .hero{padding:76px 0 64px;}
+  .hero-grid{display:grid; grid-template-columns:1fr; gap:52px;}
+  .eyebrow{
+    display:inline-block; font-family:'Courier Prime', monospace; font-size:12.5px;
+    letter-spacing:0.04em; color:var(--ink-soft); margin-bottom:22px;
+  }
+  .eyebrow::before{content:"[ "; color:var(--ink-faint);}
+  .eyebrow::after{content:" ]"; color:var(--ink-faint);}
+  h1{
+    font-family:'Courier Prime', monospace; font-weight:700;
+    font-size:clamp(30px, 4.6vw, 48px); line-height:1.15;
+    max-width:16ch; margin:0;
+  }
+  .hero p.lede{
+    margin-top:22px; font-size:16.5px; line-height:1.65;
+    color:var(--ink-soft); max-width:48ch;
+  }
+  .hero-ctas{display:flex; gap:14px; margin-top:30px; flex-wrap:wrap;}
+  .hero-note{margin-top:20px; font-size:13px; color:var(--ink-faint); font-family:'Courier Prime',monospace;}
+
+  /* manuscript mock */
+  .doc-mock{
+    background:var(--paper-card);
+    border:1px solid var(--rule);
+    box-shadow:0 1px 0 var(--rule), 6px 6px 0 rgba(34,29,22,0.05);
+    position:relative;
+    padding:26px 28px 30px;
+  }
+  .doc-mock .fname{
+    font-family:'Courier Prime', monospace; font-size:12px; color:var(--ink-faint);
+    margin-bottom:18px; padding-bottom:12px; border-bottom:1px dashed var(--rule);
+  }
+  .doc-body{
+    font-family:'Courier Prime', monospace; font-size:13.8px; line-height:2;
+    color:#2A251C;
+  }
+  .doc-body p{margin:0;}
+  .mk{position:relative; padding:0 1px;}
+  .mk.red{text-decoration:underline wavy var(--red); text-decoration-thickness:1.5px;}
+  .mk.green{background:var(--green-bg); box-shadow:inset 0 -2px 0 var(--green);}
+  .mk.ochre{border-bottom:2px solid var(--ochre); border-top:none;}
+
+  .margin-note{
+    font-family:'Caveat', cursive; font-size:19px; line-height:1.15;
+    position:absolute; white-space:nowrap;
+  }
+  .margin-note.red{color:var(--red);}
+  .margin-note.ochre{color:var(--ochre);}
+  .note-1{top:56px; right:-6px; transform:rotate(-3deg);}
+  .note-2{top:118px; right:8px; transform:rotate(2deg);}
+
+  .stamp-mini{
+    position:absolute; width:64px; height:64px; font-size:9px;
+  }
+  .stamp-verified{bottom:14px; left:24px;}
+
+  .legend{display:flex; gap:20px; flex-wrap:wrap; margin-top:20px; font-family:'Courier Prime',monospace; font-size:12px; color:var(--ink-soft);}
+  .legend span{display:inline-flex; align-items:center; gap:7px;}
+  .legend i{width:9px; height:9px; display:inline-block; border-radius:50%;}
+
+  /* sections */
+  section{padding:80px 0; border-top:1px solid var(--rule);}
+  .section-head{max-width:58ch; margin-bottom:44px;}
+  .kicker{
+    font-family:'Courier Prime', monospace; font-size:12px; letter-spacing:0.04em;
+    color:var(--ink-faint); display:block; margin-bottom:10px;
+  }
+  .kicker::before{content:"§ ";}
+  h2{font-family:'Courier Prime', monospace; font-weight:700; font-size:clamp(24px,3vw,32px); line-height:1.25; margin:0;}
+  .section-head p{margin-top:14px; color:var(--ink-soft); font-size:15.5px; line-height:1.6;}
+
+  /* problem cards -> graded slips */
+  .problems{display:grid; grid-template-columns:repeat(3,1fr); gap:24px;}
+  .slip{
+    background:var(--paper-card); border:1px solid var(--rule);
+    padding:24px 22px 22px; position:relative;
+    box-shadow:3px 3px 0 rgba(34,29,22,0.05);
+  }
+  .slip .stamp{position:absolute; top:-16px; right:-14px; width:76px; height:76px; font-size:9.5px;}
+  .slip h3{font-family:'Courier Prime',monospace; font-size:16.5px; font-weight:700; margin:6px 0 10px; max-width:85%;}
+  .slip p{font-size:14px; line-height:1.6; color:var(--ink-soft); margin:0;}
+
+  /* how it works -> form */
+  .steps{border:1px solid var(--rule); background:var(--paper-card);}
+  .step-row{
+    display:grid; grid-template-columns:70px 1fr; gap:20px;
+    padding:22px 26px; border-bottom:1px dashed var(--rule);
+    align-items:start;
+  }
+  .step-row:last-child{border-bottom:none;}
+  .step-row .no{font-family:'Courier Prime',monospace; font-weight:700; font-size:15px; color:var(--ink-faint); padding-top:2px;}
+  .step-row h3{font-size:16px; font-weight:700; margin:0 0 6px; font-family:'Inter',sans-serif;}
+  .step-row p{font-size:14.5px; line-height:1.6; color:var(--ink-soft); margin:0;}
+
+  /* style stamps */
+  .style-stamps{display:flex; flex-wrap:wrap; gap:18px;}
+  .style-stamp{
+    width:88px; height:88px; border-radius:50%; border:2.5px solid var(--ink-soft);
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-family:'Courier Prime',monospace; font-weight:700; font-size:11.5px;
+    color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.02em;
+    transform:rotate(var(--r,0deg)); mix-blend-mode:multiply;
+  }
+  .sources-line{
+    margin-top:32px; font-family:'Courier Prime',monospace; font-size:13.5px; color:var(--ink-soft);
+    padding-top:20px; border-top:1px dashed var(--rule);
+  }
+  .sources-line b{color:var(--ink);}
+
+  /* personas -> index cards */
+  .personas{display:grid; grid-template-columns:repeat(4,1fr); gap:20px;}
+  .index-card{
+    background:var(--paper-card); border:1px solid var(--rule);
+    padding:20px 18px 22px; position:relative;
+  }
+  .index-card::before{
+    content:""; position:absolute; top:0; left:20px; right:20px; height:1px;
+    background:var(--rule); top:38px;
+  }
+  .index-card .tab{
+    font-family:'Courier Prime',monospace; font-size:10.5px; color:var(--ink-faint);
+    letter-spacing:0.05em; margin-bottom:20px; display:block;
+  }
+  .index-card h3{font-size:15px; font-weight:700; margin:0 0 8px; font-family:'Inter',sans-serif;}
+  .index-card p{font-size:13.5px; line-height:1.55; color:var(--ink-soft); margin:0;}
+
+  /* cta */
+  .cta-section{text-align:center; padding:100px 0;}
+  .cta-stamp{
+    width:150px; height:150px; margin:0 auto 28px; border-radius:50%;
+    border:4px double var(--green); color:var(--green);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Courier Prime',monospace; font-weight:700; font-size:15px;
+    letter-spacing:0.04em; transform:rotate(-7deg); text-transform:uppercase; line-height:1.3;
+    mix-blend-mode:multiply;
+  }
+  .cta-section h2{max-width:20ch; margin:0 auto 16px; font-size:clamp(24px,3.6vw,34px);}
+  .cta-section p{color:var(--ink-soft); font-size:15.5px; max-width:44ch; margin:0 auto 30px;}
+  .cta-buttons{display:flex; justify-content:center; gap:14px; flex-wrap:wrap;}
+
+  footer{border-top:1px solid var(--rule); padding:30px 0;}
+  .foot-row{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;
+    font-family:'Courier Prime',monospace; font-size:12.5px; color:var(--ink-faint);
+  }
+  .foot-row a{text-decoration:none; color:var(--ink-soft);}
+  .foot-row a:hover{color:var(--ink);}
+
+  .reveal{opacity:0; transform:translateY(12px); transition:opacity .55s ease, transform .55s ease;}
+  .reveal.in{opacity:1; transform:translateY(0);}
+
+  @media (max-width:900px){
+    .hero-grid{grid-template-columns:1fr;}
+    .problems{grid-template-columns:1fr;}
+    .personas{grid-template-columns:1fr 1fr;}
+    .step-row{grid-template-columns:44px 1fr;}
+    nav.links{display:none;}
+  }
+  @media (max-width:560px){
+    .wrap, .nav{padding-left:20px; padding-right:20px;}
+    .personas{grid-template-columns:1fr;}
+    .doc-body{font-size:12.5px;}
+    .margin-note{position:static; display:block; margin-top:6px;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="nav">
+    <div class="logo"><span class="mark">✓</span>CitePilot</div>
+    <nav class="links">
+      <a href="#problem">Why it matters</a>
+      <a href="#how">How it works</a>
+      <a href="#styles">Citation styles</a>
+      <a href="#who">Who it's for</a>
+    </nav>
+    <a href="#cta" class="btn btn-primary">Check a document</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">AI CITATION AUDIT</span>
+      <h1>Verify every citation. Before your reader does.</h1>
+      <p class="lede">CitePilot marks up your manuscript like an editor with a red pen — matching every in-text citation to your reference list, then checking each source against Crossref, PubMed and OpenAlex for anything fabricated, mismatched or quietly retracted.</p>
+      <div class="hero-ctas">
+        <a href="#cta" class="btn btn-primary">Check your first document</a>
+        <a href="#how" class="btn btn-ghost">See how it works</a>
+      </div>
+      <p class="hero-note">// 9 citation styles: APA7 · APA6 · MLA · Harvard · Vancouver · Chicago · IEEE · OSCOLA · Turabian</p>
+    </div>
+
+    <div>
+      <div class="doc-mock">
+        <div class="fname">ch3_literature_review.docx — page 14</div>
+        <div class="doc-body">
+          <p>Recent estimates of citation error in student manuscripts remain persistently understated <span class="mk red">(Alavi &amp; Reyes, 2021)</span><span class="margin-note red note-1">fabricated? not<br>in Crossref</span>, particularly across dense reference lists. A correction model proposed shortly after <span class="mk ochre">(Okafor, 2019)</span><span class="margin-note ochre note-2">check page<br>range</span> has been widely cited since, alongside commentary on the same dataset <span class="mk green">(Chen &amp; Park, 2022)</span>.</p>
+        </div>
+        <div class="stamp stamp-mini stamp-verified green">verified</div>
+      </div>
+      <div class="legend">
+        <span><i style="background:var(--green)"></i>Verified against source</span>
+        <span><i style="background:var(--ochre)"></i>Needs a closer look</span>
+        <span><i style="background:var(--red)"></i>Possibly fabricated</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="problem">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">Why it matters</span>
+      <h2>Three ways a reference list quietly fails you</h2>
+      <p>None of these show up in a normal proofread. They show up in peer review, in a viva, or in a retraction notice — after it's too late to fix quietly.</p>
+    </div>
+    <div class="problems">
+      <div class="slip reveal">
+        <div class="stamp red">fabricated</div>
+        <h3>A citation that doesn't exist</h3>
+        <p>AI-assisted drafting can invent plausible sources with real author names and fake page numbers. CitePilot checks every source against live databases, not just your own list.</p>
+      </div>
+      <div class="slip reveal">
+        <div class="stamp ochre">mismatched</div>
+        <h3>A reference that says something else</h3>
+        <p>The source exists, but the claim attributed to it doesn't hold up — a wrong year, a misquoted finding, a page number pointing to the wrong section.</p>
+      </div>
+      <div class="slip reveal">
+        <div class="stamp green">retracted</div>
+        <h3>A paper that's since been withdrawn</h3>
+        <p>A source was solid when published, then formally retracted years later. CitePilot cross-references Retraction Watch so an outdated citation doesn't undercut your argument.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">How it works</span>
+      <h2>Upload, and read the results in minutes</h2>
+      <p>One pipeline, four stages — from a raw document to an annotated, citation-by-citation report.</p>
+    </div>
+    <div class="steps reveal">
+      <div class="step-row">
+        <span class="no type">01</span>
+        <div><h3>Upload your draft</h3><p>Word or PDF, any length. CitePilot parses structure, footnotes and your reference list automatically.</p></div>
+      </div>
+      <div class="step-row">
+        <span class="no type">02</span>
+        <div><h3>Citations get extracted</h3><p>Every in-text citation is matched to its entry in your reference list, in whichever style you wrote it in.</p></div>
+      </div>
+      <div class="step-row">
+        <span class="no type">03</span>
+        <div><h3>Sources get verified</h3><p>Each reference is checked live against Crossref, PubMed, OpenAlex and Retraction Watch.</p></div>
+      </div>
+      <div class="step-row">
+        <span class="no type">04</span>
+        <div><h3>Review, annotated</h3><p>Get your manuscript back with every issue marked in place, and a plain-language note for each.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="styles">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">Citation styles</span>
+      <h2>Write in the style your field expects</h2>
+      <p>CitePilot's style engine understands the formatting conventions and punctuation rules of nine citation styles, so it flags real errors — not just stylistic variation.</p>
+    </div>
+    <div class="style-stamps reveal">
+      <div class="style-stamp" style="--r:-6deg">APA 7</div>
+      <div class="style-stamp" style="--r:4deg">APA 6</div>
+      <div class="style-stamp" style="--r:-3deg">MLA</div>
+      <div class="style-stamp" style="--r:7deg">Harvard</div>
+      <div class="style-stamp" style="--r:-8deg">Vancouver</div>
+      <div class="style-stamp" style="--r:3deg">Chicago</div>
+      <div class="style-stamp" style="--r:-4deg">IEEE</div>
+      <div class="style-stamp" style="--r:6deg">OSCOLA</div>
+      <div class="style-stamp" style="--r:-2deg">Turabian</div>
+    </div>
+    <p class="sources-line reveal">Sources checked against: <b>Crossref</b> · <b>OpenAlex</b> · <b>PubMed</b> · <b>DOI.org</b> · <b>Retraction Watch</b></p>
+  </div>
+</section>
+
+<section id="who">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">Who it's for</span>
+      <h2>Anyone whose name goes under the citation</h2>
+    </div>
+    <div class="personas">
+      <div class="index-card reveal">
+        <span class="tab type">CARD 01 / STUDENT</span>
+        <h3>Students</h3>
+        <p>Catch citation mistakes before your supervisor does, on an assignment or a thesis chapter.</p>
+      </div>
+      <div class="index-card reveal">
+        <span class="tab type">CARD 02 / RESEARCHER</span>
+        <h3>Researchers</h3>
+        <p>A last check before submission, so a reviewer's first comment isn't about your reference list.</p>
+      </div>
+      <div class="index-card reveal">
+        <span class="tab type">CARD 03 / EDITOR</span>
+        <h3>Editors</h3>
+        <p>Verify a manuscript's sourcing quickly, across styles, without manually pulling every DOI.</p>
+      </div>
+      <div class="index-card reveal">
+        <span class="tab type">CARD 04 / INSTITUTION</span>
+        <h3>Institutions</h3>
+        <p>Give every student and faculty member the same citation safety net, at department scale.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section" id="cta">
+  <div class="wrap">
+    <div class="cta-stamp reveal">Ready for<br>submission</div>
+    <h2 class="reveal">Send your next draft through a citation check first.</h2>
+    <p class="reveal">Upload a document and see exactly which citations hold up — and which ones need a second look — in minutes.</p>
+    <div class="cta-buttons reveal">
+      <a href="https://citepilot-lac.vercel.app" class="btn btn-primary">Open CitePilot</a>
+      <a href="https://github.com/Faithmanex/citepilot" class="btn btn-ghost">View the repository</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot-row">
+    <span>CitePilot — AI-powered academic citation consistency checker.</span>
+    <span>
+      <a href="https://github.com/Faithmanex/citepilot" target="_blank" rel="noopener">GitHub</a>
+      &nbsp;·&nbsp;
+      <a href="https://citepilot-lac.vercel.app" target="_blank" rel="noopener">Live app</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
+    });
+  }, {threshold:0.12});
+  revealEls.forEach(el => io.observe(el));
+</script>
+
+</body>
+</html>
