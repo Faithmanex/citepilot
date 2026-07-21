@@ -6,7 +6,7 @@ try:
     class Settings(BaseSettings):
         host: str = "0.0.0.0"
         port: int = 8000
-        google_api_key: str = os.environ.get("GOOGLE_API_KEY", "")
+        google_api_key: str = ""
         gemini_model: str = "gemini-2.5-flash-lite"
         log_level: str = "info"
 

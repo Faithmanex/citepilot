@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import tempfile
 import time
 from pathlib import Path
@@ -10,9 +11,9 @@ from typing import Dict, List, Optional
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse, Response
 
-from ...models.schemas import AnalyseResponse, DocxExportRequest, PdfExportRequest
+from ...models.schemas import AnalyseResponse
 from ...services.crossref_service import validate_reference_with_crossref
-from ...services.document_parser import parse_document, split_body_and_references, _parse_txt_structured
+from ...services.document_parser import parse_document, split_body_and_references, parse_txt_structured
 from ...services.citation_extractor import (
     extract_citations,
     parse_references,
@@ -89,10 +90,10 @@ async def analyse_document_endpoint(
         if norm_mode == "reference_only":
             body_text = ""
             ref_text = text.strip()
-            para_meta = _parse_txt_structured(ref_text)
+            para_meta = parse_txt_structured(ref_text)
         else:
             body_text, ref_text = split_body_and_references(text)
-            para_meta = _parse_txt_structured(body_text)
+            para_meta = parse_txt_structured(body_text)
     else:
         raise HTTPException(status_code=400, detail="Either 'text' or 'file' must be provided.")
 
@@ -101,9 +102,13 @@ async def analyse_document_endpoint(
         task_references = parse_references(ref_text) if ref_text else asyncio.sleep(0, result=[])
         task_claims = detect_uncited_claims(body_text, para_meta) if body_text else asyncio.sleep(0, result=[])
 
-        citations, refs, uncited_claims = await asyncio.gather(
-            task_citations, task_references, task_claims
+        gathered = await asyncio.gather(
+            task_citations, task_references, task_claims, return_exceptions=True
         )
+        for result in gathered:
+            if isinstance(result, Exception):
+                raise result  # Re-raise first exception
+        citations, refs, uncited_claims = gathered
     except AIServiceError as e:
         logger.error(f"AI Service Failure during document analysis: {e}")
         raise HTTPException(status_code=503, detail=f"AI Processing Service is currently unavailable: {e}")
@@ -117,15 +122,15 @@ async def analyse_document_endpoint(
     # Build matches list lookup safely
     match_list_by_text: Dict[str, List[Dict]] = {}
     for m in matches:
-        key = m.get("citation_raw_text", "").strip().lower()
+        key = re.sub(r"\s+", " ", m.get("citation_raw_text", "").strip().lower())
         if key:
             match_list_by_text.setdefault(key, []).append(m)
 
     citation_results = []
     for c in citations:
-        key = c.get("raw_text", "").strip().lower()
+        key = re.sub(r"\s+", " ", c.get("raw_text", "").strip().lower())
         candidate_matches = match_list_by_text.get(key, [])
-        match = candidate_matches.pop(0) if candidate_matches else {}
+        match = candidate_matches[0] if candidate_matches else {}
 
         raw_idx = match.get("matched_reference_index")
         matched_ref_idx = None
@@ -153,7 +158,8 @@ async def analyse_document_endpoint(
 
     # Validate references with Crossref
     ref_validation_tasks = [validate_reference_with_crossref(r) for r in refs]
-    crossref_results = await asyncio.gather(*ref_validation_tasks) if ref_validation_tasks else []
+    crossref_results = await asyncio.gather(*ref_validation_tasks, return_exceptions=True) if ref_validation_tasks else []
+    crossref_results = [r if not isinstance(r, Exception) else {} for r in crossref_results]
 
     # Retraction checks using pre-fetched Crossref work metadata to prevent duplicate HTTP calls
     retraction_tasks = []
@@ -162,7 +168,8 @@ async def analyse_document_endpoint(
         cr_work = cr_data.get("raw_work")
         retraction_tasks.append(check_retraction_status(r.get("parsed_doi"), r.get("parsed_title"), crossref_work=cr_work))
 
-    retraction_results = await asyncio.gather(*retraction_tasks) if retraction_tasks else []
+    retraction_results = await asyncio.gather(*retraction_tasks, return_exceptions=True) if retraction_tasks else []
+    retraction_results = [r if not isinstance(r, Exception) else {} for r in retraction_results]
 
     ref_results = []
     for i, r in enumerate(refs):
@@ -254,7 +261,7 @@ async def export_docx_endpoint(payload: Dict):
 async def websocket_analyse(websocket: WebSocket):
     await websocket.accept()
     try:
-        data = await websocket.receive_text()
+        data = await asyncio.wait_for(websocket.receive_text(), timeout=30.0)
         req = json.loads(data)
 
         text = req.get("text", "")
@@ -289,8 +296,14 @@ async def websocket_analyse(websocket: WebSocket):
                 "recency": recency_data
             }
         })
+    except asyncio.TimeoutError:
+        logger.warning("WebSocket client timed out (no data received within 30s)")
+        await websocket.close(code=1008)
     except WebSocketDisconnect:
         logger.info("WebSocket client disconnected")
     except Exception as e:
-        logger.error(f"WebSocket error: {e}")
-        await websocket.send_json({"event": "error", "message": "WebSocket processing error occurred."})
+        logger.error(f"WebSocket processing error: {e}")
+        try:
+            await websocket.send_json({"event": "error", "message": "WebSocket processing error occurred."})
+        except Exception:
+            pass

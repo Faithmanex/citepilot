@@ -15,7 +15,7 @@
     --paper:#F1EBDC;
     --paper-card:#FAF6EC;
     --ink:#221D16;
-    --ink-soft:#423B30;
+    --ink-soft:#353027;
     --ink-faint:#696050;
     --rule:#C7BC9F;
     --red:#961E14;
@@ -340,8 +340,8 @@
   .card .card-sub{font-size:13px; color:var(--dash-ink-faint); margin:0 0 16px;}
 
   ul.checklist{list-style:none; margin:0; padding:0;}
-  ul.checklist li{display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
-  ul.checklist li:last-child{border-bottom:none;}
+  ul.checklist > li{display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-bottom:1px solid var(--line); font-size:13.5px;}
+  ul.checklist > li:last-child{border-bottom:none;}
   .status-icon{
     width:20px;height:20px;border-radius:50%; flex:none; margin-top:1px;
     display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:800; color:#fff;
@@ -357,6 +357,8 @@
     border-radius:4px; font-size:12.5px; color:var(--brand); font-weight:600;
   }
   .fix-box b{color:var(--dash-ink);}
+  .fix-box ol{margin: 6px 0 0 0; padding-left: 20px; list-style-type: decimal; color: var(--dash-ink);}
+  .fix-box li{display: list-item; padding: 2px 0; border-bottom: none; font-size: 12.5px; font-weight: normal;}
 
   table{width:100%; border-collapse:collapse; font-size:13.5px;}
   th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--dash-ink-faint); font-weight:800; padding:0 10px 12px; border-bottom:2px solid var(--line);}
@@ -601,29 +603,29 @@
 
       <div class="nav-group">
         <div class="nav-label">Audit &amp; Verification</div>
-        <button class="nav-item active" data-panel="overview" aria-selected="true" aria-label="Overview Panel"><span class="ic" aria-hidden="true">◆</span>Overview</button>
-        <button class="nav-item" data-panel="matching" aria-selected="false" aria-label="Citation Matching Panel"><span class="ic" aria-hidden="true">↔</span>Citation Matching<span class="badge err" id="badge-matching">0</span></button>
-        <button class="nav-item" data-panel="crossref" aria-selected="false" aria-label="Crossref and Retraction Panel"><span class="ic" aria-hidden="true">✓</span>Crossref &amp; Retraction<span class="badge err" id="badge-crossref">0</span></button>
-        <button class="nav-item" data-panel="style" aria-selected="false" aria-label="Style Rules Panel"><span class="ic" aria-hidden="true">§</span>Style Rules<span class="badge warn" id="badge-style">0</span></button>
-        <button class="nav-item" data-panel="claims" aria-selected="false" aria-label="Uncited Claims Panel"><span class="ic" aria-hidden="true">!</span>Uncited Claims<span class="badge warn" id="badge-claims">0</span></button>
+        <button class="nav-item active" data-panel="overview" aria-current="page" aria-label="Overview Panel"><span class="ic" aria-hidden="true">◆</span>Overview</button>
+        <button class="nav-item" data-panel="matching" aria-label="Citation Matching Panel"><span class="ic" aria-hidden="true">↔</span>Citation Matching<span class="badge err" id="badge-matching">0</span></button>
+        <button class="nav-item" data-panel="crossref" aria-label="Crossref and Retraction Panel"><span class="ic" aria-hidden="true">✓</span>Crossref &amp; Retraction<span class="badge err" id="badge-crossref">0</span></button>
+        <button class="nav-item" data-panel="style" aria-label="Style Rules Panel"><span class="ic" aria-hidden="true">§</span>Style Rules<span class="badge warn" id="badge-style">0</span></button>
+        <button class="nav-item" data-panel="claims" aria-label="Uncited Claims Panel"><span class="ic" aria-hidden="true">!</span>Uncited Claims<span class="badge warn" id="badge-claims">0</span></button>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Analytics &amp; Layout</div>
-        <button class="nav-item" data-panel="recency" aria-selected="false" aria-label="Recency Analytics Panel"><span class="ic" aria-hidden="true">◔</span>Recency Analytics</button>
-        <button class="nav-item" data-panel="structure" aria-selected="false" aria-label="Document Layout Panel"><span class="ic" aria-hidden="true">▤</span>Document Layout</button>
+        <button class="nav-item" data-panel="recency" aria-label="Recency Analytics Panel"><span class="ic" aria-hidden="true">◔</span>Recency Analytics</button>
+        <button class="nav-item" data-panel="structure" aria-label="Document Layout Panel"><span class="ic" aria-hidden="true">▤</span>Document Layout</button>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Output &amp; Export</div>
-        <button class="nav-item" data-panel="export" aria-selected="false" aria-label="Feedback and Export Panel"><span class="ic" aria-hidden="true">⇩</span>Feedback &amp; Export</button>
+        <button class="nav-item" data-panel="export" aria-label="Feedback and Export Panel"><span class="ic" aria-hidden="true">⇩</span>Feedback &amp; Export</button>
       </div>
     </aside>
 
     <main class="dash-main" role="main">
       <div class="topbar">
         <div class="topbar-row">
-          <div class="doc-chip" id="doc-chip" tabindex="0" aria-label="Document Loaded Status"><span class="dot" aria-hidden="true"></span><span id="doc-file-name">No document loaded</span><button id="btn-reset-doc" style="display:none; background:none; border:none; color:var(--dash-ink-faint); cursor:pointer; padding:0 4px; font-size:12px; margin-left:4px;" aria-label="Clear loaded document">&times;</button></div>
+          <div class="doc-chip" id="doc-chip" role="button" tabindex="0" aria-label="No document loaded"><span class="dot" aria-hidden="true"></span><span id="doc-file-name">No document loaded</span><button id="btn-reset-doc" style="display:none; background:none; border:none; color:var(--dash-ink-faint); cursor:pointer; padding:0 4px; font-size:12px; margin-left:4px;" aria-label="Clear loaded document">&times;</button></div>
 
           <div class="seg" id="audit-mode" role="radiogroup" aria-label="Audit Mode Selector">
             <button class="active" data-mode="full" aria-checked="true" role="radio" tabindex="0">Full Manuscript Audit</button>
@@ -660,7 +662,7 @@
               <i class="fas fa-file-upload" style="font-size:28px; color:var(--dash-ink-faint); margin-bottom:10px;" aria-hidden="true"></i>
               <div style="font-weight:700; margin-bottom:4px;" id="drop-box-title">Upload Document</div>
               <div style="font-size:12px; color:var(--dash-ink-faint);" id="drop-box-subtitle">Drag &amp; drop .docx, .pdf, or .txt file here</div>
-              <button type="button" id="btn-clear-file" class="btn btn-ghost" style="display:none; margin-top:10px; padding:4px 12px; font-size:12px; min-height:32px;" aria-label="Remove selected file"><i class="fas fa-times" aria-hidden="true"></i> Remove file</button>
+              <button type="button" id="btn-clear-file" class="link-btn" style="display:none; margin-top:10px; padding:4px 12px; font-size:12px; min-height:32px;" aria-label="Remove selected file"><i class="fas fa-times" aria-hidden="true"></i> Remove file</button>
             </div>
             <div>
               <label for="paste-text" style="font-size:12px; font-weight:700; color:var(--dash-ink-faint); margin-bottom:6px; display:block; font-family:'JetBrains Mono',monospace;">OR PASTE TEXT DIRECTLY</label>
@@ -671,7 +673,7 @@
 
         <section class="panel active" id="panel-overview">
           <div class="page-head">
-            <h1>Audit overview</h1>
+            <h1 id="overview-title" class="report-header">Full Manuscript Audit Report</h1>
             <p id="overview-subtitle">Run an audit above to generate real-time citation analysis.</p>
           </div>
           <div class="stat-grid">
@@ -822,7 +824,7 @@
     <h2 id="error-modal-title" style="color:var(--error); margin-top:0; font-size:18px; display:flex; align-items:center; gap:8px;">
       <i class="fas fa-exclamation-triangle" aria-hidden="true"></i> API Request Error
     </h2>
-    <p id="error-modal-msg" style="font-size:13.5px; color:var(--dash-ink); line-height:1.5; margin:16px 0; max-height:220px; overflow-y:auto; font-family:'JetBrains Mono',monospace; background:var(--dash-paper); padding:12px; border-radius:4px; border:1px solid var(--line); white-space:pre-wrap;"></p>
+    <p id="error-modal-msg" tabindex="0" style="font-size:13.5px; color:var(--dash-ink); line-height:1.5; margin:16px 0; max-height:220px; overflow-y:auto; font-family:'JetBrains Mono',monospace; background:var(--dash-paper); padding:12px; border-radius:4px; border:1px solid var(--line); white-space:pre-wrap;"></p>
     <div style="text-align:right;">
       <button class="btn btn-primary" id="btn-close-error-modal" style="background:var(--dash-ink); border-color:var(--dash-ink);">Dismiss</button>
     </div>
@@ -836,6 +838,7 @@
   let currentMode = "full";
   let analysisData = null;
   let manuscriptText = "";
+  let uploadedFile = null;
 
   const viewLanding = document.getElementById('view-landing');
   const viewDashboard = document.getElementById('view-dashboard');
@@ -886,6 +889,25 @@
 
   btnToggleInputBar.addEventListener('click', () => toggleInputSection());
 
+  function showErrorModal(title, message) {
+    const modal = document.getElementById('error-modal');
+    const titleEl = document.getElementById('error-modal-title');
+    const msgEl = document.getElementById('error-modal-msg');
+    if (titleEl) titleEl.innerHTML = `<i class="fas fa-exclamation-triangle" aria-hidden="true"></i> ${title || 'API Request Error'}`;
+    if (msgEl) msgEl.innerText = message || 'An unexpected error occurred.';
+    if (modal) modal.style.display = 'flex';
+  }
+
+  function hideErrorModal() {
+    const modal = document.getElementById('error-modal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  const closeErrorBtn = document.getElementById('btn-close-error-modal');
+  if (closeErrorBtn) {
+    closeErrorBtn.addEventListener('click', hideErrorModal);
+  }
+
   // Export Downloads
   btnExportPdf.addEventListener('click', async () => {
     if (!analysisData) {
@@ -923,6 +945,7 @@
       showToast("Downloaded PDF Diagnostic Report!");
     } catch (err) {
       showToast("Error exporting PDF: " + err.message);
+      showErrorModal("Export PDF Error", err.message);
     } finally {
       btnExportPdf.disabled = false;
       btnExportPdf.innerHTML = origHtml;
@@ -939,7 +962,7 @@
     const origHtml = btnExportDocx.innerHTML;
     btnExportDocx.innerHTML = `<div class="ic"><i class="fas fa-spinner fa-spin"></i></div><div><div class="t">Generating DOCX...</div><div class="s">Please wait</div></div>`;
 
-    const textPayload = manuscriptText || pasteText.value.trim() || (analysisData && (analysisData.text || analysisData.manuscript_text)) || "";
+    const textPayload = manuscriptText || pasteText.value.trim() || (analysisData && (analysisData.text || analysisData.manuscript_text)) || "Uploaded Document";
 
     try {
       const resp = await fetch(`${API_BASE}/export/docx`, {
@@ -967,6 +990,7 @@
       showToast("Downloaded Redline DOCX File!");
     } catch (err) {
       showToast("Error exporting DOCX: " + err.message);
+      showErrorModal("Export DOCX Error", err.message);
     } finally {
       btnExportDocx.disabled = false;
       btnExportDocx.innerHTML = origHtml;
@@ -986,19 +1010,30 @@
   const progressPct = document.getElementById('progress-pct');
   const progressPhase = document.getElementById('progress-phase');
 
+  function showPanel(targetPanel) {
+    navItems.forEach(i => {
+      const isTarget = i.getAttribute('data-panel') === targetPanel;
+      if (isTarget) {
+        i.classList.add('active');
+        i.setAttribute('aria-current', 'page');
+      } else {
+        i.classList.remove('active');
+        i.removeAttribute('aria-current');
+      }
+    });
+    panels.forEach(p => {
+      if (p.id === `panel-${targetPanel}`) {
+        p.classList.add('active');
+      } else {
+        p.classList.remove('active');
+      }
+    });
+  }
+
   navItems.forEach(item => {
     item.addEventListener('click', () => {
       const targetPanel = item.getAttribute('data-panel');
-      navItems.forEach(i => {
-        i.classList.remove('active');
-        i.setAttribute('aria-selected', 'false');
-      });
-      item.classList.add('active');
-      item.setAttribute('aria-selected', 'true');
-      panels.forEach(p => {
-        p.classList.remove('active');
-        if (p.id === `panel-${targetPanel}`) p.classList.add('active');
-      });
+      showPanel(targetPanel);
     });
   });
 
@@ -1015,14 +1050,31 @@
     selectedBtn.focus();
     currentMode = selectedBtn.getAttribute('data-mode');
 
+    const isRefOnly = currentMode === 'reference_only';
+
+    const overviewSubtitle = document.getElementById('overview-subtitle');
+    if (overviewSubtitle) {
+      if (analysisData) {
+        overviewSubtitle.innerText = isRefOnly
+          ? `Reference-List-Only Audit completed. Analyzed ${(analysisData.references || []).length} reference entries.`
+          : `Full Manuscript Audit completed. Analyzed ${(analysisData.citations || []).length} citations and ${(analysisData.references || []).length} reference entries.`;
+      } else {
+        overviewSubtitle.innerText = isRefOnly
+          ? "Reference-List-Only Audit mode active. Run an audit above to analyze bibliography entries."
+          : "Full Manuscript Audit mode active. Run an audit above to generate real-time citation analysis.";
+      }
+    }
+
+    const reportHeaders = document.querySelectorAll('.report-header, #report-header-text, #report-header-title');
+    reportHeaders.forEach(el => { el.innerText = isRefOnly ? "Reference-List-Only Audit Report" : "Full Manuscript Audit Report"; });
+
     // Update placeholders and UI when toggled
-    if (currentMode === 'reference_only') {
+    const dropSub = document.getElementById('drop-box-subtitle');
+    if (isRefOnly) {
       pasteText.placeholder = "Paste your bibliography / reference list text here (in-text citation matching disabled)...";
-      const dropSub = dropBox.querySelector('div:last-child');
       if (dropSub) dropSub.innerText = "Drag & drop reference list .docx, .pdf, or .txt file here";
     } else {
       pasteText.placeholder = "Paste your research manuscript or reference list text here...";
-      const dropSub = dropBox.querySelector('div:last-child');
       if (dropSub) dropSub.innerText = "Drag & drop .docx, .pdf, or .txt file here";
     }
   }
@@ -1066,14 +1118,23 @@
     if (validateFile(file)) {
       const fileNameEl = document.getElementById('doc-file-name');
       const resetBtn = document.getElementById('btn-reset-doc');
+      const docChip = document.getElementById('doc-chip');
+      const clearFileBtn = document.getElementById('btn-clear-file');
       if (fileNameEl) fileNameEl.innerText = file.name;
       if (resetBtn) resetBtn.style.display = 'inline-block';
+      if (docChip) docChip.setAttribute('aria-label', `Loaded document: ${file.name}`);
+      if (clearFileBtn) clearFileBtn.style.display = 'inline-block';
 
-      // Store text if it is a text file
-      if (file.name.endsWith('.txt')) {
+      uploadedFile = file;
+      // Read text if text/rtf or store file reference for binary files
+      const ext = file.name.toLowerCase();
+      if (ext.endsWith('.txt') || ext.endsWith('.rtf')) {
         const reader = new FileReader();
         reader.onload = (e) => { manuscriptText = e.target.result; };
+        reader.onerror = () => showToast("Failed to read file content.");
         reader.readAsText(file);
+      } else {
+        manuscriptText = `Uploaded document file: ${file.name}`;
       }
       showToast(`Loaded document: ${file.name}`);
     } else {
@@ -1083,16 +1144,32 @@
 
   function resetDocumentSelection() {
     fileInput.value = '';
+    if (pasteText) pasteText.value = '';
+    manuscriptText = '';
+    uploadedFile = null;
     const fileNameEl = document.getElementById('doc-file-name');
     const resetBtn = document.getElementById('btn-reset-doc');
+    const docChip = document.getElementById('doc-chip');
+    const clearFileBtn = document.getElementById('btn-clear-file');
     if (fileNameEl) fileNameEl.innerText = 'No document loaded';
     if (resetBtn) resetBtn.style.display = 'none';
+    if (docChip) docChip.setAttribute('aria-label', 'No document loaded');
+    if (clearFileBtn) clearFileBtn.style.display = 'none';
     showToast('Document cleared.');
   }
 
   const resetDocBtn = document.getElementById('btn-reset-doc');
   if (resetDocBtn) {
     resetDocBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      resetDocumentSelection();
+    });
+  }
+
+  // Wire the clear file button inside the drop box
+  const clearFileBtn = document.getElementById('btn-clear-file');
+  if (clearFileBtn) {
+    clearFileBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       resetDocumentSelection();
     });
@@ -1127,7 +1204,6 @@
     if (e.dataTransfer.files.length) {
       const file = e.dataTransfer.files[0];
       if (validateFile(file)) {
-        fileInput.files = e.dataTransfer.files;
         handleFileSelection(file);
       }
     }
@@ -1141,11 +1217,23 @@
 
   pasteText.addEventListener('input', () => {
     manuscriptText = pasteText.value.trim();
+    const docChip = document.getElementById('doc-chip');
+    const fileNameEl = document.getElementById('doc-file-name');
+    const resetBtn = document.getElementById('btn-reset-doc');
+    if (manuscriptText && !uploadedFile) {
+      if (fileNameEl) fileNameEl.innerText = 'Pasted Manuscript';
+      if (resetBtn) resetBtn.style.display = 'inline-block';
+      if (docChip) docChip.setAttribute('aria-label', 'Loaded document: Pasted Manuscript');
+    } else if (!manuscriptText && !uploadedFile) {
+      if (fileNameEl) fileNameEl.innerText = 'No document loaded';
+      if (resetBtn) resetBtn.style.display = 'none';
+      if (docChip) docChip.setAttribute('aria-label', 'No document loaded');
+    }
   });
 
   runBtn.addEventListener('click', async () => {
     const textVal = pasteText.value.trim();
-    const hasFile = fileInput.files.length > 0;
+    const hasFile = !!(uploadedFile);
 
     if (!textVal && !hasFile) {
       showToast("Please upload a file or paste manuscript text.");
@@ -1162,7 +1250,7 @@
     updateProgress("Parsing document structure…", 20);
 
     const formData = new FormData();
-    if (hasFile) formData.append('file', fileInput.files[0]);
+    if (hasFile) formData.append('file', uploadedFile);
     if (textVal) formData.append('text', textVal);
     formData.append('citation_style', styleSelect.value);
     formData.append('mode', currentMode);
@@ -1184,13 +1272,14 @@
         manuscriptText = analysisData.text || analysisData.manuscript_text;
       }
       updateProgress("Done!", 100);
-      setTimeout(() => progressWrap.classList.remove('show'), 500);
 
       renderAuditResults(analysisData);
+      progressWrap.classList.remove('show');
       showToast("Audit finished successfully!");
     } catch (err) {
       progressWrap.classList.remove('show');
       showToast("Error running audit: " + err.message);
+      showErrorModal("Audit Analysis Error", err.message);
     } finally {
       runBtn.disabled = false;
     }
@@ -1266,7 +1355,13 @@
             <div>
               <div class="li-title" style="color:var(--error);">RETRACTED SOURCE DETECTED</div>
               <div class="li-sub"><b>${(r.raw_entry || '').substring(0, 90)}...</b></div>
-              <div class="fix-box" style="margin-top:6px;"><b>How to Fix:</b> ${r.retraction_info?.how_to_fix || 'Remove this retracted source from your manuscript.'}</div>
+              <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+                <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+                <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                  <li>Locate retracted paper in manuscript.</li>
+                  <li>${r.retraction_info?.how_to_fix || 'Remove this retracted source from your manuscript.'}</li>
+                </ol>
+              </div>
             </div>
           </li>
         `);
@@ -1280,7 +1375,13 @@
             <div>
               <div class="li-title" style="color:var(--error);">MISSING REFERENCE ENTRY</div>
               <div class="li-sub">In-text citation <b>'${c.raw_text}'</b> (Paragraph ${(c.paragraph_index || 0) + 1}) has no entry in the reference list.</div>
-              <div class="fix-box" style="margin-top:6px;"><b>How to Fix:</b> Add an entry for '${c.raw_text}' to your reference list.</div>
+              <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+                <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+                <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                  <li>Locate in-text citation '${c.raw_text}' in paragraph ${(c.paragraph_index || 0) + 1}.</li>
+                  <li>Add full entry for '${c.raw_text}' to reference list.</li>
+                </ol>
+              </div>
             </div>
           </li>
         `);
@@ -1296,7 +1397,13 @@
               <div>
                 <div class="li-title" style="color:var(--warning);">CROSSREF METADATA DISCREPANCY (${(d.field || '').toUpperCase()})</div>
                 <div class="li-sub">${d.message || ''}</div>
-                <div class="fix-box" style="margin-top:6px;"><b>How to Fix:</b> ${d.how_to_fix || 'Verify entry details against official publisher record.'}</div>
+                <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+                  <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+                  <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                    <li>Review metadata field '${(d.field || '').toUpperCase()}': ${d.message || ''}.</li>
+                    <li>${d.how_to_fix || 'Verify entry details against official publisher record.'}</li>
+                  </ol>
+                </div>
               </div>
             </li>
           `);
@@ -1311,7 +1418,14 @@
             <div>
               <div class="li-title">${w.code || 'STYLE WARNING'}</div>
               <div class="li-sub">${w.message || ''}</div>
-              ${w.suggestion ? `<div class="fix-box" style="margin-top:6px;"><b>How to Fix:</b> ${w.suggestion}</div>` : ''}
+              ${w.suggestion ? `
+                <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+                  <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+                  <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                    <li>Review style rule violation '${w.code || 'STYLE WARNING'}'.</li>
+                    <li>${w.suggestion}</li>
+                  </ol>
+                </div>` : ''}
             </div>
           </li>
         `);
@@ -1325,7 +1439,13 @@
             <div>
               <div class="li-title">UNAUTHORED FACTUAL CLAIM</div>
               <div class="li-sub">"${(c.claim_text || '').substring(0, 100)}..." (Paragraph ${(c.paragraph_index || 0) + 1})</div>
-              <div class="fix-box" style="margin-top:6px;"><b>How to Fix:</b> ${c.suggestion || 'Add an empirical source citation.'}</div>
+              <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+                <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+                <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                  <li>Locate assertion in paragraph ${(c.paragraph_index || 0) + 1}.</li>
+                  <li>${c.suggestion || 'Add an empirical source citation.'}</li>
+                </ol>
+              </div>
             </div>
           </li>
         `);
@@ -1353,10 +1473,10 @@
     if (document.getElementById('stat-year-mismatches')) document.getElementById('stat-year-mismatches').innerText = yearMismatches;
 
     const matchBody = document.getElementById('matching-table-body');
-    matchBody.innerHTML = '';
-    if (!citations || citations.length === 0) {
+    if (citations.length === 0) {
       matchBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--dash-ink-faint);">No in-text citations found in manuscript.</td></tr>`;
     } else {
+      const rows = [];
       citations.forEach(c => {
         const hasValidRefIndex = c.matched_reference_index !== null && c.matched_reference_index !== undefined && refs[c.matched_reference_index] && refs[c.matched_reference_index].raw_entry;
         const matchText = hasValidRefIndex
@@ -1364,58 +1484,115 @@
           : 'No match found';
         const pillClass = c.status === 'matched' ? 'ok' : 'err';
         const pillText = c.status === 'matched' ? 'Matched' : 'Missing reference';
-        const fixStep = c.status === 'no_match'
-          ? `<div class="fix-box"><b>How to Fix:</b> Add an entry for '${c.raw_text}' to your reference list or remove the citation marker from paragraph ${(c.paragraph_index || 0) + 1}.</div>`
-          : '';
+        let fixStep = '';
+        if (c.status === 'no_match') {
+          fixStep = `
+            <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+              <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <li>Locate in-text citation marker '${c.raw_text}' in paragraph ${(c.paragraph_index || 0) + 1}.</li>
+                <li>Add an entry for '${c.raw_text}' to reference list or remove citation marker.</li>
+              </ol>
+            </div>`;
+        } else if ((c.issues && c.issues.length > 0) || c.match_type === 'fuzzy') {
+          const issueDesc = c.issues && c.issues.length > 0 ? c.issues.map(i => i.message || i.type).join('; ') : 'Spelling or year discrepancy detected';
+          fixStep = `
+            <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+              <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <li>Verify citation details: ${issueDesc}.</li>
+                <li>Align in-text citation spelling/year with reference list entry.</li>
+              </ol>
+            </div>`;
+        }
         const citeLabel = c.raw_text ? c.raw_text.replace(/"/g, '&quot;') : 'citation';
 
-        matchBody.innerHTML += `
+        rows.push(`
           <tr>
             <td class="cite-mono">${c.raw_text || ''}</td>
             <td>${matchText} ${fixStep}</td>
             <td><span class="pill ${pillClass}">${pillText}</span></td>
-            <td><button class="link-btn" aria-label="Flag citation '${citeLabel}'" onclick="showToast('Flagged citation: ${citeLabel}')">Flag</button></td>
+            <td><button class="link-btn flag-btn" data-label="${citeLabel}" aria-label="Flag citation '${citeLabel}'">Flag</button></td>
           </tr>
-        `;
+        `);
       });
+      matchBody.innerHTML = rows.join('');
     }
 
     // Panel 3: Crossref Table & Empty State Fallback
     const crBody = document.getElementById('crossref-table-body');
     crBody.innerHTML = '';
-    if (!refs || refs.length === 0) {
+    if (refs.length === 0) {
       crBody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--dash-ink-faint);">No reference entries found to check against Crossref.</td></tr>`;
     } else {
+      const crRows = [];
       refs.forEach(r => {
         const crVal = r.crossref_validation || {};
         const isRet = r.status === 'retracted';
         const retPill = isRet ? `<span class="pill err">RETRACTED PAPER</span>` : `<span class="pill ok">Not retracted</span>`;
         const matchPill = crVal.crossref_verified ? `<span class="pill ok">Verified</span>` : `<span class="pill err">No Crossref Record</span>`;
-        const fixStep = isRet && r.retraction_info?.how_to_fix
-          ? `<div class="fix-box"><b>How to Fix:</b> ${r.retraction_info.how_to_fix}</div>`
-          : '';
+        let fixStep = '';
+        if (isRet) {
+          const fixText = r.retraction_info?.how_to_fix || 'Remove or replace this retracted source in your manuscript.';
+          fixStep = `
+            <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+              <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <li>Identify retracted publication in reference list.</li>
+                <li>${fixText}</li>
+              </ol>
+            </div>`;
+        } else if (crVal.discrepancies && crVal.discrepancies.length > 0) {
+          const discList = crVal.discrepancies.map(d => d.message || d.field).join('; ');
+          fixStep = `
+            <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+              <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <li>Cross-check metadata discrepancies: ${discList}.</li>
+                <li>Update reference entry details to match publisher metadata.</li>
+              </ol>
+            </div>`;
+        } else if (!crVal.crossref_verified) {
+          fixStep = `
+            <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+              <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <li>Verify DOI (${r.parsed_doi || 'N/A'}) or publication title on Crossref.</li>
+                <li>Ensure title, authors, and publication year match official record.</li>
+              </ol>
+            </div>`;
+        }
 
-        crBody.innerHTML += `
+        crRows.push(`
           <tr>
             <td>${(r.raw_entry || '').substring(0, 70)}... ${fixStep}</td>
             <td>${matchPill}</td>
             <td class="cite-mono">${r.parsed_doi || '—'}</td>
             <td>${retPill}</td>
           </tr>
-        `;
+        `);
       });
+      crBody.innerHTML = crRows.join('');
     }
 
     // Panel 4: Style Rules & Empty State Fallback
     const styleList = document.getElementById('style-warnings-list');
     styleList.innerHTML = '';
-    if (!warnings || warnings.length === 0) {
+    if (warnings.length === 0) {
       styleList.innerHTML = `<li><span class="status-icon ok">✓</span><div><div class="li-title" style="color:var(--verified);">No style warnings detected</div><div class="li-sub">Your manuscript adheres to all checked ${(styleSelect.value || '').toUpperCase()} style rules.</div></div></li>`;
     } else {
+      const styleRows = [];
       warnings.forEach((w) => {
         const targetBadge = w.target_text ? `<div class="cite-mono" style="margin:4px 0; font-weight:700; color:var(--dash-ink-soft);">Target Content: <span style="background:var(--warning-bg); padding:2px 6px; border-radius:4px; color:var(--warning);">${w.target_text}</span></div>` : '';
-        const fixBox = w.suggestion ? `<div class="fix-box" style="margin-top:6px;"><b>How to Fix:</b> ${w.suggestion}</div>` : '';
-        styleList.innerHTML += `
+        const fixBox = w.suggestion ? `
+          <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+            <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+            <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <li>Review targeted citation in manuscript.</li>
+              <li>${w.suggestion}</li>
+            </ol>
+          </div>` : '';
+        styleRows.push(`
           <li>
             <span class="status-icon warn">!</span>
             <div>
@@ -1426,26 +1603,35 @@
               ${fixBox}
             </div>
           </li>
-        `;
+        `);
       });
+      styleList.innerHTML = styleRows.join('');
     }
 
     // Panel 5: Uncited Claims & Empty State Fallback
     const claimsCont = document.getElementById('uncited-claims-container');
     claimsCont.innerHTML = '';
-    if (!claims || claims.length === 0) {
+    if (claims.length === 0) {
       claimsCont.innerHTML = `<p style="color:var(--dash-ink-faint);">No uncited claims detected.</p>`;
     } else {
+      const claimRows = [];
       claims.forEach(c => {
-        claimsCont.innerHTML += `
+        claimRows.push(`
           <div class="claim-card">
             <div class="claim-text">"${c.claim_text || ''}"</div>
             <div class="claim-meta"><span>PARAGRAPH ${(c.paragraph_index || 0) + 1}</span><span>UNAUTHORED ASSERTION</span></div>
             <div class="claim-explain">${c.educational_context || ''}</div>
-            <div class="fix-box" style="margin-top:8px;"><b>How to Fix:</b> ${c.suggestion || 'Add an empirical reference citation.'}</div>
-          </div>
-        `;
+            <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:8px;">
+              <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <li>Review un-authored assertion in paragraph ${(c.paragraph_index || 0) + 1}.</li>
+                <li>${c.suggestion || 'Add an empirical reference citation.'}</li>
+              </ol>
+            </div>
+            </div>
+          `;
       });
+      claimsCont.innerHTML = claimRows.join('');
     }
 
     // Panel 6: Recency Analytics
@@ -1468,7 +1654,14 @@
           const iconChar = isErr || isWarn ? '!' : '✓';
           const title = item.title || item.rule || item.category || 'Layout Rule';
           const detail = item.description || item.message || item.sub || '';
-          const fix = item.suggestion || item.how_to_fix ? `<div class="fix-box" style="margin-top:6px;"><b>How to Fix:</b> ${item.suggestion || item.how_to_fix}</div>` : '';
+          const fix = item.suggestion || item.how_to_fix ? `
+            <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
+              <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
+              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <li>Inspect document layout structure element.</li>
+                <li>${item.suggestion || item.how_to_fix}</li>
+              </ol>
+            </div>` : '';
           return `
             <li>
               <span class="status-icon ${iconClass}">${iconChar}</span>
@@ -1489,6 +1682,25 @@
       }
     }
   }
+
+  // Event delegation for Flag buttons (replaces inline onclick to prevent injection)
+  document.addEventListener('click', (e) => {
+    const flagBtn = e.target.closest('.flag-btn');
+    if (flagBtn) {
+      const label = flagBtn.getAttribute('data-label') || 'citation';
+      showToast('Flagged citation: ' + label);
+    }
+  });
+
+  // Keyboard Escape closes error modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      const modal = document.getElementById('error-modal');
+      if (modal && modal.style.display === 'flex') {
+        hideErrorModal();
+      }
+    }
+  });
 
   function showToast(msg) {
     const toast = document.getElementById('toast');

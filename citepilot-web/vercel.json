@@ -5,7 +5,7 @@
   "rewrites": [
     {
       "source": "/api/v1/:path*",
-      "destination": "http://127.0.0.1:8000/api/v1/:path*"
+      "destination": "https://citepilot-gateway.up.railway.app/api/v1/:path*"
     }
   ],
   "headers": [

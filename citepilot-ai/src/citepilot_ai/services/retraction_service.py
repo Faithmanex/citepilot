@@ -1,13 +1,10 @@
 import logging
 import re
-import urllib.parse
 from typing import Dict, Optional
 
-from .crossref_service import _clean_doi, get_http_client
+from .crossref_service import _clean_doi, _fetch_by_doi, _search_by_query, get_http_client
 
 logger = logging.getLogger(__name__)
-
-CROSSREF_API_BASE = "https://api.crossref.org/works"
 
 
 async def check_retraction_status(doi: Optional[str], title: Optional[str] = None, crossref_work: Optional[Dict] = None) -> Dict:
@@ -23,10 +20,10 @@ async def check_retraction_status(doi: Optional[str], title: Optional[str] = Non
 
     if not work and doi:
         clean_doi = _clean_doi(doi)
-        work = await _fetch_crossref_work(clean_doi)
+        work = await _fetch_by_doi(clean_doi)
 
     if not work and title:
-        work = await _search_crossref_work(title)
+        work = await _search_by_query(title, "")
 
     if work:
         return _analyze_crossref_retraction(work)
@@ -96,27 +93,3 @@ def _analyze_crossref_retraction(work: Dict) -> Dict:
     return {"is_retracted": False, "status": "normal", "message": None, "how_to_fix": None}
 
 
-async def _fetch_crossref_work(doi: str) -> Optional[Dict]:
-    url = f"{CROSSREF_API_BASE}/{urllib.parse.quote(doi)}"
-    client = get_http_client()
-    try:
-        resp = await client.get(url)
-        if resp.status_code == 200:
-            return resp.json().get("message")
-    except Exception as e:
-        logger.warning(f"Retraction check error for DOI {doi}: {e}")
-    return None
-
-
-async def _search_crossref_work(title: str) -> Optional[Dict]:
-    client = get_http_client()
-    params = {"query.title": title, "rows": 1}
-    try:
-        resp = await client.get(CROSSREF_API_BASE, params=params)
-        if resp.status_code == 200:
-            items = resp.json().get("message", {}).get("items", [])
-            if items:
-                return items[0]
-    except Exception as e:
-        logger.warning(f"Retraction check title search error for '{title}': {e}")
-    return None

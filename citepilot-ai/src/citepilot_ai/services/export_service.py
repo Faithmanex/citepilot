@@ -105,7 +105,7 @@ def generate_pdf_report(analysis_data: Dict) -> bytes:
 
 
 def _generate_minimal_pdf_bytes(title: str, lines: list) -> bytes:
-    """Generates valid PDF 1.4 bytes without external PDF libraries."""
+    """Generates valid PDF 1.4 bytes without external PDF libraries (computes correct xref offsets)."""
     content_stream = f"BT /F1 14 Tf 40 750 Td 18 TL ({title}) Tj T*"
     for line in lines[:25]:
         clean = str(line).replace("(", "\\(").replace(")", "\\)")
@@ -113,17 +113,50 @@ def _generate_minimal_pdf_bytes(title: str, lines: list) -> bytes:
     content_stream += " ET"
 
     stream_len = len(content_stream)
+    # Build PDF objects incrementally and track byte offsets for proper xref table
+    objects = []
+    # Object 1: Catalog
+    obj1 = b"1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
+    objects.append(obj1)
+    # Object 2: Pages
+    obj2 = b"2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
+    objects.append(obj2)
+    # Object 3: Page
+    obj3 = b"3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n"
+    objects.append(obj3)
+    # Object 4: Content stream
+    stream_bytes = content_stream.encode("latin1", errors="replace")
+    obj4 = f"4 0 obj\n<< /Length {stream_len} >>\nstream\n".encode("latin1") + stream_bytes + b"\nendstream\nendobj\n"
+    objects.append(obj4)
+    # Object 5: Font
+    obj5 = b"5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
+    objects.append(obj5)
+
+    header = b"%PDF-1.4\n"
+    # Compute byte offsets: each object starts at cumulative offset after header
+    offsets = [len(header)]
+    for obj_bytes in objects:
+        offsets.append(offsets[-1] + len(obj_bytes))
+
+    xref_entries = b""
+    for i in range(6):
+        if i == 0:
+            xref_entries += f"{offsets[0]:010d} 65535 f \n".encode("latin1")
+        else:
+            xref_entries += f"{offsets[i - 1]:010d} 00000 n \n".encode("latin1")
+
+    trailer = b"trailer\n<< /Size 6 /Root 1 0 R >>\n"
+    startxref_offset = len(header) + sum(len(o) for o in objects) + len(b"xref\n") + len(xref_entries) + len(trailer)
+
     pdf = (
-        "%PDF-1.4\n"
-        "1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n"
-        "2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n"
-        "3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>\nendobj\n"
-        f"4 0 obj\n<< /Length {stream_len} >>\nstream\n{content_stream}\nendstream\nendobj\n"
-        "5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\nendobj\n"
-        "xref\n0 6\n0000000000 65535 f \n"
-        "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n350\n%%EOF"
+        header +
+        b"".join(objects) +
+        b"xref\n" +
+        xref_entries +
+        trailer +
+        f"startxref\n{startxref_offset}\n%%EOF".encode("latin1")
     )
-    return pdf.encode("latin1", errors="replace")
+    return pdf
 
 
 def generate_redline_docx(text: str, analysis_data: Dict) -> bytes:

@@ -1,7 +1,7 @@
 import logging
 import re
 import urllib.parse
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import httpx
 
@@ -148,7 +148,7 @@ def _clean_doi(doi_str: str) -> str:
         return ""
     # Strip leading URL prefix if present
     cleaned = re.sub(r"^https?://(?:dx\.)?doi\.org/", "", doi_str.strip(), flags=re.IGNORECASE)
-    match = re.search(r"10\.\d{4,9}/[-._;()/:A-Z0-9]+", cleaned, re.IGNORECASE)
+    match = re.search(r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", cleaned, re.IGNORECASE)
     res = match.group(0) if match else cleaned
     # Strip trailing punctuation (periods, commas, parens, brackets, semicolons)
     res = re.sub(r"[\.,;\)\]]+$", "", res)

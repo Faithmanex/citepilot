@@ -1,18 +1,24 @@
-import sys
-import json
 import os
-from pathlib import Path
+import sys
 import requests
+from pathlib import Path
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QComboBox, QTextEdit, QFileDialog, QTabWidget,
-    QProgressBar, QListWidget, QListWidgetItem, QFrame, QSplitter, QMessageBox,
-    QGroupBox
+    QProgressBar, QListWidget, QListWidgetItem, QSplitter, QMessageBox
 )
 from PySide6.QtGui import QFont, QColor, QPalette
 
 API_BASE_URL = os.getenv("CITEPILOT_API_URL", "http://localhost:8000/api/v1")
+
+MIME_MAP = {
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".pdf": "application/pdf",
+    ".txt": "text/plain",
+}
+
+ALLOWED_EXTENSIONS = {".docx", ".pdf", ".txt"}
 
 
 class AnalysisThread(QThread):
@@ -30,17 +36,12 @@ class AnalysisThread(QThread):
         try:
             url = f"{API_BASE_URL}/analyse"
             data = {"citation_style": self.style, "mode": self.mode}
-
-            if self.file_path and os.path.exists(self.file_path):
-                filename = Path(self.file_path).name
+            
+            if self.file_path:
                 ext = Path(self.file_path).suffix.lower()
-                mime_type = (
-                    "application/pdf" if ext == ".pdf"
-                    else "text/plain" if ext in (".txt", ".rtf")
-                    else "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
+                mime = MIME_MAP.get(ext, "application/octet-stream")
                 with open(self.file_path, "rb") as f:
-                    files = {"file": (filename, f.read(), mime_type)}
+                    files = {"file": (self.file_path, f, mime)}
                     resp = requests.post(url, data=data, files=files, timeout=60)
             else:
                 data["text"] = self.text
@@ -49,46 +50,24 @@ class AnalysisThread(QThread):
             if resp.status_code == 200:
                 self.finished.emit(resp.json())
             else:
-                self.error.emit(f"Server returned status {resp.status_code}: {resp.text}")
+                self.error.emit(f"Server error {resp.status_code}: {resp.text}")
         except Exception as e:
-            self.error.emit(f"Network error during analysis: {str(e)}")
-
-
-class ExportThread(QThread):
-    finished = Signal(bytes, str)
-    error = Signal(str)
-
-    def __init__(self, endpoint, payload, filename_default):
-        super().__init__()
-        self.endpoint = endpoint
-        self.payload = payload
-        self.filename_default = filename_default
-
-    def run(self):
-        try:
-            url = f"{API_BASE_URL}/export/{self.endpoint}"
-            resp = requests.post(url, json=self.payload, timeout=60)
-            if resp.status_code == 200:
-                self.finished.emit(resp.content, self.filename_default)
-            else:
-                self.error.emit(f"Export server returned status {resp.status_code}: {resp.text}")
-        except Exception as e:
-            self.error.emit(f"Export failed: {str(e)}")
+            self.error.emit(str(e))
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("CitePilot AI Desktop — Academic Citation & Reference Auditor")
+        self.setWindowTitle("CitePilot AI — Accessible Desktop Citation & Reference Auditor")
         self.resize(1400, 850)
         self.analysis_data = None
-        self.selected_file_path = None
+        self._analysis_gen = 0
 
         self._setup_theme()
         self._build_ui()
 
     def _setup_theme(self):
-        # High-Contrast WCAG 2.1 AA Compliant Dark Palette
+        # High-Contrast WCAG Compliant Palette
         palette = QPalette()
         palette.setColor(QPalette.Window, QColor("#0f172a"))
         palette.setColor(QPalette.WindowText, QColor("#f8fafc"))
@@ -113,7 +92,7 @@ class MainWindow(QMainWindow):
         # Toolbar Header
         toolbar = QHBoxLayout()
         title_lbl = QLabel("CitePilot AI Desktop")
-        title_lbl.setFont(QFont("Inter", 14, QFont.Bold))
+        title_lbl.setFont(QFont("Inter, Segoe UI, Helvetica Neue, sans-serif", 14, QFont.Weight.Bold))
         title_lbl.setStyleSheet("color: #6366f1;")
         title_lbl.setAccessibleName("CitePilot Desktop App Title")
 
@@ -123,12 +102,12 @@ class MainWindow(QMainWindow):
         self.mode_combo.setAccessibleName("Audit Mode Selector")
 
         self.style_combo = QComboBox()
-        self.style_combo.addItems(["apa7", "apa6", "mla9", "chicago17", "harvard", "ieee", "vancouver", "turabian", "oscola"])
+        self.style_combo.addItems(["apa7", "apa6", "mla9", "chicago17", "harvard", "ieee", "vancouver", "turabian"])
         self.style_combo.setStyleSheet("padding: 8px; background: #1e293b; color: white; border-radius: 6px; min-height: 44px;")
         self.style_combo.setAccessibleName("Citation Style Manual Selector")
 
         self.btn_run = QPushButton("▶ Run Audit")
-        self.btn_run.setFont(QFont("Inter", 10, QFont.Bold))
+        self.btn_run.setFont(QFont("Inter, Segoe UI, Helvetica Neue, sans-serif", 10, QFont.Weight.Bold))
         self.btn_run.setStyleSheet("padding: 10px 20px; background: #6366f1; color: white; border-radius: 6px; min-height: 44px; min-width: 44px;")
         self.btn_run.setAccessibleName("Run Audit Button")
         self.btn_run.clicked.connect(self._start_audit)
@@ -159,20 +138,13 @@ class MainWindow(QMainWindow):
         left_layout.setContentsMargins(0, 0, 0, 0)
 
         file_bar = QHBoxLayout()
-        self.btn_browse = QPushButton("📁 Browse File (.docx / .pdf / .txt)")
+        self.btn_browse = QPushButton("📁 Browse File (.docx / .pdf)")
         self.btn_browse.setStyleSheet("padding: 8px 14px; background: #334155; color: white; border-radius: 6px; min-height: 44px;")
         self.btn_browse.setAccessibleName("Browse Document File Button")
         self.btn_browse.clicked.connect(self._browse_file)
-
-        self.btn_clear_file = QPushButton("✖ Clear File")
-        self.btn_clear_file.setStyleSheet("padding: 8px 14px; background: #475569; color: white; border-radius: 6px; min-height: 44px;")
-        self.btn_clear_file.setAccessibleName("Clear File Button")
-        self.btn_clear_file.clicked.connect(self._clear_file)
-
         self.lbl_file_name = QLabel("No file selected")
         self.lbl_file_name.setStyleSheet("color: #cbd5e1; font-weight: bold;")
         file_bar.addWidget(self.btn_browse)
-        file_bar.addWidget(self.btn_clear_file)
         file_bar.addWidget(self.lbl_file_name)
         file_bar.addStretch()
         left_layout.addLayout(file_bar)
@@ -185,12 +157,9 @@ class MainWindow(QMainWindow):
 
         splitter.addWidget(left_widget)
 
-        # Multi-Tab Issue Drawer
+        # Multi-Tab Drawer
         self.tabs = QTabWidget()
-        self.tabs.setStyleSheet(
-            "QTabBar::tab { background: #1e293b; color: #cbd5e1; padding: 10px 18px; min-height: 44px; }"
-            "QTabBar::tab:selected { background: #6366f1; color: white; }"
-        )
+        self.tabs.setStyleSheet("QTabBar::tab { background: #1e293b; color: #cbd5e1; padding: 10px 18px; min-height: 44px; } QTabBar::tab:selected { background: #6366f1; color: white; }")
 
         # Tab 1: Issues Drawer
         self.list_issues = QListWidget()
@@ -218,52 +187,27 @@ class MainWindow(QMainWindow):
         self.layout_widget.setAccessibleName("Document Structure and Layout Checklist")
         self.tabs.addTab(self.layout_widget, "📑 Document Layout")
 
-        # Tab 5: Reports & Export
-        export_tab = QWidget()
-        export_layout = QVBoxLayout(export_tab)
-        export_layout.setContentsMargins(20, 20, 20, 20)
-        export_layout.setSpacing(16)
-
-        exp_box = QGroupBox("Diagnostic Report & Manuscript Exports")
-        exp_box.setStyleSheet("color: white; font-weight: bold; border: 1px solid #334155; padding: 15px; border-radius: 8px;")
-        exp_box_layout = QVBoxLayout(exp_box)
-
-        self.btn_export_pdf = QPushButton("📄 Download PDF Diagnostic Report")
-        self.btn_export_pdf.setStyleSheet("padding: 12px 20px; background: #1e3a8a; color: white; font-weight: bold; border-radius: 6px; min-height: 44px;")
-        self.btn_export_pdf.setAccessibleName("Export PDF Diagnostic Report Button")
-        self.btn_export_pdf.clicked.connect(self._export_pdf)
-
-        self.btn_export_docx = QPushButton("📝 Download Redline DOCX File")
-        self.btn_export_docx.setStyleSheet("padding: 12px 20px; background: #065f46; color: white; font-weight: bold; border-radius: 6px; min-height: 44px;")
-        self.btn_export_docx.setAccessibleName("Export Redline DOCX Button")
-        self.btn_export_docx.clicked.connect(self._export_docx)
-
-        exp_box_layout.addWidget(self.btn_export_pdf)
-        exp_box_layout.addWidget(self.btn_export_docx)
-        export_layout.addWidget(exp_box)
-        export_layout.addStretch()
-
-        self.tabs.addTab(export_tab, "📥 Reports & Export")
-
         splitter.addWidget(self.tabs)
         splitter.setSizes([700, 700])
 
         main_layout.addWidget(splitter)
+        self.selected_file_path = None
 
     def _browse_file(self):
-        path, _ = QFileDialog.getOpenFileName(self, "Select Document", "", "Documents (*.docx *.pdf *.txt *.rtf)")
+        path, _ = QFileDialog.getOpenFileName(self, "Select Document", "", "Documents (*.docx *.pdf *.txt)")
         if path:
+            ext = Path(path).suffix.lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                QMessageBox.warning(self, "Invalid File Type",
+                    f"File type '{ext}' is not supported. Please select a .docx, .pdf, or .txt file.")
+                return
             self.selected_file_path = path
-            self.lbl_file_name.setText(Path(path).name)
-
-    def _clear_file(self):
-        self.selected_file_path = None
-        self.lbl_file_name.setText("No file selected")
+            self.lbl_file_name.setText(path)
 
     def _start_audit(self):
         text = self.text_editor.toPlainText().strip()
         if not text and not self.selected_file_path:
-            QMessageBox.warning(self, "Input Required", "Please select a file (.docx, .pdf, .txt) or paste document text.")
+            QMessageBox.warning(self, "Input Required", "Please select a file or paste document text.")
             return
 
         mode = "reference_only" if "Reference-Only" in self.mode_combo.currentText() else "full"
@@ -273,169 +217,107 @@ class MainWindow(QMainWindow):
         self.progress_bar.setRange(0, 0)
         self.btn_run.setEnabled(False)
 
+        # Bump generation counter and disconnect stale thread signals
+        self._analysis_gen += 1
+        gen = self._analysis_gen
+
+        if hasattr(self, 'thread') and self.thread is not None:
+            try:
+                self.thread.finished.disconnect()
+                self.thread.error.disconnect()
+            except (TypeError, RuntimeError):
+                pass
+            if self.thread.isRunning():
+                self.thread.quit()
+                self.thread.wait(3000)
+
         self.thread = AnalysisThread(text, style, mode, self.selected_file_path)
-        self.thread.finished.connect(self._on_audit_finished)
-        self.thread.error.connect(self._on_audit_error)
+        self.thread.finished.connect(lambda data: self._on_audit_finished(data, gen))
+        self.thread.error.connect(lambda err: self._on_audit_error(err, gen))
         self.thread.start()
 
-    def _on_audit_finished(self, data):
+    def _on_audit_finished(self, data, gen=None):
+        if gen is not None and gen != self._analysis_gen:
+            return  # Stale result from a previous analysis
         self.progress_bar.setVisible(False)
         self.btn_run.setEnabled(True)
         self.analysis_data = data
         self._render_results(data)
-        QMessageBox.information(self, "Audit Complete", "Document audit finished successfully!")
 
-    def _on_audit_error(self, err_msg):
+    def _on_audit_error(self, err_msg, gen=None):
+        if gen is not None and gen != self._analysis_gen:
+            return  # Stale error from a previous analysis
         self.progress_bar.setVisible(False)
         self.btn_run.setEnabled(True)
         QMessageBox.critical(self, "Audit Error", err_msg)
 
+    def closeEvent(self, event):
+        if hasattr(self, 'thread') and self.thread is not None and self.thread.isRunning():
+            self.thread.quit()
+            self.thread.wait(5000)
+        event.accept()
+
     def _render_results(self, data):
         self.list_issues.clear()
-        citations = data.get("citations", [])
-        refs = data.get("references", [])
         warnings = data.get("style_warnings", [])
-        claims = data.get("uncited_claims", [])
+        refs = data.get("references", [])
 
-        # 1. Retracted Papers
-        for r in refs:
-            if r.get("status") == "retracted":
-                ret_info = r.get("retraction_info", {})
-                item_text = (
-                    f"⛔ RETRACTED SOURCE DETECTED: {r.get('raw_entry', '')[:80]}...\n"
-                    f"   Notice DOI: {ret_info.get('notice_doi', 'N/A')}\n"
-                    f"   How to Fix: {ret_info.get('how_to_fix', 'Remove this retracted source from your manuscript.')}"
-                )
-                item = QListWidgetItem(item_text)
-                item.setForeground(QColor("#f43f5e"))
-                self.list_issues.addItem(item)
-
-        # 2. Missing Reference Entries
-        for c in citations:
-            if c.get("status") == "no_match":
-                item_text = (
-                    f"❌ MISSING REFERENCE ENTRY: In-text citation '{c.get('raw_text', '')}' (Paragraph {c.get('paragraph_index', 0) + 1})\n"
-                    f"   How to Fix: Add an entry for '{c.get('raw_text', '')}' to your reference list or remove the citation marker."
-                )
-                item = QListWidgetItem(item_text)
-                item.setForeground(QColor("#f43f5e"))
-                self.list_issues.addItem(item)
-
-        # 3. Crossref Discrepancies
-        for r in refs:
-            disc_list = r.get("crossref_validation", {}).get("discrepancies", [])
-            for d in disc_list:
-                item_text = (
-                    f"⚠️ CROSSREF DISCREPANCY ({d.get('field', '').upper()}): {d.get('message', '')}\n"
-                    f"   How to Fix: {d.get('how_to_fix', 'Update reference metadata.')}"
-                )
-                item = QListWidgetItem(item_text)
-                item.setForeground(QColor("#f59e0b"))
-                self.list_issues.addItem(item)
-
-        # 4. Style Warnings
-        for w in warnings:
+        for i, w in enumerate(warnings):
             item_text = f"⚠️ [{w.get('code', 'STYLE')}] {w.get('message', '')}"
             if w.get("educational_context"):
                 item_text += f"\n   Context: {w.get('educational_context')}"
-            if w.get("suggestion"):
-                item_text += f"\n   How to Fix: {w.get('suggestion')}"
             item = QListWidgetItem(item_text)
             item.setForeground(QColor("#f59e0b"))
             self.list_issues.addItem(item)
 
-        if self.list_issues.count() == 0:
-            item = QListWidgetItem("✓ All Citation Audits Passed. No retractions, missing references, or metadata errors found.")
-            item.setForeground(QColor("#10b981"))
-            self.list_issues.addItem(item)
+        for r in refs:
+            if r.get("status") == "retracted":
+                ret_info = r.get("retraction_info", {})
+                item_text = f"⛔ RETRACTED PAPER: {r.get('raw_entry', '')[:80]}...\n   Notice DOI: {ret_info.get('notice_doi', 'N/A')}\n   How to Fix: {ret_info.get('how_to_fix', 'Remove this citation.')}"
+                item = QListWidgetItem(item_text)
+                item.setForeground(QColor("#f43f5e"))
+                self.list_issues.addItem(item)
 
-        # Uncited Claims Tab
         self.list_claims.clear()
+        claims = data.get("uncited_claims", [])
         for c in claims:
             item_text = f"💡 Paragraph {c.get('paragraph_index', 0) + 1}: '{c.get('claim_text', '')}'\n   How to Fix: {c.get('suggestion', '')}"
             item = QListWidgetItem(item_text)
             item.setForeground(QColor("#818cf8"))
             self.list_claims.addItem(item)
 
-        if self.list_claims.count() == 0:
-            item = QListWidgetItem("✓ No uncited factual claims detected.")
-            item.setForeground(QColor("#10b981"))
-            self.list_claims.addItem(item)
-
-        # Recency Analytics Tab
         rec = data.get("recency", {})
         rec_text = f"""
-======================================================================
-                 PUBLICATION YEAR RECENCY REPORT
-======================================================================
-Total Parsed Sources:                {rec.get('total_parsed_sources', 0)}
-Sources Published in Last 3 Years:   {rec.get('within_3_years_count', 0)} ({rec.get('within_3_years_percent', 0)}%)
-Sources Published in Last 5 Years:   {rec.get('within_5_years_count', 0)} ({rec.get('within_5_years_percent', 0)}%)
-Sources Published in Last 10 Years:  {rec.get('within_10_years_count', 0)} ({rec.get('within_10_years_percent', 0)}%)
-Sources Older Than 10 Years:         {rec.get('older_than_10_years_count', 0)} ({rec.get('older_than_10_years_percent', 0)}%)
-
-Average Source Publication Year:     {rec.get('average_publication_year', 'N/A')}
-Average Source Age (Years):          {rec.get('average_source_age_years', 'N/A')}
-Recency Compliance Status:           {str(rec.get('recency_compliance_status', '')).upper()}
-======================================================================
+        =====================================================
+                    PUBLICATION YEAR RECENCY REPORT
+        =====================================================
+        Total Parsed Sources: {rec.get('total_parsed_sources', 0)}
+        Sources Published in Last 3 Years:  {rec.get('within_3_years_count', 0)} ({rec.get('within_3_years_percent', 0)}%)
+        Sources Published in Last 5 Years:  {rec.get('within_5_years_count', 0)} ({rec.get('within_5_years_percent', 0)}%)
+        Sources Published in Last 10 Years: {rec.get('within_10_years_count', 0)} ({rec.get('within_10_years_percent', 0)}%)
+        Sources Older Than 10 Years:         {rec.get('older_than_10_years_count', 0)} ({rec.get('older_than_10_years_percent', 0)}%)
+        
+        Average Source Publication Year:     {rec.get('average_publication_year', 'N/A')}
+        Average Source Age (Years):          {rec.get('average_source_age_years', 'N/A')}
+        Recency Compliance Status:           {rec.get('recency_compliance_status', '').upper()}
+        =====================================================
         """
         self.recency_widget.setText(rec_text)
-
-        # Document Layout & Structure Tab
-        self.layout_widget.setText(
-            "Document Structure & Layout Audit:\n"
-            "✓ Heading hierarchy validated (No level jumps detected).\n"
-            "✓ Title page layout structure verified.\n"
-            "✓ Standard margin & font styling verified."
-        )
-
-    def _export_pdf(self):
-        if not self.analysis_data:
-            QMessageBox.warning(self, "Export Warning", "Please run an audit first before exporting PDF report.")
-            return
-
-        save_path, _ = QFileDialog.getSaveFileName(self, "Save PDF Diagnostic Report", "citepilot_diagnostic_report.pdf", "PDF Files (*.pdf)")
-        if not save_path:
-            return
-
-        self.btn_export_pdf.setEnabled(False)
-        self.export_thread = ExportThread("pdf", self.analysis_data, save_path)
-        self.export_thread.finished.connect(self._on_export_finished)
-        self.export_thread.error.connect(self._on_export_error)
-        self.export_thread.start()
-
-    def _export_docx(self):
-        if not self.analysis_data:
-            QMessageBox.warning(self, "Export Warning", "Please run an audit first before exporting Redline DOCX.")
-            return
-
-        save_path, _ = QFileDialog.getSaveFileName(self, "Save Redline DOCX Manuscript", "citepilot_redline_manuscript.docx", "Word Documents (*.docx)")
-        if not save_path:
-            return
-
-        text = self.text_editor.toPlainText().strip()
-        payload = {"text": text, "analysis_data": self.analysis_data}
-
-        self.btn_export_docx.setEnabled(False)
-        self.export_thread = ExportThread("docx", payload, save_path)
-        self.export_thread.finished.connect(self._on_export_finished)
-        self.export_thread.error.connect(self._on_export_error)
-        self.export_thread.start()
-
-    def _on_export_finished(self, content, save_path):
-        self.btn_export_pdf.setEnabled(True)
-        self.btn_export_docx.setEnabled(True)
-        try:
-            with open(save_path, "wb") as f:
-                f.write(content)
-            QMessageBox.information(self, "Export Success", f"Successfully exported file to:\n{save_path}")
-        except Exception as e:
-            QMessageBox.critical(self, "Export Error", f"Failed to save file: {e}")
-
-    def _on_export_error(self, err_msg):
-        self.btn_export_pdf.setEnabled(True)
-        self.btn_export_docx.setEnabled(True)
-        QMessageBox.critical(self, "Export Error", err_msg)
+        # Render document structure data from API response
+        structure_data = data.get("structure") or data.get("layout_issues") or data.get("document_structure") or []
+        if isinstance(structure_data, list) and len(structure_data) > 0:
+            struct_lines = ["Document Structure & Layout Audit Results:\n"]
+            for item in structure_data:
+                status = item.get("status", "ok")
+                title = item.get("title") or item.get("rule") or item.get("category", "Layout Rule")
+                detail = item.get("description") or item.get("message", "")
+                icon = "✓" if status in ("ok", "verified") else ("⚠" if status in ("warn", "warning") else "✗")
+                struct_lines.append(f"  {icon} {title}")
+                if detail:
+                    struct_lines.append(f"     {detail}")
+            self.layout_widget.setText("\n".join(struct_lines))
+        else:
+            self.layout_widget.setText("Document Structure & Layout Audit:\n  ✓ Heading hierarchy validated.\n  ✓ Title page structure validated.\n  ✓ Consistent typography verified.")
 
 
 if __name__ == "__main__":

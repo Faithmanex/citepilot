@@ -28,7 +28,7 @@ def parse_document(file_path: str, mime_type: str, mode: str = "full") -> Tuple[
         raw_text, paragraphs_meta = _parse_pdf_structured(path)
     else:
         raw_text = path.read_text(encoding="utf-8", errors="replace")
-        paragraphs_meta = _parse_txt_structured(raw_text)
+        paragraphs_meta = parse_txt_structured(raw_text)
 
     mode_clean = (mode or "full").strip().lower()
     if mode_clean in ("reference_only", "references_only", "references"):
@@ -67,7 +67,7 @@ def _parse_docx_structured(path: Path) -> Tuple[str, List[Dict]]:
             continue
 
         style_name = para.style.name if para.style else "Normal"
-        is_heading = style_name.startswith("Heading") or bool(re.match(r"^\d+(\.\d+)*\s+[A-Z]", txt))
+        is_heading = style_name.startswith("Heading")
 
         paragraphs_meta.append({
             "paragraph_index": idx,
@@ -91,6 +91,7 @@ def _parse_pdf_structured(path: Path) -> Tuple[str, List[Dict]]:
         for page_num, page in enumerate(pdf.pages, start=1):
             text = page.extract_text()
             if not text or not text.strip():
+                logger.warning(f"PDF page {page_num} yielded no extractable text (possibly scanned image).")
                 continue
 
             lines = text.split("\n")
@@ -147,7 +148,7 @@ def _parse_pdf_structured(path: Path) -> Tuple[str, List[Dict]]:
     return "\n\n".join(text_parts), paragraphs_meta
 
 
-def _parse_txt_structured(raw_text: str) -> List[Dict]:
+def parse_txt_structured(raw_text: str) -> List[Dict]:
     paragraphs = raw_text.split("\n\n")
     meta = []
     idx = 0
