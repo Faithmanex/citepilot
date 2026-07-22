@@ -21,7 +21,7 @@ export default function StylePanel({ data }: StylePanelProps) {
         </p>
       </div>
 
-      <div className="bg-card border-2 border-line rounded-md p-5">
+      <div className="bg-card border-2 border-line rounded-md p-4 sm:p-5">
         {warnings.length === 0 ? (
           <ul className="list-none m-0 p-0">
             <li className="flex gap-3 items-start py-3 border-b border-line last:border-b-0 text-[13.5px]">

@@ -38,7 +38,7 @@ export default function StructurePanel({ data }: StructurePanelProps) {
         </p>
       </div>
 
-      <div className="bg-card border-2 border-line rounded-md p-5">
+      <div className="bg-card border-2 border-line rounded-md p-4 sm:p-5">
         <h2 className="text-[15px] font-extrabold m-0 mb-4">
           Structure checklist
         </h2>

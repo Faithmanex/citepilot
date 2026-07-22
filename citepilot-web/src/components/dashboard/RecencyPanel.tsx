@@ -22,7 +22,7 @@ export default function RecencyPanel({ data }: RecencyPanelProps) {
       </div>
 
       <div className="grid grid-cols-1 gap-4">
-        <div className="bg-card border-2 border-line rounded-md p-5">
+        <div className="bg-card border-2 border-line rounded-md p-4 sm:p-5">
           <h2 className="text-[15px] font-extrabold m-0 mb-4">
             Recency breakdown
           </h2>
@@ -78,7 +78,7 @@ export default function RecencyPanel({ data }: RecencyPanelProps) {
           </div>
         </div>
 
-        <div className="bg-card border-2 border-line rounded-md p-5">
+        <div className="bg-card border-2 border-line rounded-md p-4 sm:p-5">
           <h2 className="text-[15px] font-extrabold m-0 mb-4">
             Recency Guidelines
           </h2>
