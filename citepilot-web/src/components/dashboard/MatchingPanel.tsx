@@ -37,7 +37,7 @@ export default function MatchingPanel({ data }: MatchingPanelProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-4 gap-3.5 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
         <div className="bg-card border-2 border-line rounded-md p-[18px_18px_16px]">
           <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2">
             Missing references
@@ -78,9 +78,10 @@ export default function MatchingPanel({ data }: MatchingPanelProps) {
         </div>
       </div>
 
-      <div className="bg-card border-2 border-line rounded-md p-5">
+      <div className="bg-card border-2 border-line rounded-md p-4 sm:p-5">
         <h2 className="text-[15px] font-extrabold m-0 mb-4">Match table</h2>
-        <table className="w-full border-collapse text-[13.5px]">
+        <div className="overflow-x-auto w-full">
+          <table className="w-full border-collapse text-[13.5px]">
           <thead>
             <tr>
               <th className="text-left text-[11.5px] uppercase tracking-wider text-dash-ink-faint font-extrabold px-2.5 pb-3 border-b-2 border-line">
@@ -151,6 +152,7 @@ export default function MatchingPanel({ data }: MatchingPanelProps) {
             )}
           </tbody>
         </table>
+        </div>
       </div>
     </section>
   );

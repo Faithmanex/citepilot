@@ -14,6 +14,7 @@ interface TopbarProps {
   documentName: string;
   onClearDocument: () => void;
   progress: { visible: boolean; message: string; pct: number };
+  onToggleMobileSidebar?: () => void;
 }
 
 const STYLE_LABELS: Record<CitationStyle, string> = {
@@ -40,12 +41,24 @@ export default function Topbar({
   documentName,
   onClearDocument,
   progress,
+  onToggleMobileSidebar,
 }: TopbarProps) {
   return (
-    <div className="sticky top-0 z-20 bg-dash-paper/95 backdrop-blur-md border-b-2 border-line px-7 py-3.5">
-      <div className="flex items-center gap-[18px] flex-wrap">
+    <div className="sticky top-0 z-20 bg-dash-paper/95 backdrop-blur-md border-b-2 border-line px-4 sm:px-7 py-3.5">
+      <div className="flex items-center gap-2 sm:gap-[18px] flex-wrap">
+        {onToggleMobileSidebar && (
+          <button
+            type="button"
+            className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] px-3 bg-card border-2 border-line rounded-md text-dash-ink font-bold"
+            onClick={onToggleMobileSidebar}
+            aria-label="Open Audit Navigation Menu"
+          >
+            <i className="fas fa-bars text-base" />
+          </button>
+        )}
+
         <div
-          className="flex items-center gap-2 text-[13.5px] font-bold text-dash-ink min-h-[44px] bg-card border-2 border-line px-3.5 py-2 rounded-md cursor-pointer"
+          className="flex items-center gap-2 text-[13.5px] font-bold text-dash-ink min-h-[44px] bg-card border-2 border-line px-3.5 py-2 rounded-md cursor-pointer max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
           id="doc-chip"
           role="button"
           tabIndex={0}
@@ -56,7 +69,7 @@ export default function Topbar({
           }
         >
           <span
-            className="w-2 h-2 rounded-full"
+            className="w-2 h-2 rounded-full flex-none"
             style={{
               background: hasDocument
                 ? "var(--color-verified)"
@@ -64,7 +77,7 @@ export default function Topbar({
             }}
             aria-hidden="true"
           />
-          <span id="doc-file-name">{documentName}</span>
+          <span id="doc-file-name" className="truncate">{documentName}</span>
           {hasDocument && (
             <button
               id="btn-reset-doc"
@@ -88,7 +101,7 @@ export default function Topbar({
           )}
         </div>
 
-        <div className="seg-control" id="audit-mode" role="radiogroup" aria-label="Audit Mode Selector">
+        <div className="seg-control max-w-full overflow-x-auto" id="audit-mode" role="radiogroup" aria-label="Audit Mode Selector">
           <button
             className={mode === "full" ? "active" : ""}
             data-mode="full"
@@ -97,7 +110,7 @@ export default function Topbar({
             role="radio"
             tabIndex={mode === "full" ? 0 : -1}
           >
-            Full Manuscript Audit
+            Full Manuscript
           </button>
           <button
             className={mode === "reference_only" ? "active" : ""}
@@ -107,12 +120,12 @@ export default function Topbar({
             role="radio"
             tabIndex={mode === "reference_only" ? 0 : -1}
           >
-            Reference-List-Only
+            Ref-List-Only
           </button>
         </div>
 
         <select
-          className="font-dash text-[13px] font-bold min-h-[44px] px-3.5 py-[9px] rounded-md border-2 border-line bg-card text-dash-ink"
+          className="font-dash text-[13px] font-bold min-h-[44px] px-3.5 py-[9px] rounded-md border-2 border-line bg-card text-dash-ink max-w-full"
           id="style-select"
           value={style}
           onChange={(e) => onStyleChange(e.target.value as CitationStyle)}
@@ -126,7 +139,7 @@ export default function Topbar({
         </select>
 
         <button
-          className="link-btn ml-auto"
+          className="link-btn sm:ml-auto"
           id="btn-toggle-input-bar"
           onClick={onToggleInput}
           aria-expanded={!inputCollapsed}
@@ -173,3 +186,4 @@ export default function Topbar({
     </div>
   );
 }
+

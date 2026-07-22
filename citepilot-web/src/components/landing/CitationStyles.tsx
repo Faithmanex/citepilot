@@ -12,9 +12,9 @@ const styles = [
 
 export default function CitationStyles() {
   return (
-    <section className="py-20 border-t-2 border-rule" id="styles">
-      <div className="max-w-[1080px] mx-auto px-8">
-        <div className="max-w-[58ch] mb-11">
+    <section className="py-12 sm:py-20 border-t-2 border-rule" id="styles">
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-8">
+        <div className="max-w-[58ch] mb-8 sm:mb-11">
           <span className="font-type text-[13px] font-bold tracking-wider text-ink-faint block mb-2.5 before:content-['§\\0020']">
             Citation styles
           </span>
@@ -28,11 +28,11 @@ export default function CitationStyles() {
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-[18px]">
+        <div className="flex flex-wrap gap-3 sm:gap-[18px] justify-center sm:justify-start">
           {styles.map((s) => (
             <div
               key={s.name}
-              className="w-[88px] h-[88px] rounded-full border-3 border-ink-soft flex items-center justify-center text-center font-type font-bold text-xs text-ink-soft uppercase tracking-wider"
+              className="w-[78px] h-[78px] sm:w-[88px] sm:h-[88px] rounded-full border-3 border-ink-soft flex items-center justify-center text-center font-type font-bold text-[11px] sm:text-xs text-ink-soft uppercase tracking-wider bg-paper-card"
               style={{ transform: `rotate(${s.rot})` }}
             >
               {s.name}
@@ -40,7 +40,7 @@ export default function CitationStyles() {
           ))}
         </div>
 
-        <p className="mt-8 pt-5 border-t border-dashed border-rule font-type text-sm font-semibold text-ink-soft">
+        <p className="mt-8 pt-5 border-t border-dashed border-rule font-type text-xs sm:text-sm font-semibold text-ink-soft">
           Sources checked against:{" "}
           <b className="text-ink">
             Crossref · OpenAlex · PubMed · DOI.org · Retraction Watch
@@ -50,3 +50,4 @@ export default function CitationStyles() {
     </section>
   );
 }
+

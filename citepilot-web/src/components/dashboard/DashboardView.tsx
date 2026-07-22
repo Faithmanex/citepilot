@@ -23,6 +23,7 @@ export default function DashboardView() {
   const [manuscriptText, setManuscriptText] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [progress, setProgress] = useState({
     visible: false,
     message: "Parsing document…",
@@ -51,6 +52,7 @@ export default function DashboardView() {
 
   const handlePanelChange = useCallback((panel: string) => {
     setActivePanel(panel);
+    setMobileNavOpen(false);
   }, []);
 
   const handleModeChange = useCallback(
@@ -58,8 +60,6 @@ export default function DashboardView() {
       setCurrentMode(newMode);
       if (analysisData) {
         const isRefOnly = newMode === "reference_only";
-        const citations = analysisData.citations ?? [];
-        const refs = analysisData.references ?? [];
         showToast(
           `Switched to ${isRefOnly ? "Reference-List-Only" : "Full Manuscript"} mode.`
         );
@@ -178,13 +178,15 @@ export default function DashboardView() {
 
   return (
     <div className="dash-body" style={{ background: "var(--color-dash-paper)" }}>
-      <div className="grid min-h-screen" style={{ gridTemplateColumns: "236px 1fr" }}>
+      <div className="flex flex-col md:grid md:grid-cols-[236px_1fr] min-h-screen">
         <Sidebar
           activePanel={activePanel}
           onPanelChange={handlePanelChange}
           badges={badges}
+          isOpen={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
         />
-        <main className="min-w-0" role="main">
+        <main className="min-w-0 w-full" role="main">
           <Topbar
             mode={currentMode}
             onModeChange={handleModeChange}
@@ -197,8 +199,9 @@ export default function DashboardView() {
             documentName={documentName}
             onClearDocument={handleClearDocument}
             progress={progress}
+            onToggleMobileSidebar={() => setMobileNavOpen((prev) => !prev)}
           />
-          <div className="px-7 py-[26px] pb-16">
+          <div className="px-4 sm:px-7 py-4 sm:py-[26px] pb-16">
             <InputArea
               collapsed={inputCollapsed}
               onToggleCollapse={handleToggleInput}
@@ -237,7 +240,7 @@ export default function DashboardView() {
       {/* Toast */}
       <div
         id="toast"
-        className={`fixed bottom-6 right-7 bg-ink text-white px-5 py-3.5 rounded-lg text-[13.5px] font-bold flex items-center gap-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.25)] z-200 transition-all duration-300 ease ${
+        className={`fixed bottom-6 right-4 sm:right-7 bg-ink text-white px-5 py-3.5 rounded-lg text-[13.5px] font-bold flex items-center gap-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.25)] z-200 transition-all duration-300 ease ${
           toastVisible
             ? "translate-y-0 opacity-100"
             : "translate-y-5 opacity-0 pointer-events-none"
@@ -252,12 +255,12 @@ export default function DashboardView() {
       {/* Error Modal */}
       {errorModal.visible && (
         <div
-          className="fixed inset-0 bg-black/50 z-300 flex items-center justify-center"
+          className="fixed inset-0 bg-black/50 z-300 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="error-modal-title"
         >
-          <div className="bg-card border-2 border-error rounded-lg max-w-[520px] w-[90%] p-6 shadow-[0_10px_25px_rgba(0,0,0,0.3)]">
+          <div className="bg-card border-2 border-error rounded-lg max-w-[520px] w-full p-6 shadow-[0_10px_25px_rgba(0,0,0,0.3)]">
             <h2
               id="error-modal-title"
               className="text-error mt-0 text-lg flex items-center gap-2"
@@ -289,3 +292,4 @@ export default function DashboardView() {
     </div>
   );
 }
+

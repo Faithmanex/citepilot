@@ -23,9 +23,9 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section className="py-20 border-t-2 border-rule" id="how">
-      <div className="max-w-[1080px] mx-auto px-8">
-        <div className="max-w-[58ch] mb-11">
+    <section className="py-12 sm:py-20 border-t-2 border-rule" id="how">
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-8">
+        <div className="max-w-[58ch] mb-8 sm:mb-11">
           <span className="font-type text-[13px] font-bold tracking-wider text-ink-faint block mb-2.5 before:content-['§\\0020']">
             How it works
           </span>
@@ -42,7 +42,7 @@ export default function HowItWorks() {
           {steps.map((step) => (
             <div
               key={step.num}
-              className="grid grid-cols-[70px_1fr] gap-5 p-[22px_26px] border-b border-dashed border-rule last:border-b-0 items-start"
+              className="grid grid-cols-1 sm:grid-cols-[70px_1fr] gap-2 sm:gap-5 p-4 sm:p-[22px_26px] border-b border-dashed border-rule last:border-b-0 items-start"
             >
               <span className="font-type font-bold text-base text-ink-faint pt-0.5">
                 {step.num}
@@ -62,3 +62,4 @@ export default function HowItWorks() {
     </section>
   );
 }
+

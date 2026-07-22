@@ -69,7 +69,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
         <p className="text-sm text-dash-ink-soft m-0 max-w-[64ch]">{subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-4 gap-3.5 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
         <div className="bg-card border-2 border-line rounded-md p-[18px_18px_16px]">
           <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2">
             Citations parsed

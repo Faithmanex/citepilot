@@ -1,6 +1,9 @@
 import type { AuditResponse, CitationStyle, AuditMode } from "./types";
 
 function getApiBase(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  }
   if (
     typeof window !== "undefined" &&
     (window.location.hostname === "localhost" ||
@@ -8,7 +11,9 @@ function getApiBase(): string {
   ) {
     return "http://localhost:8000/api/v1";
   }
-  return `${window.location.origin}/api/v1`;
+  return typeof window !== "undefined"
+    ? `${window.location.origin}/api/v1`
+    : "http://localhost:8000/api/v1";
 }
 
 export async function runAudit(

@@ -59,10 +59,10 @@ export default function InputArea({
 
   return (
     <div
-      className="bg-card border-2 border-line rounded-md p-5 mb-5 transition-all duration-300 ease"
+      className="bg-card border-2 border-line rounded-md p-4 sm:p-5 mb-5 transition-all duration-300 ease"
       id="input-section"
     >
-      <div className="grid grid-cols-[1fr_1.5fr] gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr] gap-5">
         <div
           className={`border-2 ${
             dragOver ? "border-brand" : "border-dashed border-line"

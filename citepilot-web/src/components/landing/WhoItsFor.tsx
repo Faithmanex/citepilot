@@ -23,9 +23,9 @@ const personas = [
 
 export default function WhoItsFor() {
   return (
-    <section className="py-20 border-t-2 border-rule" id="who">
-      <div className="max-w-[1080px] mx-auto px-8">
-        <div className="max-w-[58ch] mb-11">
+    <section className="py-12 sm:py-20 border-t-2 border-rule" id="who">
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-8">
+        <div className="max-w-[58ch] mb-8 sm:mb-11">
           <span className="font-type text-[13px] font-bold tracking-wider text-ink-faint block mb-2.5 before:content-['§\\0020']">
             Who it&apos;s for
           </span>
@@ -34,7 +34,7 @@ export default function WhoItsFor() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {personas.map((p) => (
             <div
               key={p.tab}
@@ -54,3 +54,4 @@ export default function WhoItsFor() {
     </section>
   );
 }
+
