@@ -2,7 +2,13 @@ import json
 import logging
 from typing import Optional
 
-from .llm import async_call_gemini, extract_json
+from .llm import async_call_gemini, parse_and_validate_ai_response
+from ..models.schemas import (
+    CitationsResponseSchema,
+    ReferencesResponseSchema,
+    MatchesResponseSchema,
+    StyleWarningsResponseSchema,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,11 +66,15 @@ Return a JSON object with this structure:
   ]
 }}"""
 
-    raw = await async_call_gemini(prompt, system_instruction=CITATION_EXTRACTION_SYSTEM_PROMPT)
+    raw = await async_call_gemini(
+        prompt,
+        system_instruction=CITATION_EXTRACTION_SYSTEM_PROMPT,
+        response_schema=CitationsResponseSchema
+    )
     logger.debug("AI RAW RESPONSE [CITATIONS EXTRACTION]: %s", raw)
 
-    result = extract_json(raw)
-    return result.get("citations", [])
+    validated = parse_and_validate_ai_response(raw, CitationsResponseSchema)
+    return [item.model_dump() for item in validated.citations]
 
 
 REFERENCE_PARSING_SYSTEM_PROMPT = """You are an expert academic document parser and bibliographic classifier based on Formatly's multi-step document architecture.
@@ -122,11 +132,15 @@ Reference text:
 Return a JSON object with this structure:
 {schema_example}"""
 
-    raw = await async_call_gemini(prompt, system_instruction=REFERENCE_PARSING_SYSTEM_PROMPT)
+    raw = await async_call_gemini(
+        prompt,
+        system_instruction=REFERENCE_PARSING_SYSTEM_PROMPT,
+        response_schema=ReferencesResponseSchema
+    )
     logger.debug("AI RAW RESPONSE [REFERENCES PARSING]: %s", raw)
 
-    result = extract_json(raw)
-    return result.get("references", [])
+    validated = parse_and_validate_ai_response(raw, ReferencesResponseSchema)
+    return [item.model_dump() for item in validated.references]
 
 
 MATCHING_SYSTEM_PROMPT = """You are an expert citation matching system. Match in-text citations to reference list entries and determine the match quality.
@@ -173,11 +187,15 @@ For each citation, determine:
 Return a JSON object:
 {schema_example}"""
 
-    raw = await async_call_gemini(prompt, system_instruction=MATCHING_SYSTEM_PROMPT)
+    raw = await async_call_gemini(
+        prompt,
+        system_instruction=MATCHING_SYSTEM_PROMPT,
+        response_schema=MatchesResponseSchema
+    )
     logger.debug("AI RAW RESPONSE [CITATIONS & REFERENCES MATCHING]: %s", raw)
 
-    result = extract_json(raw)
-    return result.get("matches", [])
+    validated = parse_and_validate_ai_response(raw, MatchesResponseSchema)
+    return [item.model_dump() for item in validated.matches]
 
 
 STYLE_CHECK_SYSTEM_PROMPT = """You are an expert citation style checker based on Formatly's multi-step document architecture. Analyze citations and references for compliance with the specified citation style manual.
@@ -227,8 +245,13 @@ For every style issue found, include the exact target_text (the citation or refe
 Return a JSON object:
 {schema_example}"""
 
-    raw = await async_call_gemini(prompt, system_instruction=STYLE_CHECK_SYSTEM_PROMPT)
+    raw = await async_call_gemini(
+        prompt,
+        system_instruction=STYLE_CHECK_SYSTEM_PROMPT,
+        response_schema=StyleWarningsResponseSchema
+    )
     logger.debug("AI RAW RESPONSE [STYLE CHECKING]: %s", raw)
 
-    result = extract_json(raw)
-    return result.get("style_warnings", [])
+    validated = parse_and_validate_ai_response(raw, StyleWarningsResponseSchema)
+    return [item.model_dump() for item in validated.style_warnings]
+

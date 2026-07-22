@@ -2,7 +2,8 @@ import json
 import logging
 from typing import Dict, List
 
-from .llm import async_call_gemini, extract_json
+from .llm import async_call_gemini, parse_and_validate_ai_response
+from ..models.schemas import UncitedClaimsResponseSchema
 
 logger = logging.getLogger(__name__)
 
@@ -82,14 +83,18 @@ Return JSON with structure:
 }}"""
 
     try:
-        raw = await async_call_gemini(prompt, system_instruction=UNCITED_CLAIMS_SYSTEM_PROMPT)
+        raw = await async_call_gemini(
+            prompt,
+            system_instruction=UNCITED_CLAIMS_SYSTEM_PROMPT,
+            response_schema=UncitedClaimsResponseSchema
+        )
         logger.debug("AI RAW RESPONSE [UNCITED CLAIMS DETECTOR]: %s", raw)
 
-        res = extract_json(raw)
-        claims = res.get("uncited_claims", [])
+        validated = parse_and_validate_ai_response(raw, UncitedClaimsResponseSchema)
 
         enriched = []
-        for c in claims:
+        for item in validated.uncited_claims:
+            c = item.model_dump()
             enriched.append({
                 "code": "UNCITED_FACTUAL_CLAIM",
                 "category": "citation_needed",
@@ -104,3 +109,4 @@ Return JSON with structure:
     except Exception as e:
         logger.error(f"Error detecting uncited claims: {e}")
         return []
+

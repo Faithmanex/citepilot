@@ -3,7 +3,8 @@ import json
 import logging
 import re
 import time
-from typing import Optional
+from typing import Optional, Type, TypeVar
+from pydantic import BaseModel, ValidationError
 
 from google import genai
 from google.genai import types as genai_types
@@ -117,3 +118,27 @@ def extract_json(text: str) -> dict:
             pass
 
     return {}
+
+
+TypeVar_T = TypeVar("TypeVar_T", bound=BaseModel)
+
+
+def parse_and_validate_ai_response(raw_text: str, schema_model: Type[TypeVar_T]) -> TypeVar_T:
+    """
+    Safely extracts JSON from raw LLM output and validates it against a Pydantic schema model.
+    Returns a validated Pydantic model instance. If validation fails or json parsing yields empty,
+    returns a default instance of schema_model and logs detailed validation warnings.
+    """
+    raw_dict = extract_json(raw_text)
+    try:
+        return schema_model.model_validate(raw_dict)
+    except ValidationError as ve:
+        logger.warning(f"Pydantic schema validation warning for {schema_model.__name__}: {ve}")
+        try:
+            return schema_model()
+        except Exception:
+            raise ve
+    except Exception as e:
+        logger.error(f"Unexpected error during schema validation for {schema_model.__name__}: {e}")
+        return schema_model()
+
