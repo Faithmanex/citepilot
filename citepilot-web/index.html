@@ -3,9 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CitePilot — Accessible Academic Citation & Audit Dashboard</title>
-<meta name="description" content="Verify every citation in your manuscript against Crossref, PubMed, OpenAlex and Retraction Watch. Supports APA, MLA, Chicago, Harvard, IEEE, Vancouver, OSCOLA, Turabian.">
-<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<title>CitePilot — Academic Citation & Reference List Checker | Audit APA, MLA, Harvard, Vancouver</title>
+<meta name="description" content="Instant academic citation and reference list audit tool. CitePilot verifies in-text citations against your bibliography and validates DOIs, titles, publication years, and retracted papers with Crossref, PubMed, and Retraction Watch.">
+<meta name="keywords" content="citation checker, reference list checker, APA citation check, reciteworks alternative, crossref validation, retraction watch, online citation audit, Vancouver citation check, MLA citation audit">
+<meta name="author" content="CitePilot">
+<meta name="robots" content="index, follow">
+
+<!-- Open Graph / WhatsApp / Facebook / LinkedIn Sharing Tags -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="CitePilot">
+<meta property="og:title" content="CitePilot — Academic Citation & Reference List Checker">
+<meta property="og:description" content="Audit your research manuscript instantly. Match in-text citations to reference entries and check for Crossref metadata errors and retracted papers in seconds.">
+<meta property="og:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%2314181F'/%3E%3Ccircle cx='256' cy='256' r='200' fill='none' stroke='%23961E14' stroke-width='24'/%3E%3Ccircle cx='256' cy='256' r='175' fill='%23FAF6EC' stroke='%23C7BC9F' stroke-width='8'/%3E%3Ctext x='256' y='345' font-family='Courier Prime, monospace' font-size='270' font-weight='900' fill='%23961E14' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:image:type" content="image/svg+xml">
+
+<!-- Twitter Card Meta Tags -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CitePilot — Academic Citation & Reference List Checker">
+<meta name="twitter:description" content="Audit your research manuscript instantly. Match in-text citations to reference entries and check for Crossref metadata errors and retracted papers.">
+<meta name="twitter:image" content="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%2314181F'/%3E%3Ccircle cx='256' cy='256' r='200' fill='none' stroke='%23961E14' stroke-width='24'/%3E%3Ccircle cx='256' cy='256' r='175' fill='%23FAF6EC' stroke='%23C7BC9F' stroke-width='8'/%3E%3Ctext x='256' y='345' font-family='Courier Prime, monospace' font-size='270' font-weight='900' fill='%23961E14' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E">
+
+<!-- Favicon Icon -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%2314181F'/%3E%3Ccircle cx='256' cy='256' r='200' fill='none' stroke='%23961E14' stroke-width='24'/%3E%3Ccircle cx='256' cy='256' r='175' fill='%23FAF6EC' stroke='%23C7BC9F' stroke-width='8'/%3E%3Ctext x='256' y='345' font-family='Courier Prime, monospace' font-size='270' font-weight='900' fill='%23961E14' text-anchor='middle'%3EC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&family=Inter:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -79,9 +100,11 @@
   }
   .logo{display:flex; align-items:center; gap:10px; font-weight:800; font-size:18px; cursor:pointer;}
   .logo .mark{
-    width:24px;height:24px;border:2px solid var(--red); border-radius:50%;
+    width:26px;height:26px;border:2px double var(--red); border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    font-size:11px; color:var(--red); transform:rotate(-8deg); font-weight:700;
+    font-family:'Courier Prime', monospace;
+    font-size:14px; color:var(--red); transform:rotate(-6deg); font-weight:800;
+    background:var(--paper-card); box-shadow:0 0 0 1px var(--rule);
   }
   nav.links{display:flex; gap:28px; font-size:14px; color:var(--ink-soft); margin-left:auto; margin-right:24px;}
   nav.links a{text-decoration:none; border-bottom:1px dashed transparent; padding-bottom:2px; transition:all .15s ease; min-height:44px; display:inline-flex; align-items:center;}
@@ -253,8 +276,11 @@
     font-weight:800; font-size:17px; color:#fff;
   }
   .brand-dash .mark{
-    width:9px;height:9px;border-radius:1px;background:var(--verified);
-    box-shadow:10px 0 0 var(--warning), 20px 0 0 var(--error); margin-right:12px;
+    width:24px;height:24px;border:2px double var(--red); border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Courier Prime', monospace;
+    font-size:13px; color:var(--red); font-weight:800; background:var(--paper-card);
+    transform:rotate(-6deg); margin-right:8px;
   }
   .nav-group{margin-bottom:4px;}
   .nav-label{
@@ -357,8 +383,16 @@
     border-radius:4px; font-size:12.5px; color:var(--brand); font-weight:600;
   }
   .fix-box b{color:var(--dash-ink);}
-  .fix-box ol{margin: 6px 0 0 0; padding-left: 20px; list-style-type: decimal; color: var(--dash-ink);}
-  .fix-box li{display: list-item; padding: 2px 0; border-bottom: none; font-size: 12.5px; font-weight: normal;}
+  .fix-box ol, ol.resolution-steps {
+    margin: 4px 0 0 0;
+    padding-left: 20px;
+    list-style-type: decimal;
+  }
+  .fix-box li, ol.resolution-steps li {
+    margin-bottom: 3px;
+    font-weight: 500;
+    color: var(--dash-ink);
+  }
 
   table{width:100%; border-collapse:collapse; font-size:13.5px;}
   th{text-align:left; font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--dash-ink-faint); font-weight:800; padding:0 10px 12px; border-bottom:2px solid var(--line);}
@@ -424,7 +458,7 @@
 
 <header role="banner">
   <div class="global-nav">
-    <div class="logo" id="nav-logo" tabindex="0" role="button" aria-label="CitePilot Home"><span class="mark" aria-hidden="true">✓</span>CitePilot</div>
+    <div class="logo" id="nav-logo" tabindex="0" role="button" aria-label="CitePilot Home"><span class="mark" aria-hidden="true">C</span>CitePilot</div>
     <nav class="links" id="nav-marketing-links" role="navigation" aria-label="Main Navigation">
       <a href="#problem" id="nav-link-problem">Why it matters</a>
       <a href="#how" id="nav-link-how">How it works</a>
@@ -599,26 +633,26 @@
 <div class="view dash-body" id="view-dashboard" role="region" aria-label="Audit Workspace Dashboard">
   <div class="app">
     <aside class="sidebar" role="navigation" aria-label="Audit Drawer Navigation">
-      <div class="brand-dash"><span class="mark" aria-hidden="true"></span>CitePilot Audit</div>
+      <div class="brand-dash"><span class="mark" aria-hidden="true">C</span>CitePilot Audit</div>
 
       <div class="nav-group">
         <div class="nav-label">Audit &amp; Verification</div>
-        <button class="nav-item active" data-panel="overview" aria-current="page" aria-label="Overview Panel"><span class="ic" aria-hidden="true">◆</span>Overview</button>
-        <button class="nav-item" data-panel="matching" aria-label="Citation Matching Panel"><span class="ic" aria-hidden="true">↔</span>Citation Matching<span class="badge err" id="badge-matching">0</span></button>
-        <button class="nav-item" data-panel="crossref" aria-label="Crossref and Retraction Panel"><span class="ic" aria-hidden="true">✓</span>Crossref &amp; Retraction<span class="badge err" id="badge-crossref">0</span></button>
-        <button class="nav-item" data-panel="style" aria-label="Style Rules Panel"><span class="ic" aria-hidden="true">§</span>Style Rules<span class="badge warn" id="badge-style">0</span></button>
-        <button class="nav-item" data-panel="claims" aria-label="Uncited Claims Panel"><span class="ic" aria-hidden="true">!</span>Uncited Claims<span class="badge warn" id="badge-claims">0</span></button>
+        <button class="nav-item active" data-panel="overview" aria-current="page" aria-selected="true" aria-label="Overview Panel"><span class="ic" aria-hidden="true">◆</span>Overview</button>
+        <button class="nav-item" data-panel="matching" aria-current="false" aria-selected="false" aria-label="Citation Matching Panel"><span class="ic" aria-hidden="true">↔</span>Citation Matching<span class="badge err" id="badge-matching">0</span></button>
+        <button class="nav-item" data-panel="crossref" aria-current="false" aria-selected="false" aria-label="Crossref and Retraction Panel"><span class="ic" aria-hidden="true">✓</span>Crossref &amp; Retraction<span class="badge err" id="badge-crossref">0</span></button>
+        <button class="nav-item" data-panel="style" aria-current="false" aria-selected="false" aria-label="Style Rules Panel"><span class="ic" aria-hidden="true">§</span>Style Rules<span class="badge warn" id="badge-style">0</span></button>
+        <button class="nav-item" data-panel="claims" aria-current="false" aria-selected="false" aria-label="Uncited Claims Panel"><span class="ic" aria-hidden="true">!</span>Uncited Claims<span class="badge warn" id="badge-claims">0</span></button>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Analytics &amp; Layout</div>
-        <button class="nav-item" data-panel="recency" aria-label="Recency Analytics Panel"><span class="ic" aria-hidden="true">◔</span>Recency Analytics</button>
-        <button class="nav-item" data-panel="structure" aria-label="Document Layout Panel"><span class="ic" aria-hidden="true">▤</span>Document Layout</button>
+        <button class="nav-item" data-panel="recency" aria-current="false" aria-selected="false" aria-label="Recency Analytics Panel"><span class="ic" aria-hidden="true">◔</span>Recency Analytics</button>
+        <button class="nav-item" data-panel="structure" aria-current="false" aria-selected="false" aria-label="Document Layout Panel"><span class="ic" aria-hidden="true">▤</span>Document Layout</button>
       </div>
 
       <div class="nav-group">
         <div class="nav-label">Output &amp; Export</div>
-        <button class="nav-item" data-panel="export" aria-label="Feedback and Export Panel"><span class="ic" aria-hidden="true">⇩</span>Feedback &amp; Export</button>
+        <button class="nav-item" data-panel="export" aria-current="false" aria-selected="false" aria-label="Feedback and Export Panel"><span class="ic" aria-hidden="true">⇩</span>Feedback &amp; Export</button>
       </div>
     </aside>
 
@@ -1016,9 +1050,11 @@
       if (isTarget) {
         i.classList.add('active');
         i.setAttribute('aria-current', 'page');
+        i.setAttribute('aria-selected', 'true');
       } else {
         i.classList.remove('active');
-        i.removeAttribute('aria-current');
+        i.setAttribute('aria-current', 'false');
+        i.setAttribute('aria-selected', 'false');
       }
     });
     panels.forEach(p => {
@@ -1052,6 +1088,11 @@
 
     const isRefOnly = currentMode === 'reference_only';
 
+    const overviewH1 = document.querySelector('#panel-overview .page-head h1');
+    if (overviewH1) {
+      overviewH1.innerText = isRefOnly ? "Reference-List-Only Audit Report" : "Full Manuscript Audit Report";
+    }
+
     const overviewSubtitle = document.getElementById('overview-subtitle');
     if (overviewSubtitle) {
       if (analysisData) {
@@ -1064,9 +1105,6 @@
           : "Full Manuscript Audit mode active. Run an audit above to generate real-time citation analysis.";
       }
     }
-
-    const reportHeaders = document.querySelectorAll('.report-header, #report-header-text, #report-header-title');
-    reportHeaders.forEach(el => { el.innerText = isRefOnly ? "Reference-List-Only Audit Report" : "Full Manuscript Audit Report"; });
 
     // Update placeholders and UI when toggled
     const dropSub = document.getElementById('drop-box-subtitle');
@@ -1357,7 +1395,7 @@
               <div class="li-sub"><b>${(r.raw_entry || '').substring(0, 90)}...</b></div>
               <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
                 <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-                <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <ol class="resolution-steps">
                   <li>Locate retracted paper in manuscript.</li>
                   <li>${r.retraction_info?.how_to_fix || 'Remove this retracted source from your manuscript.'}</li>
                 </ol>
@@ -1377,7 +1415,7 @@
               <div class="li-sub">In-text citation <b>'${c.raw_text}'</b> (Paragraph ${(c.paragraph_index || 0) + 1}) has no entry in the reference list.</div>
               <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
                 <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-                <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <ol class="resolution-steps">
                   <li>Locate in-text citation '${c.raw_text}' in paragraph ${(c.paragraph_index || 0) + 1}.</li>
                   <li>Add full entry for '${c.raw_text}' to reference list.</li>
                 </ol>
@@ -1399,7 +1437,7 @@
                 <div class="li-sub">${d.message || ''}</div>
                 <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
                   <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-                  <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                  <ol class="resolution-steps">
                     <li>Review metadata field '${(d.field || '').toUpperCase()}': ${d.message || ''}.</li>
                     <li>${d.how_to_fix || 'Verify entry details against official publisher record.'}</li>
                   </ol>
@@ -1421,7 +1459,7 @@
               ${w.suggestion ? `
                 <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
                   <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-                  <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                  <ol class="resolution-steps">
                     <li>Review style rule violation '${w.code || 'STYLE WARNING'}'.</li>
                     <li>${w.suggestion}</li>
                   </ol>
@@ -1441,7 +1479,7 @@
               <div class="li-sub">"${(c.claim_text || '').substring(0, 100)}..." (Paragraph ${(c.paragraph_index || 0) + 1})</div>
               <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
                 <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-                <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+                <ol class="resolution-steps">
                   <li>Locate assertion in paragraph ${(c.paragraph_index || 0) + 1}.</li>
                   <li>${c.suggestion || 'Add an empirical source citation.'}</li>
                 </ol>
@@ -1489,7 +1527,7 @@
           fixStep = `
             <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
               <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <ol class="resolution-steps">
                 <li>Locate in-text citation marker '${c.raw_text}' in paragraph ${(c.paragraph_index || 0) + 1}.</li>
                 <li>Add an entry for '${c.raw_text}' to reference list or remove citation marker.</li>
               </ol>
@@ -1499,7 +1537,7 @@
           fixStep = `
             <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
               <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <ol class="resolution-steps">
                 <li>Verify citation details: ${issueDesc}.</li>
                 <li>Align in-text citation spelling/year with reference list entry.</li>
               </ol>
@@ -1537,7 +1575,7 @@
           fixStep = `
             <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
               <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <ol class="resolution-steps">
                 <li>Identify retracted publication in reference list.</li>
                 <li>${fixText}</li>
               </ol>
@@ -1547,7 +1585,7 @@
           fixStep = `
             <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
               <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <ol class="resolution-steps">
                 <li>Cross-check metadata discrepancies: ${discList}.</li>
                 <li>Update reference entry details to match publisher metadata.</li>
               </ol>
@@ -1556,7 +1594,7 @@
           fixStep = `
             <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
               <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <ol class="resolution-steps">
                 <li>Verify DOI (${r.parsed_doi || 'N/A'}) or publication title on Crossref.</li>
                 <li>Ensure title, authors, and publication year match official record.</li>
               </ol>
@@ -1587,7 +1625,7 @@
         const fixBox = w.suggestion ? `
           <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
             <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-            <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+            <ol class="resolution-steps">
               <li>Review targeted citation in manuscript.</li>
               <li>${w.suggestion}</li>
             </ol>
@@ -1623,7 +1661,7 @@
             <div class="claim-explain">${c.educational_context || ''}</div>
             <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:8px;">
               <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <ol class="resolution-steps">
                 <li>Review un-authored assertion in paragraph ${(c.paragraph_index || 0) + 1}.</li>
                 <li>${c.suggestion || 'Add an empirical reference citation.'}</li>
               </ol>
@@ -1657,7 +1695,7 @@
           const fix = item.suggestion || item.how_to_fix ? `
             <div class="fix-box" role="note" aria-label="Resolution guidance" style="margin-top:6px;">
               <div style="font-weight:700; margin-bottom:2px;">Resolution guidance:</div>
-              <ol class="resolution-steps" style="margin:0; padding-left:18px;">
+              <ol class="resolution-steps">
                 <li>Inspect document layout structure element.</li>
                 <li>${item.suggestion || item.how_to_fix}</li>
               </ol>
