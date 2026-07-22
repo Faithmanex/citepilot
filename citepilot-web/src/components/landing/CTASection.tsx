@@ -20,9 +20,9 @@ export default function CTASection({ onLaunchApp }: CTASectionProps) {
           Upload a document and see exactly which citations hold up — and which
           ones need a second look — in minutes.
         </p>
-        <div className="mt-5">
+        <div className="mt-5 max-w-[320px] sm:max-w-none mx-auto">
           <button
-            className="btn btn-primary"
+            className="btn btn-primary w-full sm:w-auto"
             onClick={onLaunchApp}
             aria-label="Open Audit Workspace"
           >

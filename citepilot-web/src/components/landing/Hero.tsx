@@ -21,9 +21,9 @@ export default function Hero({ onLaunchApp }: HeroProps) {
             each source against Crossref, PubMed and OpenAlex for anything
             fabricated, mismatched or quietly retracted.
           </p>
-          <div className="flex gap-3.5 mt-6 sm:mt-7.5 flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-3.5 mt-6 sm:mt-7.5">
             <button
-              className="btn btn-primary w-full sm:w-auto"
+              className="btn btn-primary w-full sm:w-auto text-center"
               onClick={onLaunchApp}
               aria-label="Check your first document"
             >
