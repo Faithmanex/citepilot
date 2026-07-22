@@ -164,3 +164,7 @@ def parse_txt_structured(raw_text: str) -> List[Dict]:
             })
             idx += 1
     return meta
+
+
+_parse_txt_structured = parse_txt_structured
+
