@@ -11,73 +11,73 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-100 bg-paper/95 backdrop-blur-md border-b-2 border-rule"
+      className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white"
       role="banner"
     >
-      <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 max-w-[1200px] mx-auto w-full">
+      <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 max-w-[1240px] mx-auto w-full">
+        {/* Logo */}
         <div
-          className="flex items-center gap-2.5 font-extrabold text-lg cursor-pointer"
+          className="flex items-center gap-2.5 font-dash font-extrabold text-xl cursor-pointer tracking-tight"
           id="nav-logo"
           tabIndex={0}
           role="button"
           aria-label="CitePilot Home"
         >
           <span
-            className="w-6 h-6 border-2 border-red rounded-full flex items-center justify-center text-[11px] text-red -rotate-8 font-bold"
+            className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center text-xs text-white font-black"
             aria-hidden="true"
           >
-            ✓
+            CP
           </span>
           CitePilot
         </div>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation Links */}
         <nav
-          className="hidden md:flex gap-7 text-sm text-ink-soft ml-auto mr-6"
+          className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300 ml-auto mr-8"
           id="nav-marketing-links"
           role="navigation"
           aria-label="Main Navigation"
         >
           <a
             href="#problem"
-            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
+            className="hover:text-white transition-colors py-2"
           >
-            Why it matters
+            Why It Matters
           </a>
           <a
             href="#how"
-            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
+            className="hover:text-white transition-colors py-2"
           >
-            How it works
+            How It Works
           </a>
           <a
             href="#styles"
-            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
+            className="hover:text-white transition-colors py-2"
           >
-            Citation styles
+            Citation Standards
           </a>
           <a
             href="#who"
-            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
+            className="hover:text-white transition-colors py-2"
           >
-            Who it&apos;s for
+            Who It&apos;s For
           </a>
           <a
             href="#pricing"
-            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px] font-bold text-brand"
+            className="text-blue-400 hover:text-blue-300 font-semibold transition-colors py-2"
           >
-            Pricing & Subscription
+            Plans &amp; Pricing
           </a>
         </nav>
 
         <div className="hidden md:block">
           <button
-            className="btn btn-primary"
+            className="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white border-none font-semibold px-5 py-2.5 text-sm"
             id="btn-toggle-dashboard"
             onClick={onToggleDashboard}
             aria-label="Open Audit Workspace"
           >
-            <i className="fas fa-play text-[10px]" aria-hidden="true" />{" "}
             Audit Workspace
           </button>
         </div>
@@ -85,58 +85,58 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
         {/* Mobile Hamburger Button */}
         <button
           type="button"
-          className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] p-2 text-ink border-2 border-ink rounded-md bg-paper-card"
+          className="md:hidden flex items-center justify-center p-2 text-slate-300 border border-slate-700 rounded-md bg-slate-800"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           aria-expanded={mobileMenuOpen}
           aria-label="Toggle Navigation Menu"
         >
-          <i className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-lg`} />
+          <i className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-base`} />
         </button>
       </div>
 
       {/* Mobile Navigation Dropdown */}
       {mobileMenuOpen && (
         <nav
-          className="md:hidden bg-paper-card border-t border-rule px-4 py-4 flex flex-col gap-3"
+          className="md:hidden bg-slate-900 border-t border-slate-800 px-4 py-4 flex flex-col gap-3 text-slate-300"
           aria-label="Mobile Main Navigation"
         >
           <a
             href="#problem"
-            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
+            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Why it matters
+            Why It Matters
           </a>
           <a
             href="#how"
-            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
+            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
             onClick={() => setMobileMenuOpen(false)}
           >
-            How it works
+            How It Works
           </a>
           <a
             href="#styles"
-            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
+            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Citation styles
+            Citation Standards
           </a>
           <a
             href="#who"
-            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
+            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Who it&apos;s for
+            Who It&apos;s For
           </a>
           <a
             href="#pricing"
-            className="text-sm font-bold text-brand px-3 py-2 rounded border border-transparent hover:bg-paper"
+            className="text-sm font-semibold text-blue-400 px-3 py-2 rounded hover:bg-slate-800"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Pricing & Subscription
+            Plans &amp; Pricing
           </a>
           <button
-            className="btn btn-primary w-full mt-2"
+            className="btn btn-primary bg-blue-600 text-white w-full mt-2"
             id="btn-toggle-dashboard-mobile"
             onClick={() => {
               setMobileMenuOpen(false);
@@ -144,7 +144,6 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
             }}
             aria-label="Open Audit Workspace"
           >
-            <i className="fas fa-play text-[10px]" aria-hidden="true" />{" "}
             Audit Workspace
           </button>
         </nav>
@@ -152,4 +151,3 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
     </header>
   );
 }
-

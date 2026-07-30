@@ -1,61 +1,64 @@
+"use client";
+
 export default function WhyItMatters() {
   return (
-    <section className="py-12 sm:py-20 border-t-2 border-rule" id="problem">
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-8">
-        <div className="max-w-[58ch] mb-8 sm:mb-11">
-          <span className="font-type text-[13px] font-bold tracking-wider text-ink-faint block mb-2.5 before:content-['§\\0020']">
-            Why it matters
+    <section className="py-20 border-b border-slate-200 bg-slate-50" id="problem">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-8">
+        <div className="max-w-3xl mb-12 space-y-3">
+          <span className="inline-block px-3 py-1 rounded bg-slate-200 text-slate-700 text-xs font-mono font-semibold uppercase tracking-wider">
+            Risk Analysis
           </span>
-          <h2 className="font-type font-bold text-[clamp(24px,3vw,32px)] leading-[1.25] m-0">
-            Three ways a reference list quietly fails you
+          <h2 className="text-3xl sm:text-4xl font-dash font-extrabold text-slate-900 tracking-tight">
+            Critical Integrity Risks in Academic Reference Lists
           </h2>
-          <p className="mt-3.5 text-ink-soft text-base leading-[1.6]">
-            None of these show up in a normal proofread. They show up in peer
-            review, in a viva, or in a retraction notice — after it&apos;s too
-            late to fix quietly.
+          <p className="text-slate-600 text-base leading-relaxed">
+            Standard word processor spellcheckers do not validate bibliographies. Reference list failures manifest during peer review, institutional compliance audits, or post-publication reviews.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6">
-          <div className="bg-paper-card border-2 border-rule p-6 pr-5.5 relative shadow-[3px_3px_0_rgba(34,29,22,0.06)]">
-            <div className="w-[76px] h-[76px] rounded-full border-3 border-red text-red flex items-center justify-center text-center font-bold text-[9.5px] tracking-wider uppercase leading-[1.3] p-1.5 absolute -top-4 -right-3.5 -rotate-10 bg-paper-card">
-              fabricated
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-4">
+            <div className="w-10 h-10 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-bold text-base border border-red-200">
+              <i className="fas fa-search-minus" />
             </div>
-            <h3 className="font-type text-[17px] font-bold mt-1.5 mb-2.5 max-w-[85%]">
-              A citation that doesn&apos;t exist
+            <span className="inline-block px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-red-100 text-red-800 border border-red-200">
+              Unverified Source
+            </span>
+            <h3 className="text-lg font-dash font-bold text-slate-900">
+              Fabricated or Missing Metadata
             </h3>
-            <p className="text-[14.5px] leading-[1.6] text-ink-soft m-0">
-              AI-assisted drafting can invent plausible sources with real author
-              names and fake page numbers. CitePilot checks every source against
-              live databases, not just your own list.
+            <p className="text-sm leading-relaxed text-slate-600">
+              LLM drafting tools frequently generate plausible citation strings with real author names but invalid DOIs or fake volume numbers. CitePilot verifies every record against live registries.
             </p>
           </div>
 
-          <div className="bg-paper-card border-2 border-rule p-6 pr-5.5 relative shadow-[3px_3px_0_rgba(34,29,22,0.06)]">
-            <div className="w-[76px] h-[76px] rounded-full border-3 border-ochre text-ochre flex items-center justify-center text-center font-bold text-[9.5px] tracking-wider uppercase leading-[1.3] p-1.5 absolute -top-4 -right-3.5 rotate-7 bg-paper-card">
-              mismatched
+          <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-4">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center font-bold text-base border border-amber-200">
+              <i className="fas fa-exclamation-circle" />
             </div>
-            <h3 className="font-type text-[17px] font-bold mt-1.5 mb-2.5 max-w-[85%]">
-              A reference that says something else
+            <span className="inline-block px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+              Metadata Discrepancy
+            </span>
+            <h3 className="text-lg font-dash font-bold text-slate-900">
+              Publication Year &amp; Title Mismatches
             </h3>
-            <p className="text-[14.5px] leading-[1.6] text-ink-soft m-0">
-              The source exists, but the claim attributed to it doesn&apos;t
-              hold up — a wrong year, a misquoted finding, a page number
-              pointing to the wrong section.
+            <p className="text-sm leading-relaxed text-slate-600">
+              The cited publication exists, but metadata fields contain discrepancies — incorrect year, author order mismatch, or page numbers pointing to an unrelated article.
             </p>
           </div>
 
-          <div className="bg-paper-card border-2 border-rule p-6 pr-5.5 relative shadow-[3px_3px_0_rgba(34,29,22,0.06)]">
-            <div className="w-[76px] h-[76px] rounded-full border-3 border-green text-green flex items-center justify-center text-center font-bold text-[9.5px] tracking-wider uppercase leading-[1.3] p-1.5 absolute -top-4 -right-3.5 -rotate-6 bg-paper-card">
-              retracted
+          <div className="bg-white border border-slate-200 rounded-xl p-8 shadow-sm space-y-4">
+            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-base border border-emerald-200">
+              <i className="fas fa-[#059669] fa-shield-alt" />
             </div>
-            <h3 className="font-type text-[17px] font-bold mt-1.5 mb-2.5 max-w-[85%]">
-              A paper that&apos;s since been withdrawn
+            <span className="inline-block px-2.5 py-0.5 rounded text-xs font-mono font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Retraction Notice
+            </span>
+            <h3 className="text-lg font-dash font-bold text-slate-900">
+              Withdrawn or Retracted Papers
             </h3>
-            <p className="text-[14.5px] leading-[1.6] text-ink-soft m-0">
-              A source was solid when published, then formally retracted years
-              later. CitePilot cross-references Retraction Watch so an outdated
-              citation doesn&apos;t undercut your argument.
+            <p className="text-sm leading-relaxed text-slate-600">
+              Articles may have been formally retracted post-publication. CitePilot queries Retraction Watch to prevent reliance on invalid research.
             </p>
           </div>
         </div>
@@ -63,4 +66,3 @@ export default function WhyItMatters() {
     </section>
   );
 }
-

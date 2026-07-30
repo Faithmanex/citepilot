@@ -1,57 +1,58 @@
+"use client";
+
 export default function HowItWorks() {
   const steps = [
     {
       num: "01",
-      title: "Upload your draft",
-      desc: "Word or PDF, any length. CitePilot parses structure, footnotes and your reference list automatically.",
+      title: "Document Ingestion",
+      desc: "Upload Microsoft Word (.docx), PDF, or plain text manuscripts. CitePilot parses body sections, in-text citations, footnotes, and bibliographies.",
     },
     {
       num: "02",
-      title: "Citations get extracted",
-      desc: "Every in-text citation is matched to its entry in your reference list, in whichever style you wrote it in.",
+      title: "Bidirectional Matching Engine",
+      desc: "Every in-text citation is parsed and mapped to its corresponding bibliography entry, supporting author-date, numerical, and footnote citation styles.",
     },
     {
       num: "03",
-      title: "Sources get verified",
-      desc: "Each reference is checked live against Crossref, PubMed, OpenAlex and Retraction Watch.",
+      title: "Live Database Verification",
+      desc: "References are validated against Crossref, PubMed, OpenAlex, and Retraction Watch APIs to verify DOIs, title accuracy, and publication metadata.",
     },
     {
       num: "04",
-      title: "Review, annotated",
-      desc: "Get your manuscript back with every issue marked in place, and a plain-language note for each.",
+      title: "Automated Report & Export",
+      desc: "Receive an itemized audit report detailing matched citations, metadata discrepancies, missing references, and export options (Word, BibTeX, RIS).",
     },
   ];
 
   return (
-    <section className="py-12 sm:py-20 border-t-2 border-rule" id="how">
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-8">
-        <div className="max-w-[58ch] mb-8 sm:mb-11">
-          <span className="font-type text-[13px] font-bold tracking-wider text-ink-faint block mb-2.5 before:content-['§\\0020']">
-            How it works
+    <section className="py-20 border-b border-slate-200 bg-white" id="how">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-8">
+        <div className="max-w-3xl mb-12 space-y-3">
+          <span className="inline-block px-3 py-1 rounded bg-slate-100 text-slate-700 text-xs font-mono font-semibold uppercase tracking-wider border border-slate-200">
+            System Workflow
           </span>
-          <h2 className="font-type font-bold text-[clamp(24px,3vw,32px)] leading-[1.25] m-0">
-            Upload, and read the results in minutes
+          <h2 className="text-3xl sm:text-4xl font-dash font-extrabold text-slate-900 tracking-tight">
+            Automated 4-Stage Verification Pipeline
           </h2>
-          <p className="mt-3.5 text-ink-soft text-base leading-[1.6]">
-            One pipeline, four stages — from a raw document to an annotated,
-            citation-by-citation report.
+          <p className="text-slate-600 text-base leading-relaxed">
+            From raw manuscript input to a comprehensive, itemized citation audit report.
           </p>
         </div>
 
-        <div className="border-2 border-rule bg-paper-card">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {steps.map((step) => (
             <div
               key={step.num}
-              className="grid grid-cols-1 sm:grid-cols-[70px_1fr] gap-2 sm:gap-5 p-4 sm:p-[22px_26px] border-b border-dashed border-rule last:border-b-0 items-start"
+              className="bg-slate-50 border border-slate-200 rounded-xl p-6 flex gap-5 items-start shadow-sm"
             >
-              <span className="font-type font-bold text-base text-ink-faint pt-0.5">
+              <span className="w-10 h-10 rounded-lg bg-blue-600 text-white font-mono font-bold text-sm flex items-center justify-center flex-none">
                 {step.num}
               </span>
-              <div>
-                <h3 className="text-[16.5px] font-bold m-0 mb-1.5">
+              <div className="space-y-1.5">
+                <h3 className="text-lg font-dash font-bold text-slate-900">
                   {step.title}
                 </h3>
-                <p className="text-[15px] leading-[1.6] text-ink-soft m-0">
+                <p className="text-sm leading-relaxed text-slate-600">
                   {step.desc}
                 </p>
               </div>
@@ -62,4 +63,3 @@ export default function HowItWorks() {
     </section>
   );
 }
-

@@ -6,106 +6,101 @@ interface HeroProps {
 
 export default function Hero({ onLaunchApp }: HeroProps) {
   return (
-    <section className="py-12 md:py-20 overflow-hidden relative border-b-2 border-rule bg-paper">
-      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-        {/* Left Hero Content */}
+    <section className="py-16 md:py-24 bg-slate-900 text-white relative overflow-hidden border-b border-slate-800">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        {/* Left Enterprise Hero Text */}
         <div className="lg:col-span-6 space-y-6">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border-2 border-ink/80 bg-paper-card text-ink font-mono text-xs font-bold tracking-wider shadow-sm">
-            <span className="w-2 h-2 rounded-full bg-red animate-pulse" />
-            AI CITATION AUDIT ENGINE
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-400 font-mono text-xs font-semibold tracking-wide">
+            <span className="w-2 h-2 rounded-full bg-blue-400" />
+            ENTERPRISE ACADEMIC INTEGRITY PLATFORM
           </div>
 
-          <h1 className="font-type font-bold text-3xl sm:text-4xl md:text-5xl leading-[1.12] text-ink tracking-tight">
-            Verify every citation. <br className="hidden sm:inline" />
-            <span className="underline decoration-wavy decoration-red underline-offset-6">
-              Before your reader does.
-            </span>
+          <h1 className="font-dash font-extrabold text-4xl sm:text-5xl lg:text-6xl leading-[1.1] tracking-tight">
+            Academic Citation &amp; Reference Audit Engine
           </h1>
 
-          <p className="text-base sm:text-lg leading-relaxed text-ink-soft font-medium max-w-xl">
-            CitePilot marks up your manuscript like an expert academic editor — matching every in-text citation to your bibliography, then verifying each source against Crossref, PubMed, OpenAlex, and Retraction Watch.
+          <p className="text-slate-300 text-base sm:text-lg leading-relaxed font-normal max-w-xl">
+            CitePilot validates every in-text citation and reference entry across your manuscript. Automatically cross-check DOIs, titles, and publication records against Crossref, PubMed, OpenAlex, and Retraction Watch.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3.5 pt-2">
+          <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <button
-              className="btn btn-primary text-center group shadow-md hover:shadow-lg transition-all"
+              className="btn btn-primary text-center px-6 py-3 text-base shadow-md font-semibold"
               onClick={onLaunchApp}
-              aria-label="Check your first document"
+              aria-label="Open Audit Workspace"
             >
-              <i className="fas fa-play text-xs group-hover:scale-110 transition-transform" />
-              Check your first document
+              Open Audit Workspace
             </button>
             <a
               href="#how"
-              className="btn btn-ghost text-center hover:bg-paper-card transition-colors"
+              className="btn bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 text-center px-6 py-3 text-base font-semibold transition-colors"
             >
-              <i className="fas fa-magic text-xs text-ink-faint" />
-              See how it works
+              System Overview
             </a>
           </div>
 
-          <div className="pt-3 flex flex-wrap items-center gap-2 font-mono text-xs font-semibold text-ink-faint">
-            <span className="px-2 py-1 bg-paper-card border border-rule rounded">APA 7</span>
-            <span className="px-2 py-1 bg-paper-card border border-rule rounded">MLA 9</span>
-            <span className="px-2 py-1 bg-paper-card border border-rule rounded">Chicago</span>
-            <span className="px-2 py-1 bg-paper-card border border-rule rounded">Harvard</span>
-            <span className="px-2 py-1 bg-paper-card border border-rule rounded">IEEE</span>
-            <span className="px-2 py-1 bg-paper-card border border-rule rounded">Vancouver</span>
-            <span className="px-2 py-1 bg-paper-card border border-rule rounded">+3 more</span>
+          <div className="pt-4 flex flex-wrap items-center gap-2 font-mono text-xs text-slate-400">
+            <span className="text-slate-500 font-sans font-medium">Supported Citation Standards:</span>
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">APA 7</span>
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">MLA 9</span>
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">Chicago 17</span>
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">Harvard</span>
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">IEEE</span>
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">Vancouver</span>
+            <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 rounded text-slate-300">OSCOLA</span>
           </div>
         </div>
 
-        {/* Right Manuscript Interactive Card Mockup */}
+        {/* Right Product Workspace Mockup */}
         <div className="lg:col-span-6">
-          <div className="bg-paper-card border-3 border-ink rounded-2xl p-5 sm:p-7 shadow-2xl relative transition-all duration-300 hover:shadow-[0_16px_36px_rgba(0,0,0,0.15)]">
-            <div className="flex items-center justify-between pb-4 mb-5 border-b-2 border-dashed border-rule">
-              <div className="flex items-center gap-2.5 font-mono text-xs font-bold text-ink-faint">
-                <i className="fas fa-file-alt text-brand text-sm" />
-                <span>ch3_literature_review.docx — page 14</span>
+          <div className="bg-slate-950 border border-slate-800 rounded-xl shadow-2xl overflow-hidden">
+            {/* Mock Header */}
+            <div className="bg-slate-900 px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span className="w-3 h-3 rounded-full bg-slate-700 inline-block" />
+                <span>manuscript_literature_review.docx</span>
               </div>
-              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
-                Live Audit Preview
+              <span className="px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-xs font-mono border border-emerald-500/20">
+                Audit Active
               </span>
             </div>
 
-            <div className="font-type text-sm sm:text-base leading-[2.1] text-ink relative min-h-[160px]">
+            {/* Mock Content */}
+            <div className="p-6 font-sans text-sm text-slate-300 leading-relaxed space-y-4">
               <p>
-                Recent estimates of citation error in student manuscripts remain persistently understated{" "}
-                <span className="relative inline-block px-1 bg-red-bg text-red font-bold rounded cursor-pointer group">
+                Recent empirical models of citation discrepancies in higher education manuscripts remain significantly under-reported{" "}
+                <span className="bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded border border-red-500/40 font-mono text-xs font-semibold">
                   (Alavi &amp; Reyes, 2021)
-                  <span className="absolute -top-9 right-0 bg-red text-white text-[11px] font-sans font-bold px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
-                    ⚠ Fabricated / Not in Crossref
-                  </span>
                 </span>
-                , particularly across dense reference lists. A correction model proposed shortly after{" "}
-                <span className="relative inline-block px-1 bg-amber-100 text-amber-900 font-bold rounded border-b-2 border-amber-500 cursor-pointer group">
-                  (Okafor, 2019)
-                  <span className="absolute -top-9 right-0 bg-amber-800 text-white text-[11px] font-sans font-bold px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
-                    Check page range
-                  </span>
-                </span>{" "}
-                has been widely cited since, alongside commentary on the same dataset{" "}
-                <span className="relative inline-block px-1 bg-emerald-100 text-emerald-900 font-bold rounded border-b-2 border-emerald-600">
-                  (Chen &amp; Park, 2022)
-                </span>
-                .
+                , particularly across multi-author systematic literature reviews.
               </p>
-            </div>
 
-            {/* Audit Status Legend */}
-            <div className="mt-6 pt-4 border-t border-rule grid grid-cols-3 gap-2 font-mono text-[11px] font-bold text-ink-soft">
-              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 p-2 rounded-lg">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 flex-none" />
-                <span className="truncate">Verified</span>
+              {/* Real-time Audit Card */}
+              <div className="bg-slate-900 border border-slate-800 rounded-lg p-4 font-mono text-xs space-y-2">
+                <div className="flex items-center justify-between text-red-400 font-semibold">
+                  <span className="flex items-center gap-1.5">
+                    <i className="fas fa-exclamation-triangle" /> Crossref Database Exception
+                  </span>
+                  <span>Flagged #104</span>
+                </div>
+                <p className="text-slate-400 font-sans text-xs">
+                  Source metadata not found in Crossref registry. Reference entry &apos;Alavi &amp; Reyes (2021)&apos; missing from bibliography.
+                </p>
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="px-2 py-0.5 bg-red-950 text-red-300 border border-red-800 rounded text-[11px]">
+                    Uncited Reference
+                  </span>
+                  <span className="text-slate-500 text-[11px]">Confidence Score: 0.98</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 p-2 rounded-lg">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-600 flex-none" />
-                <span className="truncate">Check Info</span>
-              </div>
-              <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 p-2 rounded-lg">
-                <span className="w-2.5 h-2.5 rounded-full bg-red flex-none" />
-                <span className="truncate">Unverified</span>
-              </div>
+
+              <p className="text-slate-400 text-xs">
+                Subsequent verification frameworks{" "}
+                <span className="bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/40 font-mono text-xs font-semibold">
+                  (Chen &amp; Park, 2022)
+                </span>{" "}
+                confirmed 100% DOI alignment with PubMed metadata records.
+              </p>
             </div>
           </div>
         </div>

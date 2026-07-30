@@ -6,27 +6,24 @@ interface CTASectionProps {
 
 export default function CTASection({ onLaunchApp }: CTASectionProps) {
   return (
-    <section className="text-center py-25" id="cta">
-      <div className="max-w-[1080px] mx-auto px-8">
-        <div className="w-[150px] h-[150px] mx-auto mb-7 rounded-full border-4 border-green text-green flex items-center justify-center font-type font-bold text-base tracking-wider -rotate-7 uppercase leading-[1.3]">
-          Ready for
-          <br />
-          submission
+    <section className="py-24 bg-slate-900 text-white text-center border-b border-slate-800" id="cta">
+      <div className="max-w-[1240px] mx-auto px-4 sm:px-8 space-y-6">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-400 font-mono text-xs font-semibold tracking-wide">
+          <i className="fas fa-check-circle" /> READY FOR SUBMISSION
         </div>
-        <h2 className="font-type font-bold text-[clamp(24px,3vw,32px)] leading-[1.25] m-0">
-          Send your next draft through a citation check first.
+        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-dash font-extrabold text-white tracking-tight max-w-3xl mx-auto leading-tight">
+          Ensure Citation Integrity Before Journal Submission
         </h2>
-        <p className="mt-3.5 text-ink-soft text-base leading-[1.6]">
-          Upload a document and see exactly which citations hold up — and which
-          ones need a second look — in minutes.
+        <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
+          Audit your research manuscript in seconds. Verify every citation against live Crossref, PubMed, and Retraction Watch databases.
         </p>
-        <div className="mt-5 max-w-[320px] sm:max-w-none mx-auto">
+        <div className="pt-4">
           <button
-            className="btn btn-primary w-full sm:w-auto"
+            className="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white border-none font-semibold px-8 py-3.5 text-base shadow-lg"
             onClick={onLaunchApp}
             aria-label="Open Audit Workspace"
           >
-            Open Audit Workspace
+            Launch Audit Workspace
           </button>
         </div>
       </div>
