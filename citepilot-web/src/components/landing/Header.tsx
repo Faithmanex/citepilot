@@ -11,143 +11,144 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
 
   return (
     <header
-      className="sticky top-0 z-50 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white"
+      className="sticky top-0 z-100 bg-paper/95 backdrop-blur-md border-b-2 border-rule"
       role="banner"
     >
-      <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 max-w-[1240px] mx-auto w-full">
-        {/* Logo */}
+      <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 max-w-[1200px] mx-auto w-full">
         <div
-          className="flex items-center gap-2.5 font-dash font-extrabold text-xl cursor-pointer tracking-tight"
+          className="flex items-center gap-2.5 font-extrabold text-lg cursor-pointer"
           id="nav-logo"
           tabIndex={0}
           role="button"
           aria-label="CitePilot Home"
         >
           <span
-            className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center text-xs text-white font-black"
+            className="w-6 h-6 border-2 border-red rounded-full flex items-center justify-center text-[11px] text-red -rotate-8 font-bold"
             aria-hidden="true"
           >
-            CP
+            ✓
           </span>
           CitePilot
         </div>
 
-        {/* Desktop Navigation Links */}
+        {/* Desktop Navigation */}
         <nav
-          className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300 ml-auto mr-8"
+          className="hidden md:flex gap-7 text-sm font-semibold text-ink-soft ml-auto mr-6"
           id="nav-marketing-links"
           role="navigation"
           aria-label="Main Navigation"
         >
           <a
             href="#problem"
-            className="hover:text-white transition-colors py-2"
+            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
           >
-            Why It Matters
+            Why Citation Audits Matter
           </a>
           <a
             href="#how"
-            className="hover:text-white transition-colors py-2"
+            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
           >
             How It Works
           </a>
           <a
             href="#styles"
-            className="hover:text-white transition-colors py-2"
+            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
           >
-            Citation Standards
+            Supported Styles
           </a>
           <a
             href="#who"
-            className="hover:text-white transition-colors py-2"
+            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px]"
           >
             Who It&apos;s For
           </a>
           <a
             href="#pricing"
-            className="text-blue-400 hover:text-blue-300 font-semibold transition-colors py-2"
+            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px] font-bold text-brand"
           >
-            Plans &amp; Pricing
+            Pricing
           </a>
         </nav>
 
         <div className="hidden md:block">
           <button
-            className="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white border-none font-semibold px-5 py-2.5 text-sm"
+            className="btn btn-primary"
             id="btn-toggle-dashboard"
             onClick={onToggleDashboard}
-            aria-label="Open Audit Workspace"
+            aria-label="Check Manuscript Now"
           >
-            Audit Workspace
+            <i className="fas fa-[#10B981] fa-file-check text-xs" aria-hidden="true" />{" "}
+            Check Manuscript
           </button>
         </div>
 
         {/* Mobile Hamburger Button */}
         <button
           type="button"
-          className="md:hidden flex items-center justify-center p-2 text-slate-300 border border-slate-700 rounded-md bg-slate-800"
+          className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] p-2 text-ink border-2 border-ink rounded-md bg-paper-card"
           onClick={() => setMobileMenuOpen((prev) => !prev)}
           aria-expanded={mobileMenuOpen}
           aria-label="Toggle Navigation Menu"
         >
-          <i className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-base`} />
+          <i className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"} text-lg`} />
         </button>
       </div>
 
       {/* Mobile Navigation Dropdown */}
       {mobileMenuOpen && (
         <nav
-          className="md:hidden bg-slate-900 border-t border-slate-800 px-4 py-4 flex flex-col gap-3 text-slate-300"
+          className="md:hidden bg-paper-card border-t border-rule px-4 py-4 flex flex-col gap-3"
           aria-label="Mobile Main Navigation"
         >
           <a
             href="#problem"
-            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
+            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Why It Matters
+            Why Citation Audits Matter
           </a>
           <a
             href="#how"
-            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
+            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
             onClick={() => setMobileMenuOpen(false)}
           >
             How It Works
           </a>
           <a
             href="#styles"
-            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
+            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Citation Standards
+            Supported Styles
           </a>
           <a
             href="#who"
-            className="text-sm font-medium px-3 py-2 rounded hover:bg-slate-800"
+            className="text-sm font-semibold text-ink px-3 py-2 rounded border border-transparent hover:bg-paper"
             onClick={() => setMobileMenuOpen(false)}
           >
             Who It&apos;s For
           </a>
           <a
             href="#pricing"
-            className="text-sm font-semibold text-blue-400 px-3 py-2 rounded hover:bg-slate-800"
+            className="text-sm font-bold text-brand px-3 py-2 rounded border border-transparent hover:bg-paper"
             onClick={() => setMobileMenuOpen(false)}
           >
-            Plans &amp; Pricing
+            Pricing
           </a>
           <button
-            className="btn btn-primary bg-blue-600 text-white w-full mt-2"
+            className="btn btn-primary w-full mt-2"
             id="btn-toggle-dashboard-mobile"
             onClick={() => {
               setMobileMenuOpen(false);
               onToggleDashboard();
             }}
-            aria-label="Open Audit Workspace"
+            aria-label="Check Manuscript Now"
           >
-            Audit Workspace
+            Check Manuscript
           </button>
         </nav>
       )}
     </header>
   );
 }
+

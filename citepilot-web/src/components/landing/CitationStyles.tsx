@@ -1,64 +1,53 @@
-"use client";
-
 const styles = [
-  { name: "APA 7th Edition", field: "Social Sciences & Psychology" },
-  { name: "APA 6th Edition", field: "Social Sciences" },
-  { name: "MLA 9th Edition", field: "Humanities & Literature" },
-  { name: "Harvard Standard", field: "Multidisciplinary" },
-  { name: "Vancouver System", field: "Medicine & Life Sciences" },
-  { name: "Chicago 17th (Author-Date)", field: "History & Social Sciences" },
-  { name: "IEEE Standard", field: "Engineering & Computer Science" },
-  { name: "OSCOLA Oxford", field: "Legal Research & Jurisprudence" },
-  { name: "Turabian Manual", field: "Academic Dissertations" },
+  { name: "APA 7", rot: "-6deg" },
+  { name: "APA 6", rot: "4deg" },
+  { name: "MLA", rot: "-3deg" },
+  { name: "Harvard", rot: "7deg" },
+  { name: "Vancouver", rot: "-8deg" },
+  { name: "Chicago", rot: "3deg" },
+  { name: "IEEE", rot: "-4deg" },
+  { name: "OSCOLA", rot: "6deg" },
+  { name: "Turabian", rot: "-2deg" },
 ];
 
 export default function CitationStyles() {
   return (
-    <section className="py-20 border-b border-slate-200 bg-slate-50" id="styles">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-8">
-        <div className="max-w-3xl mb-12 space-y-3">
-          <span className="inline-block px-3 py-1 rounded bg-slate-200 text-slate-700 text-xs font-mono font-semibold uppercase tracking-wider">
-            Style Manual Engines
+    <section className="py-12 sm:py-20 border-t-2 border-rule" id="styles">
+      <div className="max-w-[1080px] mx-auto px-4 sm:px-8">
+        <div className="max-w-[58ch] mb-8 sm:mb-11">
+          <span className="font-type text-[13px] font-bold tracking-wider text-ink-faint block mb-2.5 before:content-['§\\0020']">
+            Citation styles
           </span>
-          <h2 className="text-3xl sm:text-4xl font-dash font-extrabold text-slate-900 tracking-tight">
-            Comprehensive Citation Style Support
+          <h2 className="font-type font-bold text-[clamp(24px,3vw,32px)] leading-[1.25] m-0">
+            Write in the style your field expects
           </h2>
-          <p className="text-slate-600 text-base leading-relaxed">
-            CitePilot enforces punctuation, capitalization, and author-date rules across major international citation standards.
+          <p className="mt-3.5 text-ink-soft text-base leading-[1.6]">
+            CitePilot&apos;s style engine understands the formatting conventions
+            and punctuation rules of nine citation styles, so it flags real
+            errors — not just stylistic variation.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="flex flex-wrap gap-3 sm:gap-[18px] justify-center sm:justify-start">
           {styles.map((s) => (
             <div
               key={s.name}
-              className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex items-center justify-between"
+              className="w-[78px] h-[78px] sm:w-[88px] sm:h-[88px] rounded-full border-3 border-ink-soft flex items-center justify-center text-center font-type font-bold text-[11px] sm:text-xs text-ink-soft uppercase tracking-wider bg-paper-card"
+              style={{ transform: `rotate(${s.rot})` }}
             >
-              <div>
-                <h3 className="font-dash font-bold text-slate-900 text-base">
-                  {s.name}
-                </h3>
-                <p className="text-xs text-slate-500 font-medium mt-0.5">
-                  {s.field}
-                </p>
-              </div>
-              <span className="w-2 h-2 rounded-full bg-emerald-500 flex-none" />
+              {s.name}
             </div>
           ))}
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-4 font-mono text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <span className="font-sans font-semibold text-slate-900">Database Verification Sources:</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 font-semibold text-slate-800">
-            <span className="px-2.5 py-1 bg-slate-100 rounded border border-slate-200">Crossref Registry</span>
-            <span className="px-2.5 py-1 bg-slate-100 rounded border border-slate-200">OpenAlex Scholarly Graph</span>
-            <span className="px-2.5 py-1 bg-slate-100 rounded border border-slate-200">PubMed / NLM</span>
-            <span className="px-2.5 py-1 bg-slate-100 rounded border border-slate-200">Retraction Watch</span>
-          </div>
-        </div>
+        <p className="mt-8 pt-5 border-t border-dashed border-rule font-type text-xs sm:text-sm font-semibold text-ink-soft">
+          Sources checked against:{" "}
+          <b className="text-ink">
+            Crossref · OpenAlex · PubMed · DOI.org · Retraction Watch
+          </b>
+        </p>
       </div>
     </section>
   );
 }
+

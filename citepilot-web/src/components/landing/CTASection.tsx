@@ -6,24 +6,27 @@ interface CTASectionProps {
 
 export default function CTASection({ onLaunchApp }: CTASectionProps) {
   return (
-    <section className="py-24 bg-slate-900 text-white text-center border-b border-slate-800" id="cta">
-      <div className="max-w-[1240px] mx-auto px-4 sm:px-8 space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-400/20 text-blue-400 font-mono text-xs font-semibold tracking-wide">
-          <i className="fas fa-check-circle" /> READY FOR SUBMISSION
+    <section className="text-center py-20 bg-paper border-t-2 border-rule" id="cta">
+      <div className="max-w-[1080px] mx-auto px-8">
+        <div className="w-[140px] h-[140px] mx-auto mb-7 rounded-full border-3 border-green text-green flex items-center justify-center font-type font-bold text-sm tracking-wider -rotate-6 uppercase leading-[1.3] shadow-sm bg-paper-card">
+          Submission
+          <br />
+          Ready
         </div>
-        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-dash font-extrabold text-white tracking-tight max-w-3xl mx-auto leading-tight">
-          Ensure Citation Integrity Before Journal Submission
+        <h2 className="font-type font-bold text-[clamp(24px,3vw,34px)] leading-[1.25] m-0 text-ink">
+          Make your next draft submission-ready.
         </h2>
-        <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto">
-          Audit your research manuscript in seconds. Verify every citation against live Crossref, PubMed, and Retraction Watch databases.
+        <p className="mt-3.5 text-ink-soft text-base sm:text-lg leading-[1.6] font-medium max-w-xl mx-auto">
+          Check your citations and references in minutes before sending your manuscript to your journal editor, committee, or supervisor.
         </p>
-        <div className="pt-4">
+        <div className="mt-6 max-w-[320px] sm:max-w-none mx-auto">
           <button
-            className="btn btn-primary bg-blue-600 hover:bg-blue-500 text-white border-none font-semibold px-8 py-3.5 text-base shadow-lg"
+            className="btn btn-primary w-full sm:w-auto text-center"
             onClick={onLaunchApp}
-            aria-label="Open Audit Workspace"
+            aria-label="Check Your Manuscript Now"
           >
-            Launch Audit Workspace
+            <i className="fas fa-file-check text-xs mr-2" />
+            Check Your Manuscript Now
           </button>
         </div>
       </div>
