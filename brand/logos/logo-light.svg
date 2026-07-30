@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 100" width="400" height="100">
+  <rect width="400" height="100" rx="16" fill="#FAF6EC"/>
+  <circle cx="50" cy="50" r="32" fill="#F1EBDC" stroke="#C7BC9F" stroke-width="3"/>
+  <circle cx="50" cy="50" r="26" fill="none" stroke="#1E5E4B" stroke-width="4"/>
+  <path d="M 40 50 L 47 57 L 62 42" fill="none" stroke="#1E5E4B" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="96" y="62" font-family="'Courier Prime', 'Inter', monospace" font-size="36" font-weight="900" fill="#221D16">CitePilot</text>
+  <text x="272" y="62" font-family="'Inter', sans-serif" font-size="28" font-weight="800" fill="#1E5E4B">✓</text>
+</svg>

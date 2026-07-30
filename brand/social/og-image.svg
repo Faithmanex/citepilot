@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#0F172A"/>
+  <!-- Decorative Grid Overlay -->
+  <rect x="40" y="40" width="1120" height="550" rx="24" fill="#14181F" stroke="#252B36" stroke-width="4"/>
+  
+  <!-- Emblem Badge -->
+  <circle cx="160" cy="180" r="64" fill="#0F172A" stroke="#252B36" stroke-width="4"/>
+  <circle cx="160" cy="180" r="50" fill="none" stroke="#10B981" stroke-width="8"/>
+  <path d="M 136 180 L 152 196 L 184 164" fill="none" stroke="#10B981" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+  
+  <!-- Brand Title -->
+  <text x="250" y="195" font-family="'Courier Prime', 'Inter', monospace" font-size="72" font-weight="900" fill="#FFFFFF">CitePilot</text>
+  
+  <!-- Main Tagline -->
+  <text x="100" y="320" font-family="'Inter', sans-serif" font-size="44" font-weight="900" fill="#F8FAFC">Check your citations before you submit.</text>
+
+  <!-- Lede Subtitle -->
+  <text x="100" y="380" font-family="'Inter', sans-serif" font-size="24" font-weight="500" fill="#94A3B8">Verify manuscript citations &amp; reference entries against official registries.</text>
+  
+  <!-- Registry Pill Badges -->
+  <g transform="translate(100, 440)">
+    <!-- Crossref Badge -->
+    <rect x="0" y="0" width="180" height="44" rx="22" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <text x="90" y="27" font-family="'Inter', sans-serif" font-size="16" font-weight="700" fill="#38BDF8" text-anchor="middle">✓ Crossref</text>
+    
+    <!-- PubMed Badge -->
+    <rect x="200" y="0" width="170" height="44" rx="22" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <text x="285" y="27" font-family="'Inter', sans-serif" font-size="16" font-weight="700" fill="#818CF8" text-anchor="middle">✓ PubMed</text>
+    
+    <!-- Retraction Watch Badge -->
+    <rect x="390" y="0" width="240" height="44" rx="22" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <text x="510" y="27" font-family="'Inter', sans-serif" font-size="16" font-weight="700" fill="#F43F5E" text-anchor="middle">✓ Retraction Watch</text>
+    
+    <!-- OpenAlex Badge -->
+    <rect x="650" y="0" width="180" height="44" rx="22" fill="#1E293B" stroke="#334155" stroke-width="2"/>
+    <text x="740" y="27" font-family="'Inter', sans-serif" font-size="16" font-weight="700" fill="#34D399" text-anchor="middle">✓ OpenAlex</text>
+  </g>
+</svg>
