@@ -6,6 +6,7 @@ import WhyItMatters from "./WhyItMatters";
 import HowItWorks from "./HowItWorks";
 import CitationStyles from "./CitationStyles";
 import WhoItsFor from "./WhoItsFor";
+import SubscriptionSection from "./SubscriptionSection";
 import CTASection from "./CTASection";
 import Footer from "./Footer";
 
@@ -22,6 +23,7 @@ export default function LandingView({ onLaunchApp }: LandingViewProps) {
       <HowItWorks />
       <CitationStyles />
       <WhoItsFor />
+      <SubscriptionSection onLaunchApp={onLaunchApp} />
       <CTASection onLaunchApp={onLaunchApp} />
       <Footer />
     </div>

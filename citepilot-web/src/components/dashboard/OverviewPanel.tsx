@@ -69,43 +69,47 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
         <p className="text-sm text-dash-ink-soft m-0 max-w-[64ch]">{subtitle}</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 mb-6">
-        <div className="bg-card border-2 border-line rounded-md p-[18px_18px_16px]">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2">
-            Citations parsed
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
+          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
+            <span>Citations parsed</span>
+            <i className="fas fa-quote-right text-slate-400 text-xs" />
           </div>
-          <div className="font-mono text-[28px] font-bold">{citations.length}</div>
+          <div className="font-mono text-[32px] font-black text-dash-ink">{citations.length}</div>
           <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">
             across body sections
           </div>
         </div>
-        <div className="bg-card border-2 border-line rounded-md p-[18px_18px_16px]">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2">
-            Issues flagged
+        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
+          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
+            <span>Issues flagged</span>
+            <i className="fas fa-exclamation-circle text-error text-xs" />
           </div>
-          <div className="font-mono text-[28px] font-bold text-error">
+          <div className="font-mono text-[32px] font-black text-error">
             {issueCount}
           </div>
           <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">
             retractions & mismatches
           </div>
         </div>
-        <div className="bg-card border-2 border-line rounded-md p-[18px_18px_16px]">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2">
-            Bidirectional match rate
+        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
+          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
+            <span>Bidirectional match rate</span>
+            <i className="fas fa-link text-verified text-xs" />
           </div>
-          <div className="font-mono text-[28px] font-bold text-verified">
+          <div className="font-mono text-[32px] font-black text-verified">
             {matchRate}%
           </div>
           <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">
-            citations linked
+            linked to bibliography
           </div>
         </div>
-        <div className="bg-card border-2 border-line rounded-md p-[18px_18px_16px]">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2">
-            Recency status
+        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
+          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
+            <span>Recency status</span>
+            <i className="fas fa-clock text-amber-600 text-xs" />
           </div>
-          <div className="font-mono text-[28px] font-bold text-warning">
+          <div className="font-mono text-[32px] font-black text-warning">
             {recencyStatus}
           </div>
           <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">

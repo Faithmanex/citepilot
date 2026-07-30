@@ -62,6 +62,12 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
           >
             Who it&apos;s for
           </a>
+          <a
+            href="#pricing"
+            className="no-underline border-b-2 border-transparent pb-0.5 transition-all duration-150 ease hover:text-ink hover:border-ink-soft inline-flex items-center min-h-[44px] font-bold text-brand"
+          >
+            Pricing & Subscription
+          </a>
         </nav>
 
         <div className="hidden md:block">
@@ -121,6 +127,13 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
             onClick={() => setMobileMenuOpen(false)}
           >
             Who it&apos;s for
+          </a>
+          <a
+            href="#pricing"
+            className="text-sm font-bold text-brand px-3 py-2 rounded border border-transparent hover:bg-paper"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            Pricing & Subscription
           </a>
           <button
             className="btn btn-primary w-full mt-2"

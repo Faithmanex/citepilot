@@ -6,101 +6,110 @@ interface HeroProps {
 
 export default function Hero({ onLaunchApp }: HeroProps) {
   return (
-    <section className="py-10 md:py-[76px] pb-12 md:pb-16 overflow-hidden">
-      <div className="max-w-[1080px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-13 items-center">
-        <div>
-          <span className="inline-block font-type text-[13px] font-bold tracking-wider text-ink-soft mb-4 sm:mb-5.5 before:content-['[\\0020'] after:content-['\\0020]'] before:text-ink-faint after:text-ink-faint">
-            AI CITATION AUDIT
-          </span>
-          <h1 className="font-type font-bold text-[clamp(28px,4.2vw,46px)] leading-[1.15] m-0">
-            Verify every citation. Before your reader does.
+    <section className="py-12 md:py-20 overflow-hidden relative border-b-2 border-rule bg-paper">
+      <div className="max-w-[1180px] mx-auto px-4 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        {/* Left Hero Content */}
+        <div className="lg:col-span-6 space-y-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border-2 border-ink/80 bg-paper-card text-ink font-mono text-xs font-bold tracking-wider shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-red animate-pulse" />
+            AI CITATION AUDIT ENGINE
+          </div>
+
+          <h1 className="font-type font-bold text-3xl sm:text-4xl md:text-5xl leading-[1.12] text-ink tracking-tight">
+            Verify every citation. <br className="hidden sm:inline" />
+            <span className="underline decoration-wavy decoration-red underline-offset-6">
+              Before your reader does.
+            </span>
           </h1>
-          <p className="mt-4 sm:mt-5.5 text-[15px] sm:text-[16.5px] leading-[1.65] text-ink-soft max-w-[48ch]">
-            CitePilot marks up your manuscript like an editor with a red pen —
-            matching every in-text citation to your reference list, then checking
-            each source against Crossref, PubMed and OpenAlex for anything
-            fabricated, mismatched or quietly retracted.
+
+          <p className="text-base sm:text-lg leading-relaxed text-ink-soft font-medium max-w-xl">
+            CitePilot marks up your manuscript like an expert academic editor — matching every in-text citation to your bibliography, then verifying each source against Crossref, PubMed, OpenAlex, and Retraction Watch.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-3.5 mt-6 sm:mt-7.5">
+
+          <div className="flex flex-col sm:flex-row gap-3.5 pt-2">
             <button
-              className="btn btn-primary w-full sm:w-auto text-center"
+              className="btn btn-primary text-center group shadow-md hover:shadow-lg transition-all"
               onClick={onLaunchApp}
               aria-label="Check your first document"
             >
+              <i className="fas fa-play text-xs group-hover:scale-110 transition-transform" />
               Check your first document
             </button>
-            <a href="#how" className="btn btn-ghost w-full sm:w-auto text-center">
+            <a
+              href="#how"
+              className="btn btn-ghost text-center hover:bg-paper-card transition-colors"
+            >
+              <i className="fas fa-magic text-xs text-ink-faint" />
               See how it works
             </a>
           </div>
-          <p className="mt-5 font-type text-[12px] sm:text-[13px] font-semibold text-ink-faint">
-            // 9 citation styles: APA7 · APA6 · MLA · Harvard · Vancouver ·
-            Chicago · IEEE · OSCOLA · Turabian
-          </p>
+
+          <div className="pt-3 flex flex-wrap items-center gap-2 font-mono text-xs font-semibold text-ink-faint">
+            <span className="px-2 py-1 bg-paper-card border border-rule rounded">APA 7</span>
+            <span className="px-2 py-1 bg-paper-card border border-rule rounded">MLA 9</span>
+            <span className="px-2 py-1 bg-paper-card border border-rule rounded">Chicago</span>
+            <span className="px-2 py-1 bg-paper-card border border-rule rounded">Harvard</span>
+            <span className="px-2 py-1 bg-paper-card border border-rule rounded">IEEE</span>
+            <span className="px-2 py-1 bg-paper-card border border-rule rounded">Vancouver</span>
+            <span className="px-2 py-1 bg-paper-card border border-rule rounded">+3 more</span>
+          </div>
         </div>
 
-        <div>
-          <div className="bg-paper-card border-2 border-rule scroll-shadow relative p-4 sm:p-[26px_28px_30px]">
-            <div className="font-type text-[12px] font-bold text-ink-faint mb-[18px] pb-3 border-b border-dashed border-rule">
-              ch3_literature_review.docx — page 14
+        {/* Right Manuscript Interactive Card Mockup */}
+        <div className="lg:col-span-6">
+          <div className="bg-paper-card border-3 border-ink rounded-2xl p-5 sm:p-7 shadow-2xl relative transition-all duration-300 hover:shadow-[0_16px_36px_rgba(0,0,0,0.15)]">
+            <div className="flex items-center justify-between pb-4 mb-5 border-b-2 border-dashed border-rule">
+              <div className="flex items-center gap-2.5 font-mono text-xs font-bold text-ink-faint">
+                <i className="fas fa-file-alt text-brand text-sm" />
+                <span>ch3_literature_review.docx — page 14</span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold border border-emerald-300">
+                Live Audit Preview
+              </span>
             </div>
-            <div className="font-type text-[13.5px] leading-[2] text-[#2A251C] relative">
+
+            <div className="font-type text-sm sm:text-base leading-[2.1] text-ink relative min-h-[160px]">
               <p>
-                Recent estimates of citation error in student manuscripts remain
-                persistently understated{" "}
-                <span className="relative px-0.5 underline decoration-wavy decoration-red underline-offset-4">
+                Recent estimates of citation error in student manuscripts remain persistently understated{" "}
+                <span className="relative inline-block px-1 bg-red-bg text-red font-bold rounded cursor-pointer group">
                   (Alavi &amp; Reyes, 2021)
+                  <span className="absolute -top-9 right-0 bg-red text-white text-[11px] font-sans font-bold px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
+                    ⚠ Fabricated / Not in Crossref
+                  </span>
                 </span>
-                <span className="font-hand text-lg sm:text-xl font-bold leading-[1.15] hidden sm:block absolute whitespace-nowrap text-red top-14 -right-1.5 -rotate-3">
-                  fabricated? not
-                  <br />
-                  in Crossref
-                </span>
-                , particularly across dense reference lists. A correction model
-                proposed shortly after{" "}
-                <span className="relative px-0.5 border-b-2 border-ochre border-t-0">
+                , particularly across dense reference lists. A correction model proposed shortly after{" "}
+                <span className="relative inline-block px-1 bg-amber-100 text-amber-900 font-bold rounded border-b-2 border-amber-500 cursor-pointer group">
                   (Okafor, 2019)
-                </span>
-                <span className="font-hand text-lg sm:text-xl font-bold leading-[1.15] hidden sm:block absolute whitespace-nowrap text-ochre top-[118px] right-2 rotate-2">
-                  check page
-                  <br />
-                  range
+                  <span className="absolute -top-9 right-0 bg-amber-800 text-white text-[11px] font-sans font-bold px-2 py-0.5 rounded shadow whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
+                    Check page range
+                  </span>
                 </span>{" "}
-                has been widely cited since, alongside commentary on the same
-                dataset{" "}
-                <span className="relative px-0.5 bg-green-bg shadow-[inset_0_-2px_0_var(--color-green)]">
+                has been widely cited since, alongside commentary on the same dataset{" "}
+                <span className="relative inline-block px-1 bg-emerald-100 text-emerald-900 font-bold rounded border-b-2 border-emerald-600">
                   (Chen &amp; Park, 2022)
                 </span>
                 .
               </p>
             </div>
-          </div>
-          <div className="flex gap-3 sm:gap-5 flex-wrap mt-5 font-type text-xs font-bold text-ink-soft">
-            <span className="inline-flex items-center gap-1.5">
-              <i
-                className="w-2.5 h-2.5 inline-block rounded-full"
-                style={{ background: "var(--color-green)" }}
-              />
-              Verified against source
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <i
-                className="w-2.5 h-2.5 inline-block rounded-full"
-                style={{ background: "var(--color-ochre)" }}
-              />
-              Needs a closer look
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <i
-                className="w-2.5 h-2.5 inline-block rounded-full"
-                style={{ background: "var(--color-red)" }}
-              />
-              Possibly fabricated
-            </span>
+
+            {/* Audit Status Legend */}
+            <div className="mt-6 pt-4 border-t border-rule grid grid-cols-3 gap-2 font-mono text-[11px] font-bold text-ink-soft">
+              <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 p-2 rounded-lg">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 flex-none" />
+                <span className="truncate">Verified</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 p-2 rounded-lg">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-600 flex-none" />
+                <span className="truncate">Check Info</span>
+              </div>
+              <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 p-2 rounded-lg">
+                <span className="w-2.5 h-2.5 rounded-full bg-red flex-none" />
+                <span className="truncate">Unverified</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
   );
 }
-

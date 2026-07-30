@@ -14,8 +14,10 @@ import ClaimsPanel from "./ClaimsPanel";
 import RecencyPanel from "./RecencyPanel";
 import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
+import SubscriptionModal from "../subscription/SubscriptionModal";
 
 export default function DashboardView() {
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [activePanel, setActivePanel] = useState("overview");
   const [currentMode, setCurrentMode] = useState<AuditMode>("full");
   const [style, setStyle] = useState<CitationStyle>("apa7");
@@ -185,6 +187,7 @@ export default function DashboardView() {
           badges={badges}
           isOpen={mobileNavOpen}
           onClose={() => setMobileNavOpen(false)}
+          onOpenSubscription={() => setSubscriptionModalOpen(true)}
         />
         <main className="min-w-0 w-full" role="main">
           <Topbar
@@ -289,6 +292,11 @@ export default function DashboardView() {
           </div>
         </div>
       )}
+      {/* Subscription Modal */}
+      <SubscriptionModal
+        isOpen={subscriptionModalOpen}
+        onClose={() => setSubscriptionModalOpen(false)}
+      />
     </div>
   );
 }

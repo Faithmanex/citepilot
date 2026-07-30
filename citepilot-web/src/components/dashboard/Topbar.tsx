@@ -58,7 +58,9 @@ export default function Topbar({
         )}
 
         <div
-          className="flex items-center gap-2 text-[13.5px] font-bold text-dash-ink min-h-[44px] bg-card border-2 border-line px-3.5 py-2 rounded-md cursor-pointer max-w-full overflow-hidden text-ellipsis whitespace-nowrap"
+          className={`flex items-center gap-2 text-[13.5px] font-bold text-dash-ink min-h-[44px] bg-card border-2 px-3.5 py-2 rounded-lg cursor-pointer max-w-full overflow-hidden text-ellipsis whitespace-nowrap shadow-sm transition-colors ${
+            hasDocument ? "border-emerald-600 bg-emerald-50/50" : "border-line"
+          }`}
           id="doc-chip"
           role="button"
           tabIndex={0}
@@ -69,27 +71,16 @@ export default function Topbar({
           }
         >
           <span
-            className="w-2 h-2 rounded-full flex-none"
-            style={{
-              background: hasDocument
-                ? "var(--color-verified)"
-                : "var(--color-line)",
-            }}
+            className={`w-2.5 h-2.5 rounded-full flex-none ${
+              hasDocument ? "bg-emerald-600 animate-pulse" : "bg-slate-300"
+            }`}
             aria-hidden="true"
           />
           <span id="doc-file-name" className="truncate">{documentName}</span>
           {hasDocument && (
             <button
               id="btn-reset-doc"
-              style={{
-                background: "none",
-                border: "none",
-                color: "var(--color-dash-ink-faint)",
-                cursor: "pointer",
-                padding: "0 4px",
-                fontSize: "12px",
-                marginLeft: "4px",
-              }}
+              className="ml-1 text-slate-400 hover:text-slate-700 font-bold p-1 text-xs transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 onClearDocument();
