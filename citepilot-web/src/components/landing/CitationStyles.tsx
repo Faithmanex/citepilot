@@ -43,7 +43,7 @@ export default function CitationStyles() {
         <p className="mt-8 pt-5 border-t border-dashed border-rule font-type text-xs sm:text-sm font-semibold text-ink-soft">
           Sources checked against:{" "}
           <b className="text-ink">
-            Crossref · OpenAlex · PubMed · DOI.org · Retraction Watch
+            Crossref · DOI.org · Retraction Watch Registry
           </b>
         </p>
       </div>

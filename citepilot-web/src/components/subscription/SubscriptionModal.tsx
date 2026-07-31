@@ -34,7 +34,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             Upgrade to CitePilot Pro
           </h3>
           <p className="text-sm text-ink-soft mt-1 font-medium">
-            Unlock unlimited manuscript verification &amp; automated citation formatting
+            Unlock unlimited manuscript verification &amp; style rule inspection
           </p>
         </div>
 
@@ -45,15 +45,15 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
           </div>
           <div className="flex items-center gap-2 text-ink">
             <i className="fas fa-check-circle text-emerald-600 text-base" />
-            <span>Cross-verification with Crossref, PubMed &amp; Retraction Watch registries</span>
+            <span>Cross-verification with official Crossref &amp; Retraction Watch registries</span>
           </div>
           <div className="flex items-center gap-2 text-ink">
             <i className="fas fa-check-circle text-emerald-600 text-base" />
-            <span>Automated citation style corrections &amp; manuscript formatting</span>
+            <span>Detailed style violation warnings &amp; citation guidance</span>
           </div>
           <div className="flex items-center gap-2 text-ink">
             <i className="fas fa-check-circle text-emerald-600 text-base" />
-            <span>Batch exports to Word, BibTeX, RIS, CSV &amp; JSON</span>
+            <span>Export Word DOCX (with Tracked Changes) &amp; PDF Diagnostic Reports</span>
           </div>
         </div>
 

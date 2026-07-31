@@ -59,15 +59,11 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
                 </li>
                 <li className="flex items-start gap-2.5 text-ink-soft opacity-60">
                   <i className="fas fa-times text-rule-dark mt-0.5 text-xs" />
-                  <span>Batch export to BibTeX, RIS, APA Word</span>
+                  <span>Export Word DOCX (with Tracked Changes) &amp; PDF reports</span>
                 </li>
                 <li className="flex items-start gap-2.5 text-ink-soft opacity-60">
                   <i className="fas fa-times text-rule-dark mt-0.5 text-xs" />
-                  <span>Batch export to BibTeX, RIS, Word</span>
-                </li>
-                <li className="flex items-start gap-2.5 text-ink-soft opacity-60">
-                  <i className="fas fa-times text-rule-dark mt-0.5 text-xs" />
-                  <span>Automated citation corrections</span>
+                  <span>Style violation warnings &amp; citation guidance</span>
                 </li>
               </ul>
             </div>
@@ -115,19 +111,19 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>Cross-verification</strong> with Crossref, PubMed, OpenAlex &amp; Retraction Watch</span>
+                  <span><strong>Cross-verification</strong> with official Crossref &amp; Retraction Watch registries</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>Automated citation corrections</strong> &amp; reference matching</span>
+                  <span><strong>In-text citation matching</strong> &amp; style violation inspection</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Export to Word, BibTeX, RIS, CSV &amp; JSON</span>
+                  <span>Export Word DOCX (with Tracked Changes) &amp; PDF Diagnostic Reports</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Priority Processing &amp; 24/7 Academic Support</span>
+                  <span>Priority Processing &amp; Responsive Email Support</span>
                 </li>
               </ul>
             </div>

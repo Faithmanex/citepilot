@@ -26,7 +26,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
   const matchedCount = citations.filter((c) => c.status === "matched").length;
   const matchRate = citations.length
     ? Math.round((matchedCount / citations.length) * 100)
-    : 100;
+    : 0;
   const recencyStatus = (
     recency.recency_compliance_status ?? "N/A"
   ).toUpperCase();

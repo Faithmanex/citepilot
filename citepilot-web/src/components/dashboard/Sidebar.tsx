@@ -138,7 +138,7 @@ export default function Sidebar({
               <i className="fas fa-crown text-xs" /> CitePilot Pro
             </div>
             <p className="text-[11px] text-slate-300 font-medium mb-3">
-              Unlock unlimited manuscript audits &amp; automated citation corrections.
+              Unlock unlimited manuscript audits &amp; style rule inspection.
             </p>
             <button
               onClick={onOpenSubscription}

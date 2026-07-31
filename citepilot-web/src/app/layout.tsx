@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://citepilot.com"),
   title: "CitePilot — Academic Citation & Reference List Audit",
   description:
-    "Check your citations before you submit. CitePilot cross-checks your manuscript references against Crossref, PubMed, OpenAlex, and Retraction Watch — so you can submit your research with complete confidence.",
+    "Check your citations before you submit. CitePilot cross-checks your manuscript references against official Crossref and Retraction Watch registries — so you can submit your research with complete confidence.",
   icons: { icon: "/brand/icon-mark.svg", apple: "/brand/icon-app.svg" },
   openGraph: {
     title: "CitePilot — Academic Citation & Reference List Audit",
