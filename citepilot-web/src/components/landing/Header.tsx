@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import BrandLogo from "../brand/BrandLogo";
 
 interface HeaderProps {
   onToggleDashboard: () => void;
@@ -15,21 +16,7 @@ export default function Header({ onToggleDashboard }: HeaderProps) {
       role="banner"
     >
       <div className="flex items-center justify-between px-4 sm:px-8 py-3.5 max-w-[1200px] mx-auto w-full">
-        <div
-          className="flex items-center gap-2.5 font-extrabold text-lg cursor-pointer"
-          id="nav-logo"
-          tabIndex={0}
-          role="button"
-          aria-label="CitePilot Home"
-        >
-          <span
-            className="w-6 h-6 border-2 border-red rounded-full flex items-center justify-center text-[11px] text-red -rotate-8 font-bold"
-            aria-hidden="true"
-          >
-            ✓
-          </span>
-          CitePilot
-        </div>
+        <BrandLogo variant="light" size="md" />
 
         {/* Desktop Navigation */}
         <nav

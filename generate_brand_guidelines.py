@@ -161,8 +161,8 @@ def build_pdf(filename="CitePilot_Brand_Guidelines.pdf"):
     cover_table_data = [
         [
             Paragraph(
-                "<font color='#10B981'><b>✓ CITE PILOT</b></font>",
-                ParagraphStyle("BrandTag", fontName="Courier-Bold", fontSize=14, textColor=colors.HexColor("#10B981"))
+                "<font color='#10B981'><b>✓ CITEPILOT OFFICIAL BRAND SYSTEM</b></font>",
+                ParagraphStyle("BrandTag", fontName="Courier-Bold", fontSize=13, textColor=colors.HexColor("#10B981"))
             )
         ],
         [Spacer(1, 40)],

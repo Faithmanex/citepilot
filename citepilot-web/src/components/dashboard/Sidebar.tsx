@@ -1,5 +1,7 @@
 "use client";
 
+import BrandLogo from "../brand/BrandLogo";
+
 interface SidebarProps {
   activePanel: string;
   onPanelChange: (panel: string) => void;
@@ -62,17 +64,7 @@ export default function Sidebar({
         aria-label="Audit Drawer Navigation"
       >
         <div className="flex items-center justify-between px-2.5 pb-[22px] pt-1.5 font-extrabold text-[17px] text-white">
-          <div className="flex items-center gap-[9px]">
-            <span
-              className="w-[9px] h-[9px] rounded-[1px] mr-3"
-              style={{
-                background: "var(--color-verified)",
-                boxShadow: "10px 0 0 var(--color-warning), 20px 0 0 var(--color-error)",
-              }}
-              aria-hidden="true"
-            />
-            CitePilot Audit
-          </div>
+          <BrandLogo variant="dark" size="sm" subtitle="Audit" />
           {onClose && (
             <button
               type="button"
