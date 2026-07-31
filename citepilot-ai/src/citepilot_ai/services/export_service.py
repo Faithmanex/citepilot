@@ -15,10 +15,10 @@ def generate_pdf_report(analysis_data: Dict) -> bytes:
     Wraps dynamic text in html.escape() to prevent ReportLab Expat XML parser errors.
     """
     try:
-        from reportlab.lib.pagesizes import letter
-        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-        from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
         from reportlab.lib import colors
+        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=36, leftMargin=36, topMargin=36, bottomMargin=36)

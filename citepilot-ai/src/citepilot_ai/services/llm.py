@@ -4,10 +4,10 @@ import logging
 import re
 import time
 from typing import Optional, Type, TypeVar
-from pydantic import BaseModel, ValidationError
 
 from google import genai
 from google.genai import types as genai_types
+from pydantic import BaseModel, ValidationError
 
 from ..config import settings
 
