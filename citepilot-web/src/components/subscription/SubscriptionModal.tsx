@@ -34,26 +34,26 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             Upgrade to CitePilot Pro
           </h3>
           <p className="text-sm text-ink-soft mt-1 font-medium">
-            Unlock unlimited manuscript verification & DeepSeek AI citations engine
+            Unlock unlimited manuscript verification &amp; automated citation formatting
           </p>
         </div>
 
         <div className="space-y-3 mb-6 bg-paper-card p-4 rounded-xl border-2 border-rule text-xs sm:text-sm font-medium">
           <div className="flex items-center gap-2 text-ink">
             <i className="fas fa-check-circle text-emerald-600 text-base" />
-            <span>Unlimited Manuscript & Reference audits</span>
+            <span>Unlimited Manuscript &amp; Reference audits</span>
           </div>
           <div className="flex items-center gap-2 text-ink">
             <i className="fas fa-check-circle text-emerald-600 text-base" />
-            <span>Full Crossref, PubMed & Retraction Watch API integration</span>
+            <span>Cross-verification with Crossref, PubMed &amp; Retraction Watch registries</span>
           </div>
           <div className="flex items-center gap-2 text-ink">
             <i className="fas fa-check-circle text-emerald-600 text-base" />
-            <span>DeepSeek AI automated citation repair & formatting</span>
+            <span>Automated citation style corrections &amp; manuscript formatting</span>
           </div>
           <div className="flex items-center gap-2 text-ink">
             <i className="fas fa-check-circle text-emerald-600 text-base" />
-            <span>Batch exports to Word, BibTeX, RIS, CSV & JSON</span>
+            <span>Batch exports to Word, BibTeX, RIS, CSV &amp; JSON</span>
           </div>
         </div>
 

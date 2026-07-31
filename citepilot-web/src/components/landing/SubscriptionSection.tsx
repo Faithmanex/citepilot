@@ -63,7 +63,11 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
                 </li>
                 <li className="flex items-start gap-2.5 text-ink-soft opacity-60">
                   <i className="fas fa-times text-rule-dark mt-0.5 text-xs" />
-                  <span>DeepSeek V4 AI Automated Citation Repair</span>
+                  <span>Batch export to BibTeX, RIS, Word</span>
+                </li>
+                <li className="flex items-start gap-2.5 text-ink-soft opacity-60">
+                  <i className="fas fa-times text-rule-dark mt-0.5 text-xs" />
+                  <span>Automated citation corrections</span>
                 </li>
               </ul>
             </div>
@@ -107,23 +111,23 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
               <ul className="space-y-3 mb-6 text-sm text-ink font-medium">
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>Unlimited</strong> Manuscript & Reference Audits</span>
+                  <span><strong>Unlimited</strong> Manuscript &amp; Reference Audits</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>Full API Access</strong> (Crossref, PubMed, OpenAlex, Retraction Watch)</span>
+                  <span><strong>Cross-verification</strong> with Crossref, PubMed, OpenAlex &amp; Retraction Watch</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>AI Auto-Repair</strong> & Citation Matching Engine</span>
+                  <span><strong>Automated citation corrections</strong> &amp; reference matching</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Export to Word, BibTeX, RIS, CSV & JSON</span>
+                  <span>Export to Word, BibTeX, RIS, CSV &amp; JSON</span>
                 </li>
                 <li className="flex items-start gap-2.5">
                   <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Priority Processing & 24/7 Academic Support</span>
+                  <span>Priority Processing &amp; 24/7 Academic Support</span>
                 </li>
               </ul>
             </div>

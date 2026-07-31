@@ -135,17 +135,17 @@ export default function Sidebar({
         <div className="mt-6 pt-4 border-t border-white/10">
           <div className="bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-500/30 rounded-xl p-3.5 text-center">
             <div className="flex items-center justify-center gap-1.5 text-amber-400 font-bold text-xs mb-1">
-              <i className="fas fa-crown text-xs" /> Pro Account
+              <i className="fas fa-crown text-xs" /> CitePilot Pro
             </div>
             <p className="text-[11px] text-slate-300 font-medium mb-3">
-              Unlock unlimited manuscript audits & DeepSeek AI repair.
+              Unlock unlimited manuscript audits &amp; automated citation corrections.
             </p>
             <button
               onClick={onOpenSubscription}
               className="w-full py-2 px-3 bg-brand text-white font-bold text-xs rounded-lg hover:bg-brand-hover transition-colors shadow-md flex items-center justify-center gap-2"
-              aria-label="Manage Pro Subscription"
+              aria-label="Upgrade to Pro Account"
             >
-              <i className="fab fa-paypal" /> Subscribe Pro
+              <i className="fab fa-paypal" /> Upgrade to Pro
             </button>
           </div>
         </div>
