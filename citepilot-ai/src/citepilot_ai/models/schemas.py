@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
 from typing import Any, Dict, List, Optional
+
+from pydantic import BaseModel, Field
 
 
 class AnalyseRequest(BaseModel):
@@ -99,7 +100,7 @@ class ParsedAuthorItem(BaseModel):
 class ParsedReferenceItem(BaseModel):
     raw_entry: str = ""
     position: int = 1
-    parsed_authors: List[Dict[str, Any]] = Field(default_factory=list)
+    parsed_authors: List[ParsedAuthorItem] = Field(default_factory=list)
     parsed_year: Optional[int] = None
     parsed_title: Optional[str] = None
     parsed_journal: Optional[str] = None
@@ -130,7 +131,7 @@ class CitationMatchItem(BaseModel):
     confidence: float = Field(default=0.0)
     author_score: Optional[float] = None
     year_score: Optional[float] = None
-    issues: List[Dict[str, Any]] = Field(default_factory=list)
+    issues: List[CitationMatchIssue] = Field(default_factory=list)
 
 
 class MatchesResponseSchema(BaseModel):

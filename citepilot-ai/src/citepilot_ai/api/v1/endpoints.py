@@ -9,22 +9,26 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, WebSocket, WebSocketDisconnect
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import Response
 
 from ...models.schemas import AnalyseResponse
-from ...services.crossref_service import validate_reference_with_crossref
-from ...services.document_parser import parse_document, split_body_and_references, parse_txt_structured
 from ...services.citation_extractor import (
-    extract_citations,
-    parse_references,
-    match_citations_to_references,
     check_style,
+    extract_citations,
+    match_citations_to_references,
+    parse_references,
 )
+from ...services.crossref_service import validate_reference_with_crossref
+from ...services.document_parser import (
+    parse_document,
+    parse_txt_structured,
+    split_body_and_references,
+)
+from ...services.export_service import generate_pdf_report, generate_redline_docx
+from ...services.llm import AIServiceError
 from ...services.recency_service import calculate_publication_recency
 from ...services.retraction_service import check_retraction_status
 from ...services.uncited_claims_detector import detect_uncited_claims
-from ...services.export_service import generate_pdf_report, generate_redline_docx
-from ...services.llm import AIServiceError
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +65,7 @@ async def analyse_document_endpoint(
     if file:
         orig_filename = Path(file.filename).name if file.filename else "upload.tmp"
         suffix = Path(orig_filename).suffix or ".tmp"
-        
+
         content = await file.read()
         if not content:
             raise HTTPException(status_code=400, detail="Uploaded file is empty.")

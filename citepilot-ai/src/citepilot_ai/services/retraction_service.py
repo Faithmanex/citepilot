@@ -1,8 +1,7 @@
 import logging
-import re
 from typing import Dict, Optional
 
-from .crossref_service import _clean_doi, _fetch_by_doi, _search_by_query, get_http_client
+from .crossref_service import _clean_doi, _fetch_by_doi, _search_by_query
 
 logger = logging.getLogger(__name__)
 

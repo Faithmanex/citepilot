@@ -1,14 +1,13 @@
 import json
 import logging
-from typing import Optional
 
-from .llm import async_call_gemini, parse_and_validate_ai_response
 from ..models.schemas import (
     CitationsResponseSchema,
-    ReferencesResponseSchema,
     MatchesResponseSchema,
+    ReferencesResponseSchema,
     StyleWarningsResponseSchema,
 )
+from .llm import async_call_gemini, parse_and_validate_ai_response
 
 logger = logging.getLogger(__name__)
 
