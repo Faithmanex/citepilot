@@ -55,13 +55,19 @@ async def detect_uncited_claims(body_text: str, paragraphs_meta: List[Dict]) -> 
         parts = body_text.split("\n\n")
         paras = [{"paragraph_index": i, "text": p.strip()} for i, p in enumerate(parts) if p.strip()]
 
-    payload = json.dumps([{
-        "paragraph_index": p.get("paragraph_index", i),
-        "text": p.get("text", "")[:2000]
-    } for i, p in enumerate(paras)], ensure_ascii=False)
+    doc_structure = []
+    current_char_count = 0
+    for i, p in enumerate(paras):
+        p_txt = p.get("text", "").strip()[:2000]
+        if p_txt:
+            item = {"paragraph_index": p.get("paragraph_index", i), "text": p_txt}
+            item_len = len(p_txt)
+            if current_char_count + item_len > 115000:
+                break
+            doc_structure.append(item)
+            current_char_count += item_len
 
-    if len(payload) > 120000:
-        payload = payload[:120000] + "...[TRUNCATED]"
+    payload = json.dumps(doc_structure, ensure_ascii=False)
 
     prompt = f"""Scan the following academic paragraphs and identify ONLY specific external empirical, statistical, or third-party research assertions that lack a citation marker. 
 

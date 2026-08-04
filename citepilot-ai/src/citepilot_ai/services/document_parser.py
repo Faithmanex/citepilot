@@ -40,19 +40,28 @@ def parse_document(file_path: str, mime_type: str, mode: str = "full") -> Tuple[
 
 def split_body_and_references(text: str) -> Tuple[str, str]:
     """
-    Splits full document text into body and reference section using robust regex patterns.
-    Handles 'References:', '10. References', 'Chapter X: References', starting at top, etc.
+    Splits document text into body and reference sections.
+    Safely ignores TOC mentions and early headings, falling back to full text
+    so AI document architecture models can contextually process the document.
     """
     patterns = [
-        r"(?:^|\n)\s*(?:\d+[\.\s]+|Chapter\s+\d+[:\s]+)?(?:References|Bibliography|Works\s+Cited|Reference\s+List)\b:?\s*(?:\n|$)",
-        r"(?:^|\n)\s*(?:\d+[\.\s]+)?(?:REFERENCES|BIBLIOGRAPHY|WORKS\s+CITED|REFERENCE\s+LIST)\b:?",
+        r"(?:^|\n)#*\s*(?:\d+[\.\s]+|Chapter\s+\d+[:\s]+)?(?:References|Bibliography|Works\s+Cited|Reference\s+List)\b:?\s*(?:\n|$)",
+        r"(?:^|\n)#*\s*(?:\d+[\.\s]+)?(?:REFERENCES|BIBLIOGRAPHY|WORKS\s+CITED|REFERENCE\s+LIST)\b:?\s*(?:\n|$)",
     ]
     for pat in patterns:
-        parts = re.split(pat, text, maxsplit=1, flags=re.IGNORECASE)
-        if len(parts) == 2 and len(parts[1].strip()) > 10:
-            return parts[0].strip(), parts[1].strip()
+        matches = list(re.finditer(pat, text, flags=re.IGNORECASE))
+        if matches:
+            # Check matches from last to first to avoid TOC lines near top of document
+            for m in reversed(matches):
+                start_idx = m.start()
+                # Ensure the match is not in the first 15% of document if doc is long
+                if start_idx > len(text) * 0.15 or len(text) < 2000:
+                    body = text[:start_idx].strip()
+                    refs = text[m.end():].strip()
+                    if len(refs) > 10:
+                        return body, refs
 
-    return text.strip(), ""
+    return text.strip(), text.strip()
 
 
 def _parse_docx_structured(path: Path) -> Tuple[str, List[Dict]]:

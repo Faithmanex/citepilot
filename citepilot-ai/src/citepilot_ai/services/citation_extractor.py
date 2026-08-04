@@ -34,13 +34,18 @@ STEP 2 — EXTRACTION & DISCRIMINATION RULES
 async def extract_citations(text: str, citation_style: str) -> list[dict]:
     paragraphs = text.split("\n\n")
     doc_structure = []
+    current_char_count = 0
     for i, para in enumerate(paragraphs):
-        if para.strip():
-            doc_structure.append({"index": i, "text": para.strip()[:2000]})
+        p_str = para.strip()
+        if p_str:
+            item = {"index": i, "text": p_str[:2000]}
+            item_len = len(p_str[:2000])
+            if current_char_count + item_len > 115000:
+                break
+            doc_structure.append(item)
+            current_char_count += item_len
 
     truncated = json.dumps(doc_structure, ensure_ascii=False)
-    if len(truncated) > 120000:
-        truncated = truncated[:120000] + "...[TRUNCATED]"
 
     prompt = f"""Analyze the following document text and extract all in-text citations.
 
@@ -178,7 +183,7 @@ References:
 {json.dumps(references, indent=2, ensure_ascii=False)[:40000]}
 
 For each citation, determine:
-1. Which reference it matches (by position index, null if no match)
+1. Which reference it matches by 0-based array index (0 for first reference, 1 for second reference, null if no match)
 2. The match type: exact, fuzzy, ai_verified, or none
 3. Confidence score 0.0-1.0
 4. Detect any author spelling mismatches or year mismatches between citation and reference

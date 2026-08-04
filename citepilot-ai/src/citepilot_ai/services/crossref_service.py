@@ -153,20 +153,25 @@ async def _search_by_query(title: str, author: str) -> Optional[Dict]:
 def _clean_doi(doi_str: str) -> str:
     if not doi_str:
         return ""
-    # Strip leading URL prefix if present
-    cleaned = re.sub(r"^https?://(?:dx\.)?doi\.org/", "", doi_str.strip(), flags=re.IGNORECASE)
+    cleaned = doi_str.strip()
+    cleaned = re.sub(r"^doi:\s*", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"^https?://(?:dx\.)?doi\.org/", "", cleaned, flags=re.IGNORECASE)
     match = re.search(r"10\.\d{4,9}/[-._;()/:A-Za-z0-9]+", cleaned, re.IGNORECASE)
     res = match.group(0) if match else cleaned
-    # Strip trailing punctuation (periods, commas, parens, brackets, semicolons)
     res = re.sub(r"[\.,;\)\]]+$", "", res)
     return res
 
 
+STOP_WORDS = {"the", "a", "an", "in", "of", "on", "and", "for", "to", "with", "by", "at", "from", "is", "are", "was", "were", "or", "as", "that", "this"}
+
+
 def _fuzzy_title_match(t1: str, t2: str) -> bool:
-    s1 = set(re.sub(r"[^\w\s]", "", t1.lower()).split())
-    s2 = set(re.sub(r"[^\w\s]", "", t2.lower()).split())
+    words1 = [w for w in re.sub(r"[^\w\s]", "", t1.lower()).split() if w not in STOP_WORDS]
+    words2 = [w for w in re.sub(r"[^\w\s]", "", t2.lower()).split() if w not in STOP_WORDS]
+    s1 = set(words1)
+    s2 = set(words2)
     if not s1 or not s2:
         return False
     intersection = s1.intersection(s2)
     smaller = min(len(s1), len(s2))
-    return (len(intersection) / smaller) >= 0.7
+    return (len(intersection) / smaller) >= 0.75
