@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import type { AuditResponse, CitationStyle, AuditMode } from "@/lib/types";
 import { runAudit } from "@/lib/api";
 import Sidebar from "./Sidebar";
@@ -15,6 +15,7 @@ import RecencyPanel from "./RecencyPanel";
 import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
 import SubscriptionModal from "../subscription/SubscriptionModal";
+import { AlertOctagon, CheckCircle2 } from "lucide-react";
 
 export default function DashboardView() {
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
@@ -24,7 +25,6 @@ export default function DashboardView() {
   const [analysisData, setAnalysisData] = useState<AuditResponse | null>(null);
   const [manuscriptText, setManuscriptText] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [inputCollapsed, setInputCollapsed] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [progress, setProgress] = useState({
     visible: false,
@@ -49,7 +49,7 @@ export default function DashboardView() {
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
     setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 3000);
+    setTimeout(() => setToastVisible(false), 3500);
   }, []);
 
   const handlePanelChange = useCallback((panel: string) => {
@@ -74,14 +74,14 @@ export default function DashboardView() {
     setStyle(newStyle);
   }, []);
 
-  const handleToggleInput = useCallback(() => {
-    setInputCollapsed((prev) => !prev);
-  }, []);
-
   const handleFileSelect = useCallback((file: File) => {
     setUploadedFile(file);
     setManuscriptText("");
-    if (file.name.toLowerCase().endsWith(".txt") || file.name.toLowerCase().endsWith(".rtf")) {
+    if (
+      file.name.toLowerCase().endsWith(".txt") ||
+      file.name.toLowerCase().endsWith(".rtf") ||
+      file.name.toLowerCase().endsWith(".bib")
+    ) {
       const reader = new FileReader();
       reader.onload = (e) => {
         if (e.target?.result) setManuscriptText(e.target.result as string);
@@ -102,12 +102,11 @@ export default function DashboardView() {
   const handleRunAudit = useCallback(async () => {
     const textVal = manuscriptText.trim();
     if (!textVal && !uploadedFile) {
-      showToast("Please upload a file or paste manuscript text.");
+      showToast("Please upload a document file or paste manuscript text.");
       return;
     }
 
-    setInputCollapsed(true);
-    setProgress({ visible: true, message: "Parsing document structure…", pct: 20 });
+    setProgress({ visible: true, message: "Extracting manuscript structure & AST…", pct: 25 });
 
     const formData = new FormData();
     if (uploadedFile) formData.append("file", uploadedFile);
@@ -118,27 +117,39 @@ export default function DashboardView() {
     try {
       setProgress((p) => ({
         ...p,
-        message: "Extracting citations & querying Crossref API…",
-        pct: 65,
+        message: "Matching citations & querying Crossref APIs…",
+        pct: 70,
       }));
       const data = await runAudit(formData);
       if (data.text || data.manuscript_text) {
         setManuscriptText(data.text || data.manuscript_text || "");
       }
       setAnalysisData(data);
-      setProgress({ visible: false, message: "Done!", pct: 100 });
-      showToast("Audit finished successfully!");
+      setProgress({ visible: false, message: "Audit Complete!", pct: 100 });
+      showToast("Manuscript audit completed successfully!");
     } catch (err) {
       setProgress({ visible: false, message: "", pct: 0 });
       const msg = (err as Error).message;
-      showToast("Error running audit: " + msg);
+      showToast("Audit Error: " + msg);
       setErrorModal({
         visible: true,
-        title: "Audit Analysis Error",
+        title: "Audit Execution Error",
         message: msg,
       });
     }
   }, [manuscriptText, uploadedFile, style, currentMode, showToast]);
+
+  // Keyboard shortcut (Cmd/Ctrl + Enter to trigger audit)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleRunAudit();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleRunAudit]);
 
   const handleCloseErrorModal = useCallback(() => {
     setErrorModal((prev) => ({ ...prev, visible: false }));
@@ -179,8 +190,8 @@ export default function DashboardView() {
   })();
 
   return (
-    <div className="dash-body" style={{ background: "var(--color-dash-paper)" }}>
-      <div className="flex flex-col md:grid md:grid-cols-[236px_1fr] min-h-screen">
+    <div className="dash-body bg-[#F4F3EE] text-ink min-h-screen selection:bg-[#1E5E4B] selection:text-white font-dash">
+      <div className="flex flex-col md:grid md:grid-cols-[240px_1fr] min-h-screen">
         <Sidebar
           activePanel={activePanel}
           onPanelChange={handlePanelChange}
@@ -189,25 +200,22 @@ export default function DashboardView() {
           onClose={() => setMobileNavOpen(false)}
           onOpenSubscription={() => setSubscriptionModalOpen(true)}
         />
-        <main className="min-w-0 w-full" role="main">
+        <main className="min-w-0 w-full bg-[#F4F3EE] flex flex-col" role="main">
           <Topbar
             mode={currentMode}
             onModeChange={handleModeChange}
             style={style}
             onStyleChange={handleStyleChange}
             onRunAudit={handleRunAudit}
-            onToggleInput={handleToggleInput}
-            inputCollapsed={inputCollapsed}
             hasDocument={hasDocument}
             documentName={documentName}
             onClearDocument={handleClearDocument}
             progress={progress}
             onToggleMobileSidebar={() => setMobileNavOpen((prev) => !prev)}
           />
-          <div className="px-4 sm:px-7 py-4 sm:py-[26px] pb-16">
+
+          <div className="flex-1 px-4 sm:px-8 py-6 pb-20 max-w-7xl w-full mx-auto space-y-6">
             <InputArea
-              collapsed={inputCollapsed}
-              onToggleCollapse={handleToggleInput}
               onFileSelect={handleFileSelect}
               onTextChange={handleTextChange}
               onClear={handleClearDocument}
@@ -215,75 +223,87 @@ export default function DashboardView() {
               hasText={!!manuscriptText.trim()}
             />
 
-            {activePanel === "overview" && (
-              <OverviewPanel data={analysisData} mode={currentMode} />
-            )}
-            {activePanel === "matching" && (
-              <MatchingPanel data={analysisData} />
-            )}
-            {activePanel === "crossref" && (
-              <CrossrefPanel data={analysisData} />
-            )}
-            {activePanel === "style" && <StylePanel data={analysisData} />}
-            {activePanel === "claims" && <ClaimsPanel data={analysisData} />}
-            {activePanel === "recency" && <RecencyPanel data={analysisData} />}
-            {activePanel === "structure" && (
-              <StructurePanel data={analysisData} />
-            )}
-            {activePanel === "export" && (
-              <ExportPanel
-                data={analysisData}
-                manuscriptText={manuscriptText}
-              />
+            {/* Shimmer Skeleton Loader state when audit is running */}
+            {progress.visible ? (
+              <div className="space-y-4 animate-pulse">
+                <div className="h-32 bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl" />
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
+                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
+                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
+                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
+                </div>
+                <div className="h-64 bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl" />
+              </div>
+            ) : (
+              <>
+                {activePanel === "overview" && (
+                  <OverviewPanel data={analysisData} mode={currentMode} />
+                )}
+                {activePanel === "matching" && (
+                  <MatchingPanel data={analysisData} />
+                )}
+                {activePanel === "crossref" && (
+                  <CrossrefPanel data={analysisData} />
+                )}
+                {activePanel === "style" && <StylePanel data={analysisData} />}
+                {activePanel === "claims" && <ClaimsPanel data={analysisData} />}
+                {activePanel === "recency" && <RecencyPanel data={analysisData} />}
+                {activePanel === "structure" && (
+                  <StructurePanel data={analysisData} />
+                )}
+                {activePanel === "export" && (
+                  <ExportPanel
+                    data={analysisData}
+                    manuscriptText={manuscriptText}
+                  />
+                )}
+              </>
             )}
           </div>
         </main>
       </div>
 
-      {/* Toast */}
+      {/* Toast Notification */}
       <div
         id="toast"
-        className={`fixed bottom-6 right-4 sm:right-7 bg-ink text-white px-5 py-3.5 rounded-lg text-[13.5px] font-bold flex items-center gap-2.5 shadow-[0_8px_24px_rgba(0,0,0,0.25)] z-200 transition-all duration-300 ease ${
+        className={`fixed bottom-6 right-6 bg-[#FAF6EC] border border-[#C7BC9F] text-[#221D16] px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2.5 shadow-lg z-50 transition-all duration-300 ${
           toastVisible
             ? "translate-y-0 opacity-100"
-            : "translate-y-5 opacity-0 pointer-events-none"
+            : "translate-y-6 opacity-0 pointer-events-none"
         }`}
         role="status"
         aria-live="polite"
       >
-        <span className="w-2 h-2 rounded-full bg-verified" aria-hidden="true" />
+        <CheckCircle2 className="w-4 h-4 text-[#1E5E4B]" />
         <span id="toast-msg">{toastMsg}</span>
       </div>
 
       {/* Error Modal */}
       {errorModal.visible && (
         <div
-          className="fixed inset-0 bg-black/50 z-300 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-[#221D16]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="error-modal-title"
         >
-          <div className="bg-card border-2 border-error rounded-lg max-w-[520px] w-full p-6 shadow-[0_10px_25px_rgba(0,0,0,0.3)]">
+          <div className="bg-[#FAF6EC] border border-[#961E14]/40 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
             <h2
               id="error-modal-title"
-              className="text-error mt-0 text-lg flex items-center gap-2"
+              className="text-[#961E14] font-extrabold text-base flex items-center gap-2"
             >
-              <i className="fas fa-exclamation-triangle" aria-hidden="true" />{" "}
-              {errorModal.title || "API Request Error"}
+              <AlertOctagon className="w-5 h-5 text-[#961E14]" />
+              {errorModal.title || "Audit Error"}
             </h2>
             <p
               tabIndex={0}
-              className="text-[13.5px] text-dash-ink leading-[1.5] my-4 max-h-[220px] overflow-y-auto font-mono bg-dash-paper p-3 rounded-[4px] border border-line whitespace-pre-wrap"
+              className="text-xs text-[#353027] font-mono bg-[#F1EBDC] p-3.5 rounded-xl border border-[#C7BC9F] leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap"
             >
               {errorModal.message}
             </p>
-            <div className="text-right">
+            <div className="text-right pt-2">
               <button
-                className="btn-dash"
-                style={{
-                  background: "var(--color-dash-ink)",
-                  borderColor: "var(--color-dash-ink)",
-                }}
+                className="px-4 py-2 bg-[#221D16] hover:bg-[#353027] text-[#F1EBDC] font-bold text-xs rounded-xl border border-[#221D16] transition-colors cursor-pointer"
                 onClick={handleCloseErrorModal}
               >
                 Dismiss
@@ -292,6 +312,7 @@ export default function DashboardView() {
           </div>
         </div>
       )}
+
       {/* Subscription Modal */}
       <SubscriptionModal
         isOpen={subscriptionModalOpen}

@@ -9,6 +9,8 @@ try:
         google_api_key: str = ""
         gemini_model: str = "gemini-2.5-flash-lite"
         log_level: str = "info"
+        cors_origins: str = "*"
+        crossref_mailto: str = "support@citepilot.ai"
 
         model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
@@ -22,5 +24,7 @@ except ImportError:
             self.google_api_key = os.environ.get("GOOGLE_API_KEY", "")
             self.gemini_model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash-lite")
             self.log_level = os.environ.get("LOG_LEVEL", "info")
+            self.cors_origins = os.environ.get("CORS_ORIGINS", "*")
+            self.crossref_mailto = os.environ.get("CROSSREF_MAILTO", "support@citepilot.ai")
 
     settings = Settings()

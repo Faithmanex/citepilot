@@ -1,13 +1,18 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
+import { UploadCloud, FileText, Trash2, Sparkles } from "lucide-react";
 
-const ALLOWED_EXTENSIONS = [".docx", ".pdf", ".txt", ".rtf"];
-const MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = [".docx", ".pdf", ".txt", ".rtf", ".bib"];
+
+const SAMPLE_TEXT = `Abstract
+Recent advancements in deep learning have transformed biomedical research (Smith et al., 2021). However, citation integrity remains a critical issue in academic literature (Johnson & Lee, 2019).
+
+References
+Smith, J., Davis, R., & Taylor, M. (2021). Neural Networks in Genomics. Nature Biotechnology, 39(4), 450-462.
+Johnson, K., & Lee, S. (2019). Citation Accuracy in Modern Publishing. Journal of Academic Integrity, 12(2), 115-130.`;
 
 interface InputAreaProps {
-  collapsed: boolean;
-  onToggleCollapse: () => void;
   onFileSelect: (file: File) => void;
   onTextChange: (text: string) => void;
   onClear: () => void;
@@ -16,8 +21,6 @@ interface InputAreaProps {
 }
 
 export default function InputArea({
-  collapsed,
-  onToggleCollapse,
   onFileSelect,
   onTextChange,
   onClear,
@@ -25,128 +28,122 @@ export default function InputArea({
   hasText,
 }: InputAreaProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dragCounter = useRef(0);
-  const [dragOver, setDragOver] = useState(false);
-
-  const validateFile = useCallback((file: File): boolean => {
-    const fileName = file.name.toLowerCase();
-    const validExt = ALLOWED_EXTENSIONS.some((ext) => fileName.endsWith(ext));
-    if (!validExt) {
-      alert(
-        `Invalid file type: ${file.name}. Only .docx, .pdf, .txt, .rtf are allowed.`
-      );
-      return false;
-    }
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      alert(
-        `File too large: ${(file.size / (1024 * 1024)).toFixed(1)}MB. Maximum allowed is 50MB.`
-      );
-      return false;
-    }
-    return true;
-  }, []);
+  const [pastedText, setPastedText] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleFileChange = useCallback(
     (file: File) => {
-      if (validateFile(file)) {
-        onFileSelect(file);
-      }
+      const ext = "." + file.name.split(".").pop()?.toLowerCase();
+      if (!ALLOWED_EXTENSIONS.includes(ext)) return;
+      onFileSelect(file);
     },
-    [validateFile, onFileSelect]
+    [onFileSelect]
   );
 
-  if (collapsed) return null;
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragging(false);
+      const file = e.dataTransfer.files[0];
+      if (file) handleFileChange(file);
+    },
+    [handleFileChange]
+  );
+
+  const handleLoadSample = useCallback(() => {
+    setPastedText(SAMPLE_TEXT);
+    onTextChange(SAMPLE_TEXT);
+  }, [onTextChange]);
+
+  const handleClearInternal = useCallback(() => {
+    setPastedText("");
+    onClear();
+  }, [onClear]);
 
   return (
-    <div
-      className="bg-card border-2 border-line rounded-md p-4 sm:p-5 mb-5 transition-all duration-300 ease"
-      id="input-section"
-    >
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_1.5fr] gap-5">
+    <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5 mb-6 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xs font-bold text-[#353027] uppercase tracking-wider font-mono">
+          Document Input
+        </h2>
+        <button
+          type="button"
+          onClick={handleLoadSample}
+          className="text-xs font-bold text-[#1E5E4B] hover:text-[#285235] flex items-center gap-1.5 transition-colors cursor-pointer"
+        >
+          <Sparkles className="w-3.5 h-3.5" />
+          Load Sample
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Upload / Drop Zone */}
         <div
-          className={`border-2 ${
-            dragOver ? "border-brand" : "border-dashed border-line"
-          } rounded-md p-7.5 text-center cursor-pointer transition-colors duration-150 ease bg-dash-paper`}
-          id="drop-box"
-          tabIndex={0}
-          role="button"
-          aria-label="Upload document file (.docx, .pdf, .txt)"
+          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[140px] ${
+            isDragging
+              ? "border-[#1E5E4B] bg-[#DEE8DD]/60"
+              : hasFile
+              ? "border-[#1E5E4B]/50 bg-[#DEE8DD]/40"
+              : "border-[#C7BC9F] hover:border-[#1E5E4B]/60 bg-[#F1EBDC]"
+          }`}
           onClick={() => fileInputRef.current?.click()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
-          }}
-          onDragEnter={(e) => {
-            e.preventDefault();
-            dragCounter.current++;
-            setDragOver(true);
-          }}
-          onDragOver={(e) => e.preventDefault()}
-          onDragLeave={(e) => {
-            e.preventDefault();
-            dragCounter.current--;
-            if (dragCounter.current <= 0) {
-              dragCounter.current = 0;
-              setDragOver(false);
-            }
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            dragCounter.current = 0;
-            setDragOver(false);
-            if (e.dataTransfer.files.length) {
-              handleFileChange(e.dataTransfer.files[0]);
-            }
-          }}
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
         >
           <input
             ref={fileInputRef}
             type="file"
-            style={{ display: "none" }}
-            accept=".docx,.pdf,.txt,.rtf"
+            className="hidden"
+            accept=".docx,.pdf,.txt,.rtf,.bib"
             onChange={(e) => {
               if (e.target.files?.length) handleFileChange(e.target.files[0]);
             }}
           />
-          <i
-            className="fas fa-file-upload text-[28px] text-dash-ink-faint mb-2.5"
-            aria-hidden="true"
-          />
-          <div className="font-bold mb-1" id="drop-box-title">
-            Upload Document
-          </div>
-          <div className="text-xs text-dash-ink-faint" id="drop-box-subtitle">
-            Drag & drop .docx, .pdf, or .txt file here
-          </div>
+
+          {hasFile ? (
+            <>
+              <FileText className="w-6 h-6 text-[#1E5E4B] mb-2" />
+              <div className="text-xs font-bold text-[#221D16]">File ready</div>
+              <div className="text-[11px] text-[#696050] mt-0.5">Click to replace</div>
+            </>
+          ) : (
+            <>
+              <UploadCloud className="w-6 h-6 text-[#696050] mb-2" />
+              <div className="text-xs font-bold text-[#221D16]">
+                Drop file or click to upload
+              </div>
+              <div className="text-[11px] text-[#696050] mt-0.5">
+                PDF, DOCX, BIB, TXT — max 50 MB
+              </div>
+            </>
+          )}
+
           {(hasFile || hasText) && (
             <button
               type="button"
-              className="link-btn mt-2.5 px-3 py-1 text-xs min-h-[32px]"
+              className="mt-3 text-xs font-bold text-[#961E14] hover:text-[#7a1810] flex items-center gap-1 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
-                onClear();
+                handleClearInternal();
               }}
-              aria-label="Remove selected file"
             >
-              <i className="fas fa-times" aria-hidden="true" /> Remove file
+              <Trash2 className="w-3 h-3" />
+              Clear
             </button>
           )}
         </div>
 
-        <div>
-          <label
-            htmlFor="paste-text"
-            className="text-xs font-bold text-dash-ink-faint mb-1.5 block font-mono"
-          >
-            OR PASTE TEXT DIRECTLY
-          </label>
-          <textarea
-            className="w-full h-[140px] border-2 border-line rounded-md p-3 font-mono text-[12.5px] text-dash-ink resize-none outline-none bg-dash-paper"
-            id="paste-text"
-            placeholder="Paste your research manuscript or reference list text here..."
-            aria-label="Paste Document Text"
-            onChange={(e) => onTextChange(e.target.value)}
-          />
-        </div>
+        {/* Paste textarea */}
+        <textarea
+          className="w-full h-[140px] border border-[#C7BC9F] focus:border-[#1E5E4B] rounded-xl p-3 font-mono text-xs text-[#221D16] resize-none outline-none bg-[#F1EBDC] placeholder:text-[#C7BC9F] transition-colors"
+          value={pastedText}
+          placeholder="Or paste manuscript text / bibliography directly here…"
+          onChange={(e) => {
+            setPastedText(e.target.value);
+            onTextChange(e.target.value);
+          }}
+        />
       </div>
     </div>
   );

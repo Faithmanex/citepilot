@@ -1,10 +1,10 @@
 "use client";
 
-interface CTASectionProps {
-  onLaunchApp: () => void;
-}
+import { useRouter } from "next/navigation";
 
-export default function CTASection({ onLaunchApp }: CTASectionProps) {
+export default function CTASection() {
+  const router = useRouter();
+
   return (
     <section className="text-center py-20 bg-paper border-t-2 border-rule" id="cta">
       <div className="max-w-[1080px] mx-auto px-8">
@@ -22,7 +22,7 @@ export default function CTASection({ onLaunchApp }: CTASectionProps) {
         <div className="mt-6 max-w-[320px] sm:max-w-none mx-auto">
           <button
             className="btn btn-primary w-full sm:w-auto text-center"
-            onClick={onLaunchApp}
+            onClick={() => router.push("/dashboard")}
             aria-label="Check Your Manuscript Now"
           >
             <i className="fas fa-file-check text-xs mr-2" />

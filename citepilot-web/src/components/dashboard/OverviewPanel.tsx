@@ -1,6 +1,14 @@
 "use client";
 
 import type { AuditResponse } from "@/lib/types";
+import {
+  ShieldAlert,
+  ShieldCheck,
+  SearchX,
+  Link2Off,
+  FileQuestion,
+  CheckCircle2,
+} from "lucide-react";
 
 interface OverviewPanelProps {
   data: AuditResponse | null;
@@ -12,7 +20,6 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
   const refs = data?.references ?? [];
   const warnings = data?.style_warnings ?? [];
   const claims = data?.uncited_claims ?? [];
-  const recency = data?.recency ?? {};
 
   const missingRefs = citations.filter((c) => c.status === "no_match").length;
   const uncitedRefs = refs.filter((r) => r.status === "orphaned").length;
@@ -21,142 +28,199 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
     (acc, r) => acc + (r.crossref_validation?.discrepancies?.length ?? 0),
     0
   );
-  const issueCount =
-    warnings.length + retractedCount + missingRefs + crDiscrepancies;
   const matchedCount = citations.filter((c) => c.status === "matched").length;
   const matchRate = citations.length
     ? Math.round((matchedCount / citations.length) * 100)
-    : 0;
-  const recencyStatus = (
-    recency.recency_compliance_status ?? "N/A"
-  ).toUpperCase();
+    : 100;
+
+  const totalDeductions =
+    missingRefs * 12 +
+    uncitedRefs * 8 +
+    retractedCount * 25 +
+    crDiscrepancies * 5 +
+    warnings.length * 3 +
+    claims.length * 5;
+  const integrityScore = data
+    ? Math.max(0, Math.min(100, 100 - totalDeductions))
+    : 96;
 
   const isRefOnly = mode === "reference_only";
-  const subtitle = data
-    ? `Audit completed. Analyzed ${citations.length} citations and ${refs.length} reference entries.`
-    : isRefOnly
-      ? "Reference-List-Only Audit mode active. Run an audit above to analyze bibliography entries."
-      : "Full Manuscript Audit mode active. Run an audit above to generate real-time citation analysis.";
-  const title = isRefOnly
-    ? "Reference-List-Only Audit Report"
-    : "Full Manuscript Audit Report";
 
-  const priorityItems: string[] = [];
+  const scoreColor =
+    integrityScore >= 80
+      ? "#1E5E4B"
+      : integrityScore >= 60
+      ? "#825500"
+      : "#961E14";
+  const scoreBg =
+    integrityScore >= 80
+      ? "#DEE8DD"
+      : integrityScore >= 60
+      ? "#F1E4C8"
+      : "#F3DCD6";
 
+  // Build priority items
+  const priorityItems: { label: string; type: "error" | "warn" | "info" }[] = [];
   refs
     .filter((r) => r.status === "retracted")
-    .forEach((r) => {
-      priorityItems.push(`RETRACTED SOURCE DETECTED — ${(r.raw_entry ?? "").substring(0, 90)}...`);
-    });
+    .forEach((r) =>
+      priorityItems.push({
+        label: `Retracted — ${(r.raw_entry ?? "").substring(0, 80)}…`,
+        type: "error",
+      })
+    );
   citations
     .filter((c) => c.status === "no_match")
-    .forEach((c) => {
-      priorityItems.push(`MISSING REFERENCE — '${c.raw_text}' (Paragraph ${(c.paragraph_index ?? 0) + 1})`);
-    });
-  refs.forEach((r) => {
-    (r.crossref_validation?.discrepancies ?? []).forEach((d) => {
-      priorityItems.push(`CROSSREF DISCREPANCY (${(d.field ?? "").toUpperCase()}) — ${d.message ?? ""}`);
-    });
-  });
-  warnings.slice(0, 5).forEach((w) => {
-    priorityItems.push(`${w.code ?? "STYLE WARNING"} — ${w.message ?? ""}`);
-  });
+    .forEach((c) =>
+      priorityItems.push({
+        label: `Unmatched citation — "${c.raw_text}" (¶${(c.paragraph_index ?? 0) + 1})`,
+        type: "error",
+      })
+    );
+  refs.forEach((r) =>
+    (r.crossref_validation?.discrepancies ?? []).forEach((d) =>
+      priorityItems.push({
+        label: `Crossref discrepancy (${(d.field ?? "").toUpperCase()}) — ${d.message ?? ""}`,
+        type: "warn",
+      })
+    )
+  );
+  warnings.slice(0, 3).forEach((w) =>
+    priorityItems.push({ label: `Style alert — ${w.message ?? ""}`, type: "warn" })
+  );
+
+  const summaryCards = [
+    {
+      label: "Ghost Citations",
+      value: missingRefs,
+      sub: "Unmatched in text",
+      icon: SearchX,
+      color: "#961E14",
+      bg: "#F3DCD6",
+    },
+    {
+      label: "Uncited Refs",
+      value: uncitedRefs,
+      sub: "Orphaned in bibliography",
+      icon: Link2Off,
+      color: "#825500",
+      bg: "#F1E4C8",
+    },
+    {
+      label: "Crossref Issues",
+      value: crDiscrepancies + retractedCount,
+      sub: "Discrepancies & retractions",
+      icon: FileQuestion,
+      color: "#1E3A8A",
+      bg: "#DBEAFE",
+    },
+    {
+      label: "Match Rate",
+      value: `${matchRate}%`,
+      sub: "Linked to bibliography",
+      icon: CheckCircle2,
+      color: "#1E5E4B",
+      bg: "#DEE8DD",
+    },
+  ];
 
   return (
-    <section className="panel active" id="panel-overview">
-      <div className="mb-[22px]">
-        <h1 className="text-xl font-extrabold m-0 mb-1 font-dash">{title}</h1>
-        <p className="text-sm text-dash-ink-soft m-0 max-w-[64ch]">{subtitle}</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
-            <span>Citations parsed</span>
-            <i className="fas fa-quote-right text-slate-400 text-xs" />
-          </div>
-          <div className="font-mono text-[32px] font-black text-dash-ink">{citations.length}</div>
-          <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">
-            across body sections
-          </div>
-        </div>
-        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
-            <span>Issues flagged</span>
-            <i className="fas fa-exclamation-circle text-error text-xs" />
-          </div>
-          <div className="font-mono text-[32px] font-black text-error">
-            {issueCount}
-          </div>
-          <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">
-            retractions & mismatches
-          </div>
-        </div>
-        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
-            <span>Bidirectional match rate</span>
-            <i className="fas fa-link text-verified text-xs" />
-          </div>
-          <div className="font-mono text-[32px] font-black text-verified">
-            {matchRate}%
-          </div>
-          <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">
-            linked to bibliography
-          </div>
-        </div>
-        <div className="bg-card border-2 border-line rounded-xl p-5 card-hover-lift shadow-sm">
-          <div className="text-[12.5px] font-bold text-dash-ink-faint mb-2 flex items-center justify-between">
-            <span>Recency status</span>
-            <i className="fas fa-clock text-amber-600 text-xs" />
-          </div>
-          <div className="font-mono text-[32px] font-black text-warning">
-            {recencyStatus}
-          </div>
-          <div className="text-xs font-semibold text-dash-ink-faint mt-1.5">
-            last 5 years ratio
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4">
-        <div className="bg-card border-2 border-line rounded-md p-5 w-full">
-          <h2 className="text-[15px] font-extrabold m-0 mb-1">
-            Highest-priority findings
-          </h2>
-          <p className="text-[13px] text-dash-ink-faint m-0 mb-4">
-            Pulled from Crossref validation, matching, and retraction checks.
+    <section className="space-y-5 animate-fade-in" id="panel-overview">
+      {/* Header Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5 shadow-sm">
+        <div>
+          <h1 className="text-base font-extrabold text-[#221D16] font-dash">
+            {isRefOnly ? "Reference List Audit" : "Manuscript Audit Summary"}
+          </h1>
+          <p className="text-xs text-[#696050] mt-1">
+            {data
+              ? `Verified ${citations.length} citations against ${refs.length} reference entries.`
+              : "Upload or paste your manuscript above, then click 'Run Audit'."}
           </p>
-          {priorityItems.length === 0 ? (
-            <ul className="list-none m-0 p-0">
-              <li className="flex gap-3 items-start py-3 border-b border-line last:border-b-0 text-[13.5px]">
-                <span className="status-icon status-icon-ok">✓</span>
-                <div>
-                  <div className="font-bold mb-0.5" style={{ color: "var(--color-verified)" }}>
-                    No document audited yet
-                  </div>
-                  <div className="text-[13px] text-dash-ink-soft leading-[1.5]">
-                    Upload a document or paste text above and click &apos;Run
-                    audit&apos;.
-                  </div>
-                </div>
-              </li>
-            </ul>
-          ) : (
-            <ul className="list-none m-0 p-0">
-              {priorityItems.map((item, i) => (
-                <li
-                  key={i}
-                  className="flex gap-3 items-start py-3 border-b border-line last:border-b-0 text-[13.5px]"
-                >
-                  <span className="status-icon status-icon-err">!</span>
-                  <div>
-                    <div className="li-title font-bold mb-0.5">{item}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
+
+        {/* Integrity Score */}
+        <div
+          className="flex items-center gap-3 px-4 py-3 rounded-xl border"
+          style={{ backgroundColor: scoreBg, borderColor: scoreColor + "40" }}
+        >
+          <div
+            className="font-mono text-3xl font-black"
+            style={{ color: scoreColor }}
+          >
+            {integrityScore}
+            <span className="text-sm font-normal text-[#696050]">/100</span>
+          </div>
+          <div
+            className="text-[11px] font-bold uppercase tracking-wider font-mono border-l pl-3"
+            style={{ color: scoreColor, borderColor: scoreColor + "30" }}
+          >
+            Integrity
+            <br />
+            Score
+          </div>
+        </div>
+      </div>
+
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {summaryCards.map(({ label, value, sub, icon: Icon, color, bg }) => (
+          <div
+            key={label}
+            className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl p-4 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-xs font-bold text-[#353027]">{label}</span>
+              <span
+                className="p-1 rounded-lg"
+                style={{ backgroundColor: bg }}
+              >
+                <Icon className="w-3.5 h-3.5" style={{ color }} />
+              </span>
+            </div>
+            <div
+              className="font-mono text-2xl font-black"
+              style={{ color }}
+            >
+              {value}
+            </div>
+            <div className="text-[11px] text-[#696050] mt-0.5">{sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Priority Findings */}
+      <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5 space-y-3">
+        <h2 className="text-xs font-bold text-[#353027] uppercase tracking-wider font-mono flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-[#825500]" />
+          Key Issues & Alerts
+        </h2>
+
+        {priorityItems.length === 0 ? (
+          <div className="flex items-center gap-2.5 p-3.5 bg-[#DEE8DD]/60 border border-[#1E5E4B]/20 rounded-xl text-xs text-[#1E5E4B]">
+            <ShieldCheck className="w-4 h-4 flex-none" />
+            <span>
+              {data
+                ? "All citations matched correctly — no critical errors found."
+                : "No issues detected yet. Click 'Run Audit' above to begin."}
+            </span>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {priorityItems.map((item, idx) => (
+              <div
+                key={idx}
+                className={`p-3 rounded-xl text-xs font-mono border ${
+                  item.type === "error"
+                    ? "bg-[#F3DCD6] border-[#961E14]/25 text-[#961E14]"
+                    : "bg-[#F1E4C8] border-[#825500]/25 text-[#825500]"
+                }`}
+              >
+                {item.label}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );

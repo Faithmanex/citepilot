@@ -33,10 +33,11 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Standard CORS Configuration
+# Configurable CORS Configuration
+origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()] if settings.cors_origins else ["*"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins if origins else ["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,7 +49,14 @@ app.include_router(v1_router)
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "service": "citepilot-ai"}
+    key_configured = bool(settings.google_api_key)
+    return {
+        "status": "ok",
+        "service": "citepilot-ai",
+        "version": "0.1.0",
+        "ai_engine_ready": key_configured,
+        "model": settings.gemini_model,
+    }
 
 
 # API Catch-all for unhandled /api/ routes to return 404 JSON for any HTTP method

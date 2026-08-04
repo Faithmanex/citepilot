@@ -31,6 +31,7 @@
   --color-error: #991B1B;
   --color-error-bg: #FEE2E2;
   --color-brand: #1E3A8A;
+  --color-brand-hover: #1e40af;
   --color-brand-bg: #DBEAFE;
   --color-focus-ring: #4F46E5;
 
@@ -40,9 +41,9 @@
   --font-sans: "Inter", sans-serif;
   --font-dash: "Manrope", sans-serif;
 
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 }
 
 @layer base {

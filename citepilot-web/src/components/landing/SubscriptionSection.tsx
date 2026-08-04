@@ -1,12 +1,11 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import PayPalSubscriptionButton from "../subscription/PayPalSubscriptionButton";
 
-interface SubscriptionSectionProps {
-  onLaunchApp?: () => void;
-}
+export default function SubscriptionSection() {
+  const router = useRouter();
 
-export default function SubscriptionSection({ onLaunchApp }: SubscriptionSectionProps) {
   return (
     <section
       id="pricing"
@@ -27,7 +26,7 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
-          {/* Free Tier Card */}
+          {/* Free Tier */}
           <div className="bg-paper-card border-2 border-rule rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-ink transition-all duration-200">
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -45,40 +44,29 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
               </p>
 
               <ul className="space-y-3 mb-8 text-sm text-ink">
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Up to 10 manuscript audits per month</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>APA, MLA, Chicago, IEEE, Harvard support</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Basic DOI cross-verification</span>
-                </li>
-                <li className="flex items-start gap-2.5 text-ink-soft opacity-60">
-                  <i className="fas fa-times text-rule-dark mt-0.5 text-xs" />
-                  <span>Export Word DOCX (with Tracked Changes) &amp; PDF reports</span>
-                </li>
-                <li className="flex items-start gap-2.5 text-ink-soft opacity-60">
-                  <i className="fas fa-times text-rule-dark mt-0.5 text-xs" />
-                  <span>Style violation warnings &amp; citation guidance</span>
-                </li>
+                {[
+                  { ok: true,  text: "Up to 10 manuscript audits per month" },
+                  { ok: true,  text: "APA, MLA, Chicago, IEEE, Harvard support" },
+                  { ok: true,  text: "Basic DOI cross-verification" },
+                  { ok: false, text: "Export DOCX (Tracked Changes) & PDF reports" },
+                  { ok: false, text: "Style violation warnings & citation guidance" },
+                ].map(({ ok, text }) => (
+                  <li key={text} className={`flex items-start gap-2.5 ${!ok ? "opacity-50" : ""}`}>
+                    <i className={`fas ${ok ? "fa-check text-emerald-600" : "fa-times text-rule"} mt-0.5 text-xs`} />
+                    <span>{text}</span>
+                  </li>
+                ))}
               </ul>
             </div>
-
-            {onLaunchApp && (
-              <button
-                onClick={onLaunchApp}
-                className="w-full py-3 px-4 border-2 border-ink rounded-xl font-extrabold text-ink bg-paper hover:bg-paper-card transition-colors text-center"
-              >
-                Use Free Workspace
-              </button>
-            )}
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-full py-3 px-4 border-2 border-ink rounded-xl font-extrabold text-ink bg-paper hover:bg-paper-card transition-colors text-center"
+            >
+              Use Free Workspace
+            </button>
           </div>
 
-          {/* Pro Subscription Tier Card with PayPal Integration */}
+          {/* Pro Tier */}
           <div className="bg-paper-card border-3 border-ink rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden">
             <div className="absolute top-0 right-0 bg-ink text-paper text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">
               Recommended
@@ -93,7 +81,8 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-ink">Pro Plan</span>
+                  <span className="text-4xl font-black text-ink">$10</span>
+                  <span className="text-ink-soft text-sm font-semibold ml-1">/ month</span>
                 </div>
                 <p className="text-xs text-ink-soft font-semibold mt-1">
                   Automated monthly subscription via PayPal
@@ -105,30 +94,21 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
               </p>
 
               <ul className="space-y-3 mb-6 text-sm text-ink font-medium">
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>Unlimited</strong> Manuscript &amp; Reference Audits</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>Cross-verification</strong> with official Crossref &amp; Retraction Watch registries</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span><strong>In-text citation matching</strong> &amp; style violation inspection</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Export Word DOCX (with Tracked Changes) &amp; PDF Diagnostic Reports</span>
-                </li>
-                <li className="flex items-start gap-2.5">
-                  <i className="fas fa-check text-emerald-600 mt-0.5 text-xs" />
-                  <span>Priority Processing &amp; Responsive Email Support</span>
-                </li>
+                {[
+                  "<strong>Unlimited</strong> Manuscript & Reference Audits",
+                  "<strong>Cross-verification</strong> with Crossref & Retraction Watch",
+                  "<strong>In-text citation matching</strong> & style violation inspection",
+                  "Export DOCX (Tracked Changes) & PDF Diagnostic Reports",
+                  "Priority Processing & Responsive Email Support",
+                ].map((text) => (
+                  <li key={text} className="flex items-start gap-2.5">
+                    <i className="fas fa-check text-emerald-600 mt-0.5 text-xs flex-none" />
+                    <span dangerouslySetInnerHTML={{ __html: text }} />
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* PayPal Subscription Button Container */}
             <div className="mt-4 pt-4 border-t border-rule">
               <p className="text-xs font-bold text-center text-ink-soft mb-3">
                 Subscribe securely with PayPal:
@@ -136,7 +116,7 @@ export default function SubscriptionSection({ onLaunchApp }: SubscriptionSection
               <PayPalSubscriptionButton />
               <p className="text-[11px] text-center text-ink-soft opacity-75 mt-2">
                 <i className="fas fa-shield-alt text-emerald-600 mr-1" />
-                Cancel anytime directly from your PayPal account. 256-bit SSL Encryption.
+                Cancel anytime from your PayPal account. 256-bit SSL Encryption.
               </p>
             </div>
           </div>

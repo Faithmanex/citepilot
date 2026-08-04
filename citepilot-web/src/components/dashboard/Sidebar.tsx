@@ -1,6 +1,21 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import BrandLogo from "../brand/BrandLogo";
+import {
+  LayoutDashboard,
+  GitCompare,
+  CheckCircle2,
+  BookOpenCheck,
+  AlertTriangle,
+  Clock,
+  FileSpreadsheet,
+  FileDown,
+  Sparkles,
+  X,
+  ArrowLeft,
+} from "lucide-react";
 
 interface SidebarProps {
   activePanel: string;
@@ -11,30 +26,15 @@ interface SidebarProps {
   onOpenSubscription?: () => void;
 }
 
-const navGroups = [
-  {
-    label: "Audit & Verification",
-    items: [
-      { panel: "overview", icon: "◆", label: "Overview", badgeKey: null },
-      { panel: "matching", icon: "↔", label: "Citation Matching", badgeKey: "matching" },
-      { panel: "crossref", icon: "✓", label: "Crossref & Retraction", badgeKey: "crossref" },
-      { panel: "style", icon: "§", label: "Style Rules", badgeKey: "style" },
-      { panel: "claims", icon: "!", label: "Uncited Claims", badgeKey: "claims" },
-    ],
-  },
-  {
-    label: "Analytics & Layout",
-    items: [
-      { panel: "recency", icon: "◔", label: "Recency Analytics", badgeKey: null },
-      { panel: "structure", icon: "▤", label: "Document Layout", badgeKey: null },
-    ],
-  },
-  {
-    label: "Output & Export",
-    items: [
-      { panel: "export", icon: "⇩", label: "Feedback & Export", badgeKey: null },
-    ],
-  },
+const navItems = [
+  { panel: "overview",  icon: LayoutDashboard, label: "Overview",           badgeKey: null },
+  { panel: "matching",  icon: GitCompare,       label: "Citation Matching",  badgeKey: "matching" },
+  { panel: "crossref",  icon: CheckCircle2,     label: "Crossref Check",     badgeKey: "crossref" },
+  { panel: "style",     icon: BookOpenCheck,    label: "Style Rules",        badgeKey: "style" },
+  { panel: "claims",    icon: AlertTriangle,    label: "Uncited Claims",     badgeKey: "claims" },
+  { panel: "recency",   icon: Clock,            label: "Recency Analysis",   badgeKey: null },
+  { panel: "structure", icon: FileSpreadsheet,  label: "Document Structure", badgeKey: null },
+  { panel: "export",    icon: FileDown,         label: "Export Report",      badgeKey: null },
 ];
 
 export default function Sidebar({
@@ -45,109 +45,101 @@ export default function Sidebar({
   onClose,
   onOpenSubscription,
 }: SidebarProps) {
+  const router = useRouter();
+
   return (
     <>
       {/* Mobile Backdrop */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-40 md:hidden transition-opacity"
+          className="fixed inset-0 bg-ink/40 backdrop-blur-sm z-40 md:hidden"
           onClick={onClose}
           aria-hidden="true"
         />
       )}
 
       <aside
-        className={`bg-sidebar text-sidebar-text p-5 pr-3.5 h-screen overflow-y-auto ${
-          isOpen ? "fixed inset-y-0 left-0 z-50 w-64 shadow-2xl" : "hidden md:block md:sticky md:top-0"
+        className={`bg-[#14181F] border-r border-[#252B36] flex flex-col h-screen overflow-y-auto ${
+          isOpen
+            ? "fixed inset-y-0 left-0 z-50 w-64 shadow-2xl"
+            : "hidden md:flex md:sticky md:top-0 w-[240px]"
         }`}
         role="navigation"
-        aria-label="Audit Drawer Navigation"
+        aria-label="Audit Navigation"
       >
-        <div className="flex items-center justify-between px-2.5 pb-[22px] pt-1.5 font-extrabold text-[17px] text-white">
-          <BrandLogo variant="dark" size="sm" subtitle="Audit" />
+        {/* Brand Header */}
+        <div className="flex items-center justify-between px-4 py-4 border-b border-[#252B36]">
+          <Link href="/" aria-label="CitePilot Home">
+            <BrandLogo variant="dark" size="sm" subtitle="AUDIT" />
+          </Link>
           {onClose && (
             <button
               type="button"
-              className="md:hidden text-sidebar-text hover:text-white p-1"
+              className="md:hidden text-slate-400 hover:text-white p-1 rounded"
               onClick={onClose}
-              aria-label="Close navigation drawer"
+              aria-label="Close navigation"
             >
-              <i className="fas fa-times text-lg" />
+              <X className="w-4 h-4" />
             </button>
           )}
         </div>
 
-        {navGroups.map((group) => (
-          <div key={group.label} className="mb-1">
-            <div className="font-mono text-[11px] font-bold tracking-wider uppercase text-[#94A3B8] pt-4 pb-2 px-2.5">
-              {group.label}
-            </div>
-            {group.items.map((item) => {
-              const badgeCount = item.badgeKey ? badges[item.badgeKey] ?? 0 : 0;
-              const isActive = activePanel === item.panel;
-              let badgeClass = "bg-white/15 text-[#F1F5F9]";
-              if (item.badgeKey === "matching" || item.badgeKey === "crossref")
-                badgeClass = "bg-error text-white";
-              if (item.badgeKey === "style" || item.badgeKey === "claims")
-                badgeClass = "bg-warning text-white";
+        {/* Nav Items */}
+        <nav className="flex-1 px-3 py-4 space-y-0.5">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-500 px-2 pb-2 font-mono">
+            Audit Sections
+          </p>
+          {navItems.map((item) => {
+            const badgeCount = item.badgeKey ? badges[item.badgeKey] ?? 0 : 0;
+            const isActive = activePanel === item.panel;
+            const Icon = item.icon;
 
-              return (
-                <button
-                  key={item.panel}
-                  className={`flex items-center gap-2.5 w-full text-left min-h-[44px] px-3 py-2.5 rounded-md border-none text-sm font-semibold cursor-pointer transition-all duration-150 ease mb-0.75 ${
-                    isActive
-                      ? "bg-white/15 text-white"
-                      : "text-sidebar-text hover:bg-white/10 hover:text-white"
-                  }`}
-                  data-panel={item.panel}
-                  onClick={() => {
-                    onPanelChange(item.panel);
-                    if (onClose) onClose();
-                  }}
-                  aria-current={isActive ? "page" : undefined}
-                  aria-label={`${item.label} Panel`}
-                >
-                  <span
-                    className={`w-[18px] h-[18px] flex-none rounded flex items-center justify-center text-[11px] ${
-                      isActive
-                        ? "bg-brand text-white"
-                        : "bg-white/10 text-[#E2E8F0]"
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {item.icon}
+            return (
+              <button
+                key={item.panel}
+                className={`flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer ${
+                  isActive
+                    ? "bg-[#1E5E4B] text-white shadow-sm"
+                    : "text-slate-300 hover:text-white hover:bg-white/8"
+                }`}
+                onClick={() => {
+                  onPanelChange(item.panel);
+                  if (onClose) onClose();
+                }}
+                aria-current={isActive ? "page" : undefined}
+              >
+                <div className="flex items-center gap-2.5 truncate min-w-0">
+                  <Icon className={`w-4 h-4 flex-none ${isActive ? "text-white" : "text-slate-400"}`} />
+                  <span className="truncate">{item.label}</span>
+                </div>
+                {item.badgeKey && badgeCount > 0 && (
+                  <span className={`ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-none ${isActive ? "bg-white/20 text-white" : "bg-[#961E14] text-white"}`}>
+                    {badgeCount}
                   </span>
-                  {item.label}
-                  {item.badgeKey && badgeCount > 0 && (
-                    <span
-                      className={`ml-auto font-mono text-[11px] font-bold px-2 py-0.5 rounded-[10px] ${badgeClass}`}
-                    >
-                      {badgeCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        ))}
+                )}
+              </button>
+            );
+          })}
+        </nav>
 
-        {/* Subscription Plan CTA in Sidebar */}
-        <div className="mt-6 pt-4 border-t border-white/10">
-          <div className="bg-gradient-to-br from-indigo-950/80 to-slate-900 border border-indigo-500/30 rounded-xl p-3.5 text-center">
-            <div className="flex items-center justify-center gap-1.5 text-amber-400 font-bold text-xs mb-1">
-              <i className="fas fa-crown text-xs" /> CitePilot Pro
-            </div>
-            <p className="text-[11px] text-slate-300 font-medium mb-3">
-              Unlock unlimited manuscript audits &amp; style rule inspection.
-            </p>
-            <button
-              onClick={onOpenSubscription}
-              className="w-full py-2 px-3 bg-brand text-white font-bold text-xs rounded-lg hover:bg-brand-hover transition-colors shadow-md flex items-center justify-center gap-2"
-              aria-label="Upgrade to Pro Account"
-            >
-              <i className="fab fa-paypal" /> Upgrade to Pro
-            </button>
-          </div>
+        {/* Footer */}
+        <div className="px-3 pb-4 pt-2 border-t border-[#252B36] space-y-2">
+          <button
+            onClick={onOpenSubscription}
+            className="w-full py-2.5 px-3 bg-[#1E5E4B] hover:bg-[#285235] text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#C7BC9F]" />
+            Upgrade to Pro
+          </button>
+
+          <button
+            onClick={() => router.push("/")}
+            className="w-full py-2 px-3 text-slate-400 hover:text-slate-200 hover:bg-white/5 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+            aria-label="Back to home page"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            Back to Home
+          </button>
         </div>
       </aside>
     </>

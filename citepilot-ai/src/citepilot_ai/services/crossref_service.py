@@ -5,10 +5,17 @@ from typing import Dict, Optional
 
 import httpx
 
+from ..config import settings
+
 logger = logging.getLogger(__name__)
 
 CROSSREF_API_BASE = "https://api.crossref.org/works"
-USER_AGENT = "CitePilot-Academic-Auditor/1.0 (mailto:support@citepilot.ai)"
+
+
+def _get_user_agent() -> str:
+    mailto = getattr(settings, "crossref_mailto", "support@citepilot.ai")
+    return f"CitePilot-Academic-Auditor/1.0 (mailto:{mailto})"
+
 
 # Shared AsyncClient with connection pooling for maximum speed and reuse
 _http_client: Optional[httpx.AsyncClient] = None
@@ -19,7 +26,7 @@ def get_http_client() -> httpx.AsyncClient:
     if _http_client is None or _http_client.is_closed:
         _http_client = httpx.AsyncClient(
             timeout=httpx.Timeout(10.0, connect=5.0),
-            headers={"User-Agent": USER_AGENT},
+            headers={"User-Agent": _get_user_agent()},
             limits=httpx.Limits(max_keepalive_connections=20, max_connections=50),
             follow_redirects=True
         )

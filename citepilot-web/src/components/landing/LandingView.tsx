@@ -1,30 +1,31 @@
 "use client";
 
-import Header from "./Header";
-import Hero from "./Hero";
-import WhyItMatters from "./WhyItMatters";
-import HowItWorks from "./HowItWorks";
-import CitationStyles from "./CitationStyles";
-import WhoItsFor from "./WhoItsFor";
-import SubscriptionSection from "./SubscriptionSection";
-import CTASection from "./CTASection";
-import Footer from "./Footer";
+import LandingView from "@/components/landing/LandingView";
+import Testimonials from "@/components/landing/Testimonials";
+import FAQ from "@/components/landing/FAQ";
+import Header from "@/components/landing/Header";
+import Hero from "@/components/landing/Hero";
+import WhyItMatters from "@/components/landing/WhyItMatters";
+import HowItWorks from "@/components/landing/HowItWorks";
+import CitationStyles from "@/components/landing/CitationStyles";
+import WhoItsFor from "@/components/landing/WhoItsFor";
+import SubscriptionSection from "@/components/landing/SubscriptionSection";
+import CTASection from "@/components/landing/CTASection";
+import Footer from "@/components/landing/Footer";
 
-interface LandingViewProps {
-  onLaunchApp: () => void;
-}
-
-export default function LandingView({ onLaunchApp }: LandingViewProps) {
+export default function LandingViewWithExtras() {
   return (
-    <div role="region" aria-label="Landing Page">
-      <Header onToggleDashboard={onLaunchApp} />
-      <Hero onLaunchApp={onLaunchApp} />
+    <div role="region" aria-label="CitePilot Landing Page">
+      <Header />
+      <Hero />
       <WhyItMatters />
       <HowItWorks />
       <CitationStyles />
       <WhoItsFor />
-      <SubscriptionSection onLaunchApp={onLaunchApp} />
-      <CTASection onLaunchApp={onLaunchApp} />
+      <Testimonials />
+      <SubscriptionSection />
+      <FAQ />
+      <CTASection />
       <Footer />
     </div>
   );

@@ -42,7 +42,14 @@ export default function RootLayout({
           referrerPolicy="no-referrer"
         />
       </head>
-      <body className="bg-paper text-ink" suppressHydrationWarning>{children}</body>
+      <body className="bg-paper text-ink" suppressHydrationWarning>
+        <noscript>
+          <div style={{ padding: "20px", textAlign: "center", background: "#FAF6EC", color: "#221D16" }}>
+            CitePilot requires JavaScript to perform automated academic citation audits. Please enable JavaScript in your browser to continue.
+          </div>
+        </noscript>
+        {children}
+      </body>
     </html>
   );
 }

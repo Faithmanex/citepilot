@@ -1,6 +1,13 @@
 "use client";
 
 import type { CitationStyle, AuditMode } from "@/lib/types";
+import {
+  Menu,
+  FileText,
+  X,
+  Play,
+  Loader2,
+} from "lucide-react";
 
 interface TopbarProps {
   mode: AuditMode;
@@ -8,8 +15,6 @@ interface TopbarProps {
   style: CitationStyle;
   onStyleChange: (style: CitationStyle) => void;
   onRunAudit: () => void;
-  onToggleInput: () => void;
-  inputCollapsed: boolean;
   hasDocument: boolean;
   documentName: string;
   onClearDocument: () => void;
@@ -18,15 +23,15 @@ interface TopbarProps {
 }
 
 const STYLE_LABELS: Record<CitationStyle, string> = {
-  apa7: "APA 7th Edition",
-  apa6: "APA 6th Edition",
-  mla9: "MLA 9th Edition",
-  chicago17: "Chicago 17th (Author-Date)",
-  harvard: "Harvard (Standard)",
+  apa7: "APA 7th",
+  apa6: "APA 6th",
+  mla9: "MLA 9th",
+  chicago17: "Chicago 17",
+  harvard: "Harvard",
   ieee: "IEEE",
   vancouver: "Vancouver",
   turabian: "Turabian",
-  oscola: "OSCOLA (Oxford Standard)",
+  oscola: "OSCOLA",
 };
 
 export default function Topbar({
@@ -35,8 +40,6 @@ export default function Topbar({
   style,
   onStyleChange,
   onRunAudit,
-  onToggleInput,
-  inputCollapsed,
   hasDocument,
   documentName,
   onClearDocument,
@@ -44,137 +47,122 @@ export default function Topbar({
   onToggleMobileSidebar,
 }: TopbarProps) {
   return (
-    <div className="sticky top-0 z-20 bg-dash-paper/95 backdrop-blur-md border-b-2 border-line px-4 sm:px-7 py-3.5">
-      <div className="flex items-center gap-2 sm:gap-[18px] flex-wrap">
-        {onToggleMobileSidebar && (
-          <button
-            type="button"
-            className="md:hidden flex items-center justify-center min-w-[44px] min-h-[44px] px-3 bg-card border-2 border-line rounded-md text-dash-ink font-bold"
-            onClick={onToggleMobileSidebar}
-            aria-label="Open Audit Navigation Menu"
-          >
-            <i className="fas fa-bars text-base" />
-          </button>
-        )}
-
-        <div
-          className={`flex items-center gap-2 text-[13.5px] font-bold text-dash-ink min-h-[44px] bg-card border-2 px-3.5 py-2 rounded-lg cursor-pointer max-w-full overflow-hidden text-ellipsis whitespace-nowrap shadow-sm transition-colors ${
-            hasDocument ? "border-emerald-600 bg-emerald-50/50" : "border-line"
-          }`}
-          id="doc-chip"
-          role="button"
-          tabIndex={0}
-          aria-label={
-            hasDocument
-              ? `Loaded document: ${documentName}`
-              : "No document loaded"
-          }
-        >
-          <span
-            className={`w-2.5 h-2.5 rounded-full flex-none ${
-              hasDocument ? "bg-emerald-600 animate-pulse" : "bg-slate-300"
-            }`}
-            aria-hidden="true"
-          />
-          <span id="doc-file-name" className="truncate">{documentName}</span>
-          {hasDocument && (
+    <header
+      className="sticky top-0 z-30 bg-[#FAF6EC] border-b border-[#C7BC9F] px-4 sm:px-6 py-3"
+      role="banner"
+    >
+      <div className="flex items-center gap-3 flex-wrap justify-between">
+        {/* Left: Mobile menu + document pill */}
+        <div className="flex items-center gap-3 min-w-0">
+          {onToggleMobileSidebar && (
             <button
-              id="btn-reset-doc"
-              className="ml-1 text-slate-400 hover:text-slate-700 font-bold p-1 text-xs transition-colors"
-              onClick={(e) => {
-                e.stopPropagation();
-                onClearDocument();
-              }}
-              aria-label="Clear loaded document"
+              type="button"
+              className="md:hidden flex items-center justify-center w-9 h-9 bg-[#F1EBDC] border border-[#C7BC9F] rounded-lg text-[#353027] hover:text-[#221D16] transition-colors"
+              onClick={onToggleMobileSidebar}
+              aria-label="Open Navigation"
             >
-              &times;
+              <Menu className="w-5 h-5" />
             </button>
           )}
+
+          {/* Document pill */}
+          <div
+            className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+              hasDocument
+                ? "bg-[#DEE8DD] border-[#1E5E4B]/40 text-[#1E5E4B]"
+                : "bg-[#F1EBDC] border-[#C7BC9F] text-[#696050]"
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5 flex-none" />
+            <span className="truncate max-w-[180px] font-mono text-[11px]">
+              {documentName}
+            </span>
+            {hasDocument && (
+              <button
+                className="ml-0.5 text-[#696050] hover:text-[#961E14] p-0.5 rounded transition-colors"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClearDocument();
+                }}
+                aria-label="Clear document"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="seg-control max-w-full overflow-x-auto" id="audit-mode" role="radiogroup" aria-label="Audit Mode Selector">
-          <button
-            className={mode === "full" ? "active" : ""}
-            data-mode="full"
-            onClick={() => onModeChange("full")}
-            aria-checked={mode === "full"}
-            role="radio"
-            tabIndex={mode === "full" ? 0 : -1}
+        {/* Right: Controls */}
+        <div className="flex items-center gap-2 flex-wrap ml-auto">
+          {/* Audit Mode toggle */}
+          <div className="bg-[#F1EBDC] border border-[#C7BC9F] rounded-lg p-1 flex items-center gap-1">
+            <button
+              className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                mode === "full"
+                  ? "bg-[#221D16] text-[#F1EBDC]"
+                  : "text-[#696050] hover:text-[#221D16]"
+              }`}
+              onClick={() => onModeChange("full")}
+            >
+              Full Manuscript
+            </button>
+            <button
+              className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
+                mode === "reference_only"
+                  ? "bg-[#221D16] text-[#F1EBDC]"
+                  : "text-[#696050] hover:text-[#221D16]"
+              }`}
+              onClick={() => onModeChange("reference_only")}
+            >
+              Ref List Only
+            </button>
+          </div>
+
+          {/* Citation Style */}
+          <select
+            className="bg-[#F1EBDC] border border-[#C7BC9F] text-[#221D16] text-xs font-bold h-9 px-3 rounded-lg outline-none focus:border-[#1E5E4B] transition-colors cursor-pointer"
+            value={style}
+            onChange={(e) => onStyleChange(e.target.value as CitationStyle)}
+            aria-label="Citation style"
           >
-            Full Manuscript
-          </button>
+            {Object.entries(STYLE_LABELS).map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+
+
           <button
-            className={mode === "reference_only" ? "active" : ""}
-            data-mode="reference_only"
-            onClick={() => onModeChange("reference_only")}
-            aria-checked={mode === "reference_only"}
-            role="radio"
-            tabIndex={mode === "reference_only" ? 0 : -1}
+            className="flex items-center gap-2 h-9 px-4 bg-[#1E5E4B] hover:bg-[#285235] text-white font-bold text-xs rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-60"
+            onClick={onRunAudit}
+            disabled={progress.visible}
+            aria-label="Run citation audit"
           >
-            Ref-List-Only
+            {progress.visible ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <Play className="w-3.5 h-3.5 fill-white" />
+            )}
+            <span>{progress.visible ? "Auditing…" : "Run Audit"}</span>
           </button>
         </div>
-
-        <select
-          className="font-dash text-[13px] font-bold min-h-[44px] px-3.5 py-[9px] rounded-md border-2 border-line bg-card text-dash-ink max-w-full"
-          id="style-select"
-          value={style}
-          onChange={(e) => onStyleChange(e.target.value as CitationStyle)}
-          aria-label="Select Citation Style Manual"
-        >
-          {Object.entries(STYLE_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-
-        <button
-          className="link-btn sm:ml-auto"
-          id="btn-toggle-input-bar"
-          onClick={onToggleInput}
-          aria-expanded={!inputCollapsed}
-          aria-controls="input-section"
-          aria-label="Toggle Document Input Area"
-        >
-          <i className={`fas ${inputCollapsed ? "fa-edit" : "fa-chevron-up"}`} />{" "}
-          {inputCollapsed ? "Modify Input" : "Hide Input"}
-        </button>
-
-        <button
-          className="btn-dash"
-          id="run-btn"
-          onClick={onRunAudit}
-          aria-label="Run Audit Analysis"
-        >
-          <i className="fas fa-play text-[10px]" aria-hidden="true" /> Run audit
-        </button>
       </div>
 
+      {/* Progress bar */}
       {progress.visible && (
-        <div
-          className="mt-3.5"
-          id="progress-wrap"
-          role="progressbar"
-          aria-valuenow={progress.pct}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-live="polite"
-        >
-          <div className="h-1.5 bg-line rounded overflow-hidden">
+        <div className="mt-2.5 pt-2 border-t border-[#C7BC9F]/60">
+          <div className="h-1.5 bg-[#E8E0CE] rounded-full overflow-hidden">
             <div
-              className="h-full bg-brand rounded transition-all duration-350 ease"
-              id="progress-fill"
+              className="h-full bg-[#1E5E4B] transition-all duration-500 rounded-full"
               style={{ width: `${progress.pct}%` }}
             />
           </div>
-          <div className="flex justify-between mt-1.5 font-mono text-xs font-bold text-dash-ink-soft">
-            <span id="progress-phase">{progress.message}</span>
-            <span id="progress-pct">{progress.pct}%</span>
-          </div>
+          <p className="text-[11px] text-[#696050] font-mono mt-1">
+            {progress.message} — {progress.pct}%
+          </p>
         </div>
       )}
-    </div>
+    </header>
   );
 }
-
