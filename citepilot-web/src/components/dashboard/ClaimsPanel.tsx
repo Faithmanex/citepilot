@@ -14,7 +14,7 @@ export default function ClaimsPanel({ data }: ClaimsPanelProps) {
     <section className="space-y-5 animate-fade-in" id="panel-claims">
       <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5">
         <h1 className="text-base font-extrabold text-[#221D16] mb-1 font-dash">
-          AI Uncited Factual Claims
+          Uncited Factual Claims
         </h1>
         <p className="text-xs text-[#696050]">
           Factual, empirical, or statistical assertions in the body text that lack a citation marker.
