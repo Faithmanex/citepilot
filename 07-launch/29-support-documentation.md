@@ -1,10 +1,10 @@
 # 29 — Support Documentation & Help Centre
 
 > **Document ID**: CP-LAUNCH-029
-> **Version**: 1.0
-> **Last Updated**: 2026-07-15
+> **Version**: 1.1
+> **Last Updated**: 2026-08-11
 > **Owner**: Product & Content
-> **Location**: Published at `https://citepilot.com/help`
+> **Location**: Draft for future `https://citepilot.com/help`. **Note:** the help centre is not yet built — support currently runs via email (see Contact Us).
 
 ---
 
@@ -22,7 +22,7 @@ This document contains the complete user-facing help centre content for CitePilo
 
 CitePilot is an AI-powered citation consistency checker that helps you ensure every in-text citation in your academic document matches an entry in your reference list — and vice versa. Unlike traditional rule-based tools, CitePilot uses artificial intelligence to understand context, reduce false positives, and provide intelligent suggestions for fixing issues.
 
-CitePilot supports 9+ citation styles including APA 7th Edition, APA 6th Edition, Harvard, Vancouver, Chicago, MLA, IEEE, OSCOLA, and Turabian. Whether you're writing a 2,000-word essay or a 100,000-word thesis, CitePilot helps you catch citation errors before your marker or reviewer does.
+CitePilot supports nine citation styles: APA 7th Edition, APA 6th Edition, Harvard, Vancouver, Chicago, MLA, IEEE, OSCOLA, and Turabian. Whether you're writing a 2,000-word essay or a 100,000-word thesis, CitePilot helps you catch citation errors before your marker or reviewer does.
 
 ### What CitePilot checks
 
@@ -43,9 +43,9 @@ CitePilot supports 9+ citation styles including APA 7th Edition, APA 6th Edition
 
 ### Option 1: Upload a file
 
-1. Go to [citepilot.com](https://citepilot.com) and sign in (or use the free tier without an account)
+1. Go to [citepilot.com](https://citepilot.com) — no account or sign-in is required
 2. Click **Upload Document** or drag and drop your file into the upload area
-3. Supported formats: `.docx` (Microsoft Word) and `.pdf`
+3. Supported formats: `.docx` (Microsoft Word), `.pdf`, `.txt`, `.rtf`, and `.bib`, up to 50 MB
 4. Select your **citation style** from the dropdown (e.g., APA 7th Edition)
 5. Click **Check Citations**
 6. Your results will appear within seconds for short documents, or up to 3 minutes for thesis-length documents
@@ -73,6 +73,7 @@ CitePilot supports 9+ citation styles including APA 7th Edition, APA 6th Edition
 | `.docx` (Word) | ✅ Full support | Best results — preserves document structure, headings, and formatting |
 | `.pdf` | ✅ Full support | Works well for most PDFs; scanned/image-based PDFs may have reduced accuracy |
 | Plain text (pasted) | ✅ Full support | Paste directly into the text box; ensure reference list is included |
+| `.txt` / `.rtf` / `.bib` | ✅ Supported | Upload directly; BibTeX entries are parsed from `.bib` files |
 | `.doc` (Legacy Word) | ❌ Not supported | Save as `.docx` in Microsoft Word first |
 | `.odt` (LibreOffice) | ❌ Not supported | Export as `.docx` from LibreOffice first |
 | `.tex` (LaTeX) | ❌ Not yet supported | Compile to PDF first; native LaTeX/BibTeX support is on our roadmap |
@@ -87,10 +88,10 @@ CitePilot supports 9+ citation styles including APA 7th Edition, APA 6th Edition
 | Uploads per day | 3 | Unlimited | Unlimited | Unlimited |
 | Word limit | 5,000 | Unlimited | Unlimited | Unlimited |
 | Reference limit | 100 | Unlimited | Unlimited | Unlimited |
-| Citation styles | APA 7, Harvard, MLA | All 9+ styles | All 9+ styles | All 9+ styles |
+| Citation styles | All 9 styles | All 9 styles | All 9 styles | All 9 styles |
 | AI explanations | Basic | ✅ Detailed | ✅ Detailed | ✅ Detailed |
 | Crossref reference validation | ❌ | ❌ | ✅ | ✅ |
-| Retraction Watch check | ❌ | ❌ | ✅ | ✅ |
+| Retraction checking | ❌ | ❌ | ✅ | ✅ |
 | Hallucinated citation detection | ❌ | Basic | ✅ Advanced | ✅ Advanced |
 | PDF export | ❌ | ✅ | ✅ | ✅ |
 | API access | ❌ | ❌ | ✅ | ✅ |
@@ -350,19 +351,19 @@ But the paper simply doesn't exist.
 
 ### How CitePilot detects them
 
-CitePilot cross-references your citations against multiple academic databases:
-- **Crossref** — the world's largest database of scholarly metadata (140+ million records)
-- **OpenAlex** — an open index of the global research system (250+ million works)
-- **PubMed** — biomedical and life sciences literature (36+ million records)
+CitePilot cross-references your citations against scholarly metadata registries:
+- **Crossref** — the world's largest registry of scholarly metadata (140+ million records)
 - **DOI.org** — Digital Object Identifier resolution
 
-If a reference cannot be found in any of these databases and exhibits characteristics of AI-generated text, CitePilot will flag it as potentially hallucinated.
+Additional verification sources (OpenAlex, PubMed) are on our roadmap.
 
-> **Important**: Not finding a reference in these databases doesn't automatically mean it's fake. Some legitimate sources (e.g., very recent publications, non-English works, government reports, unpublished theses) may not appear in these databases. CitePilot's AI considers these factors and avoids flagging such references as hallucinated when the reference type is unlikely to be indexed.
+If a reference cannot be verified against Crossref / DOI resolution and exhibits characteristics of AI-generated text, CitePilot will flag it as potentially hallucinated.
+
+> **Important**: Not finding a reference in these registries doesn't automatically mean it's fake. Some legitimate sources (e.g., very recent publications, non-English works, government reports, unpublished theses) may not be indexed. CitePilot's AI considers these factors and avoids flagging such references as hallucinated when the reference type is unlikely to be indexed.
 
 ### This feature is available on:
 - **Student plan**: Basic hallucination detection (checks DOI resolution only)
-- **Professional plan**: Advanced detection (full Crossref + OpenAlex + PubMed verification with AI confidence scoring)
+- **Professional plan**: Advanced detection (full Crossref verification with AI confidence scoring)
 - **Institutional plan**: Advanced detection with batch processing
 
 ---
@@ -378,75 +379,56 @@ Reference validation goes beyond checking whether your citations match your refe
 | Detail | Checked Against | Example Issue |
 |---|---|---|
 | DOI resolution | DOI.org | DOI in reference doesn't resolve to any resource |
-| Author names | Crossref / OpenAlex | Reference says "Smith, J." but the actual paper is by "Smith, K." |
-| Publication year | Crossref / OpenAlex | Reference says 2022 but the paper was published in 2023 |
+| Author names | Crossref | Reference says "Smith, J." but the actual paper is by "Smith, K." |
+| Publication year | Crossref | Reference says 2022 but the paper was published in 2023 |
 | Journal title | Crossref | Reference says "Journal of Psychology" but the actual journal is "British Journal of Psychology" |
 | Volume / issue / pages | Crossref | Page numbers don't match the actual publication |
-| Article title | Crossref / OpenAlex | Title has significant differences from the real publication |
+| Article title | Crossref | Title has significant differences from the real publication |
 
 ### Retraction checking
 
-CitePilot checks your references against the Retraction Watch database — the most comprehensive database of retracted academic publications. If any of your cited sources have been retracted, CitePilot will alert you with:
-- The retraction date
+CitePilot checks your references against Crossref's retraction metadata (`is-retracted-by`). If any of your cited sources have been retracted, CitePilot will alert you with:
+- The retraction notice
 - The reason for retraction (if available)
 - A link to the retraction notice
 
-Citing retracted papers in academic work is a serious issue. Retraction Watch integration is available on Professional and Institutional plans.
+Citing retracted papers in academic work is a serious issue. Retraction checking is available on Professional and Institutional plans.
 
 ---
 
-# 👤 Account Management
+# 👤 Accounts & Subscriptions
 
-## Creating an account
+## Using CitePilot without an account
 
-You can create a CitePilot account using:
-- **Email and password** — use any email address, you'll receive a verification link
-- **Google sign-in** — one-click registration and login using your Google account
-- **Microsoft sign-in** — one-click registration and login using your Microsoft/Outlook/university account
-
-You can also use CitePilot's free tier without creating an account (limited to 3 uploads per day, 5,000 words).
+CitePilot is currently a **sessionless** tool — you do not need an account or sign-in to use it. Open the workspace, upload or paste your document, and run an audit. Usage is limited to the free tier's daily caps (3 uploads per day, 5,000 words, 100 references). Account creation, analysis history, and saved results are on the roadmap.
 
 ## Managing your subscription
 
 ### Upgrading your plan
 
-1. Go to **Account → Subscription** in your dashboard
-2. Select the plan you'd like to upgrade to
-3. Complete the payment process via Stripe (our secure payment processor)
+1. Open the **Upgrade** dialog from the dashboard workspace (pricing section or sidebar)
+2. Select the plan you'd like to subscribe to
+3. Complete the payment process via PayPal (our secure payment processor)
 4. Your new plan features are available immediately
-
-### Downgrading your plan
-
-1. Go to **Account → Subscription**
-2. Click **Change Plan** and select a lower tier
-3. Your current plan remains active until the end of your billing period
-4. After the billing period ends, you'll be on the new plan
 
 ### Cancelling your subscription
 
-1. Go to **Account → Subscription**
-2. Click **Cancel Subscription**
+1. Log in to your **PayPal account** and open your active subscriptions
+2. Click **Cancel** on your CitePilot subscription
 3. Your plan remains active until the end of your current billing period
-4. After cancellation, your account reverts to the free tier
-5. Your account and past results are preserved — you can re-subscribe at any time
+4. After cancellation, your usage reverts to the free tier
 
 ### Billing and invoices
 
-All billing is handled securely by Stripe. You can:
-- View your billing history at **Account → Billing**
+All billing is handled securely by PayPal. You can:
+- View your billing history and invoices in your **PayPal account**
 - Download invoices as PDF for expense reimbursement
-- Update your payment method at any time
+- Update your payment method at any time from PayPal
 - All prices are in USD and include applicable taxes
 
-## Deleting your account
+## Data deletion
 
-To permanently delete your account and all associated data:
-
-1. Go to **Account → Settings → Delete Account**
-2. Confirm deletion by typing your email address
-3. All data is permanently deleted within 24 hours: your account details, citation check history, subscription records, and any uploaded documents
-
-This action cannot be undone. If you have an active subscription, it will be cancelled immediately with no further charges.
+CitePilot retains no user accounts and no persistent document data. Uploaded content is processed in memory and discarded after the audit completes — nothing to delete, and nothing kept.
 
 ---
 
@@ -454,28 +436,26 @@ This action cannot be undone. If you have an active subscription, it will be can
 
 ### Document handling
 
-- Your uploaded documents are encrypted in transit (TLS 1.2+) and at rest (AES-256)
+- Your uploaded documents are encrypted in transit (TLS 1.2+)
 - Documents are processed in secure, isolated environments
-- **All uploaded documents are automatically deleted within 36 hours** of upload
+- **All uploaded documents are discarded automatically once the audit completes** (36 hours at most)
 - We do not read, share, or use your document content for any purpose other than providing you with citation checking results
-- Citation check results are retained in your account for your convenience but contain no original document text — only citation metadata and issues found
+- CitePilot keeps no accounts and no analysis history — results live in your browser session only
 
 ### What we send to AI providers
 
-To analyse your citations, portions of your document text are sent to AI providers (OpenAI). This is necessary for AI-powered analysis. We:
+To analyse your citations, portions of your document text are sent to Google's Gemini API (our AI provider). This is necessary for AI-powered analysis. We:
 - Send only the minimum text necessary for citation analysis (not your entire document)
-- Do not allow AI providers to use your data for training their models (we use OpenAI's API with data usage controls enabled)
+- Do not allow AI providers to use your data for training their models (we use Google's API with data usage controls enabled)
 - Do not store AI analysis inputs or outputs beyond the processing session
 
 ### Your rights (GDPR)
 
 You have the right to:
-- **Access** your data — request a copy of all data we hold about you
-- **Rectify** inaccurate data — update your account information at any time
-- **Erase** your data — delete your account and all associated data
-- **Port** your data — export your citation check results
+- **Access** your data — request a copy of any data we hold about you
+- **Erase** your data — request deletion of any data we hold
 - **Object** to processing — contact us to discuss any concerns
-- **Withdraw consent** — manage cookie preferences at any time
+- **Withdraw consent** — contact us for cookie-related requests
 
 To exercise any of these rights, email `privacy@citepilot.com`.
 
@@ -496,7 +476,7 @@ CitePilot offers custom institutional plans for universities, colleges, and rese
 ### Features included
 - All Professional plan features for every user
 - Unlimited uploads and word counts
-- All 9+ citation styles
+- All 9 citation styles
 - Crossref reference validation
 - Retraction Watch checking
 - Advanced hallucinated citation detection
@@ -537,7 +517,7 @@ CitePilot's API can integrate with:
 ## My document won't upload
 
 **Check the following**:
-- **File format**: Only `.docx` and `.pdf` files are supported. If your file is `.doc`, `.odt`, or another format, convert it to `.docx` first
+- **File format**: Only `.docx`, `.pdf`, `.txt`, `.rtf`, and `.bib` files are supported. If your file is `.doc` or `.odt`, convert it to `.docx` first
 - **File size**: Maximum file size is 50 MB. If your file is larger, try removing embedded images before uploading (CitePilot only analyses text, not images)
 - **File corruption**: Try opening the file on your computer to verify it's not corrupted. If Word or your PDF reader can't open it, CitePilot won't be able to either
 - **Browser issues**: Try clearing your browser cache, disabling extensions, or using a different browser (Chrome, Firefox, Edge, and Safari are all supported)
@@ -569,15 +549,11 @@ Expected processing times:
 
 If your document is taking significantly longer:
 - Our servers may be experiencing high load — try again in a few minutes
-- Check `status.citepilot.com` for any ongoing service issues
 - For very large documents, consider checking individual chapters separately
 
-## I can't log in
+## I hit the free-tier limits
 
-- **Forgot your password?** Click "Forgot Password" on the login page to receive a reset link via email. Check your spam/junk folder if you don't see it within 5 minutes
-- **Google/Microsoft login not working?** Make sure you're logging in with the same Google or Microsoft account you originally registered with
-- **Account locked?** After 5 failed login attempts, your account is temporarily locked for 30 minutes. Wait and try again, or use "Forgot Password" to reset
-- **Browser cookies**: Ensure cookies are enabled for `citepilot.com` in your browser settings
+The free tier allows **3 uploads per day**, documents up to **5,000 words**, and up to **100 references**. The counter is stored in your browser and resets daily when you clear your site data. If you need more, the Professional plan removes all limits.
 
 ## My PDF export looks wrong
 
@@ -589,9 +565,9 @@ If your document is taking significantly longer:
 ## I was charged but don't have access to paid features
 
 - Subscription activation typically takes less than 30 seconds after payment
-- Try **logging out and logging back in** to refresh your session
-- Check your email for a payment confirmation from Stripe
-- If the issue persists, contact `support@citepilot.com` with your account email and we'll resolve it within 24 hours
+- **Refresh the workspace page** to re-check your session
+- Check your email for a payment confirmation from PayPal
+- If the issue persists, contact `support@citepilot.com` with your payment confirmation and we'll resolve it within 24 hours
 
 ---
 
@@ -603,15 +579,15 @@ Yes, CitePilot has a free tier that allows 3 uploads per day, up to 5,000 words 
 
 ### 2. Is my document stored after checking?
 
-No. All uploaded documents are automatically deleted within 36 hours. We do not retain, read, or share your document content. Citation check results (which contain only citation metadata, not your original text) are retained in your account for your convenience.
+No. CitePilot keeps no accounts and stores nothing persistent — uploaded documents are processed in memory and discarded once the audit completes (36 hours at most). Results exist only in your browser session.
 
 ### 3. Can I use CitePilot for my thesis or dissertation?
 
-Absolutely. CitePilot supports documents of any length, including multi-chapter theses with separate reference lists per chapter. For thesis-length documents, we recommend the Student plan ($4.99/month) for unlimited word counts and all citation styles.
+Absolutely. CitePilot supports documents of any length, including multi-chapter theses with separate reference lists per chapter. For thesis-length documents, the **Professional plan** ($12.99/month) removes all word, reference, and upload limits, and the **Student plan** ($4.99/month, coming soon) offers unlimited word counts and all citation styles at a reduced price.
 
 ### 4. Does CitePilot work with LaTeX / BibTeX?
 
-Not directly. CitePilot currently supports `.docx` and `.pdf` files, and pasted plain text. If you use LaTeX, compile your document to PDF and upload the PDF. Native LaTeX/BibTeX support is on our roadmap.
+Not directly. CitePilot currently supports `.docx`, `.pdf`, `.txt`, `.rtf`, and `.bib` files, and pasted plain text. If you use LaTeX, compile your document to PDF and upload the PDF. Native LaTeX/BibTeX support is on our roadmap.
 
 ### 5. How accurate is CitePilot?
 
@@ -625,10 +601,10 @@ CitePilot provides suggested corrections for many issues, but it does not edit y
 
 CitePilot offers several advantages over Reciteworks:
 - **AI-powered** vs rule-based analysis (fewer false positives)
-- **9+ citation styles** vs 3 (Reciteworks only supports APA 6, APA 7, and Harvard)
-- **Reference validation** against real academic databases (Crossref, OpenAlex, PubMed)
+- **9 citation styles** vs 3 (Reciteworks only supports APA 6, APA 7, and Harvard)
+- **Reference validation** against the Crossref scholarly metadata registry
 - **Hallucinated citation detection** (does the cited paper actually exist?)
-- **Retraction checking** via Retraction Watch integration
+- **Retraction checking** via Crossref retraction metadata
 - **AI-generated explanations and suggestions**, not just error flags
 - **Multi-reference-list support** for theses and dissertations
 - **Smart reference section detection** — no need for an exact "References" heading
@@ -659,9 +635,9 @@ Yes. We offer institutional plans with centralised management, SSO integration, 
 Yes. CitePilot takes data security seriously:
 - All data is encrypted in transit (TLS 1.2+) and at rest (AES-256)
 - Documents are automatically deleted within 36 hours
-- We do not share your data with third parties (except AI providers for analysis, with strict data usage controls)
+- We do not share your data with third parties (except our AI provider for analysis, with strict data usage controls)
 - We are GDPR compliant and registered with the UK ICO
-- Our infrastructure runs on AWS with SOC 2 and ISO 27001 certified data centres
+- Our infrastructure runs on Vercel and Railway, whose data centres are SOC 2 and ISO 27001 certified
 
 ### 13. Can I use CitePilot to check a journal submission?
 
@@ -669,7 +645,7 @@ Yes. Researchers and editors use CitePilot to verify citation consistency before
 
 ### 14. How do I cancel my subscription?
 
-Go to **Account → Subscription → Cancel Subscription**. Your plan remains active until the end of your billing period, and no further charges will be made. Your account reverts to the free tier but is not deleted — you can re-subscribe at any time.
+Open **PayPal**, find your active CitePilot subscription, and click **Cancel**. Your plan remains active until the end of your billing period, and no further charges will be made. Your usage reverts to the free tier.
 
 ### 15. What citation style should I use?
 
@@ -677,7 +653,7 @@ CitePilot doesn't prescribe a citation style — your institution, supervisor, o
 
 ### 16. Why was my citation flagged as "possibly hallucinated"?
 
-This means CitePilot could not verify the existence of the cited source in academic databases (Crossref, OpenAlex, PubMed). This can happen because:
+This means CitePilot could not verify the existence of the cited source against Crossref or DOI resolution. This can happen because:
 - The source was generated by an AI tool and doesn't exist (a genuine hallucinated citation)
 - The source is very new and hasn't been indexed yet
 - The source is a type not typically indexed (government report, personal communication, unpublished thesis)
@@ -713,4 +689,4 @@ Yes. The Professional and Institutional plans include API access. You can send d
 
 ---
 
-*Last updated: 15 July 2026. Content is subject to change as features are added and improved.*
+*Last updated: 11 August 2026. Content is subject to change as features are added and improved.*

@@ -58,18 +58,18 @@ pie title Revenue Stream Composition (Projected Year 1)
 | Parameter | Limit |
 |-----------|-------|
 | Uploads per day | Unlimited |
-| Max words per document | 25,000 |
-| Max references per document | 500 |
-| Citation styles | All 9+ (APA 6, APA 7, Harvard, Vancouver, Chicago, MLA, IEEE, OSCOLA, Turabian) |
-| Document retention | 7 days |
+| Max words per document | Unlimited |
+| Max references per document | Unlimited |
+| Citation styles | All 9 (APA 6, APA 7, Harvard, Vancouver, Chicago, MLA, IEEE, OSCOLA, Turabian) |
+| Document retention | 36 hours (sessionless) |
 | AI explanations | ✅ Full |
 | AI suggested corrections | ✅ |
 | Hallucinated citation detection | Basic (metadata-only check) |
 | Multi-reference-list support | ✅ |
 | PDF export | ✅ |
-| Crossref/OpenAlex validation | ❌ |
-| PubMed validation | ❌ |
-| Retraction Watch check | ❌ |
+| Crossref validation | ✅ |
+| PubMed validation (roadmap) | ❌ |
+| Retraction checking | ✅ |
 | API access | ❌ |
 | Support | Email (48-hr response) |
 
@@ -82,16 +82,16 @@ pie title Revenue Stream Composition (Projected Year 1)
 | Uploads per day | Unlimited |
 | Max words per document | 100,000 |
 | Max references per document | 2,000 |
-| Citation styles | All 9+ |
-| Document retention | 30 days |
+| Citation styles | All 9 |
+| Document retention | 36 hours (sessionless) |
 | AI explanations | ✅ Full |
 | AI suggested corrections | ✅ |
-| Hallucinated citation detection | Advanced (Crossref + OpenAlex + PubMed cross-validation) |
+| Hallucinated citation detection | Advanced (Crossref + DOI cross-validation) |
 | Multi-reference-list support | ✅ |
 | PDF export | ✅ |
-| Crossref/OpenAlex validation | ✅ |
-| PubMed validation | ✅ |
-| Retraction Watch check | ✅ |
+| Crossref validation | ✅ |
+| PubMed validation (roadmap) | ❌ |
+| Retraction checking | ✅ |
 | API access | ✅ (1,000 calls/month, $0.02/call overage) |
 | Document history | ✅ (last 50 documents) |
 | Batch upload | ✅ (up to 10 documents) |
@@ -137,46 +137,43 @@ Annual plans improve cash flow predictability and reduce churn. Target: 40% of p
 | **Team** | Founder/CEO (deferred) | $0 | $0 | Equity-only during Year 1 |
 | **Team** | Full-stack engineer (1) | $6,000 | $72,000 | Contract or early hire |
 | **Team** | AI/ML engineer (0.5 FTE) | $4,000 | $48,000 | Contract, part-time |
-| **Infrastructure** | AWS ECS/Fargate (compute) | $350 | $4,200 | 2 services, auto-scaling |
-| **Infrastructure** | AWS RDS PostgreSQL | $180 | $2,160 | db.t3.medium, Multi-AZ |
-| **Infrastructure** | AWS ElastiCache Redis | $120 | $1,440 | cache.t3.small |
-| **Infrastructure** | AWS S3 + CloudFront | $50 | $600 | Document storage + CDN |
-| **Infrastructure** | Domain, DNS, SSL | $10 | $120 | Route 53 + ACM |
+| **Infrastructure** | Vercel (web + Postgres) | $25 | $300 | Pro plan, edge hosting, managed Postgres |
+| **Infrastructure** | Railway (gateway + AI service) | $15 | $180 | Usage-based; single instances, scales later |
+| **Infrastructure** | Domain, DNS, SSL | $10 | $120 | Vercel-managed DNS, platform TLS |
 | **SaaS Tools** | GitHub (Team) | $20 | $240 | |
-| **SaaS Tools** | Datadog (monitoring) | $75 | $900 | Infrastructure + APM |
+| **SaaS Tools** | Monitoring (Grafana/Prometheus) | $0 | $0 | Included with Railway |
 | **SaaS Tools** | Sentry (error tracking) | $26 | $312 | Team plan |
-| **SaaS Tools** | Stripe fees | Variable | Variable | 2.9% + $0.30 per transaction |
+| **SaaS Tools** | PayPal fees | Variable | Variable | 2.9% + $0.30 per transaction (industry-standard estimate) |
 | **SaaS Tools** | Email service (Resend) | $20 | $240 | |
 | **Legal** | Privacy policy, ToS | $50 | $600 | Amortized legal costs |
 | **Marketing** | Total marketing budget | $9,000 | $123,000 | See GTM document |
-| | **Total Fixed** | **$19,901** | **$253,812** | |
+| | **Total Fixed** | **$19,166** | **$253,077** | |
 
 ### 3.2 Variable Costs (Per Document Processed)
 
 | Cost Component | Cost Per Document | Basis |
 |---------------|-------------------|-------|
-| **OpenAI GPT-4o API** | $0.035–$0.12 | Avg 3,000 input tokens + 1,500 output tokens per document × 2–3 calls |
-| **OpenAI fallback (Claude)** | $0.04–$0.15 | Used only when GPT-4o fails, ~5% of requests |
+| **Gemini 2.5 Flash API** | $0.015–$0.05 | Avg 3,000 input tokens + 1,500 output tokens per document × 3–4 calls |
+| **Gemini fallback (other Gemini tiers)** | $0.02–$0.06 | Used only when the primary tier fails, ~5% of requests |
 | **Crossref API** | $0.00 | Free for polite pool (<50 req/sec with mailto) |
-| **OpenAlex API** | $0.00 | Free, no API key required |
-| **PubMed E-utilities** | $0.00 | Free with API key (10 req/sec) |
+| **OpenAlex API (roadmap)** | $0.00 | Free, no API key required |
+| **PubMed E-utilities (roadmap)** | $0.00 | Free with API key (10 req/sec) |
 | **DOI.org** | $0.00 | Free content negotiation |
-| **Retraction Watch** | $0.005 | Estimated licensing cost amortized per lookup |
+| **Retraction data (Crossref)** | $0.00 | Included in Crossref metadata lookups |
 | **Document parsing (compute)** | $0.002 | CPU time for python-docx/pdfplumber |
-| **Redis caching** | $0.001 | Amortized per request |
 | **Total variable cost** | **$0.04–$0.13** | **Avg: $0.07 per document** |
 
 ### 3.3 AI Cost Optimization Strategies
 
 | Strategy | Estimated Savings | Implementation |
 |----------|------------------|----------------|
-| **Response caching** | 30–40% | Cache identical citation lookups in Redis (TTL: 24 hours) |
-| **Tiered model usage** | 20–25% | Use GPT-4o-mini for simple style checks, GPT-4o only for complex matching |
-| **Batch API calls** | 10–15% | Batch multiple citation lookups into single Crossref/OpenAlex requests |
+| **Response caching (post-MVP)** | Future | Crossref polite-pool batching first; response caching only if volume justifies (ADR-003 superseded) |
+| **Tiered model usage** | 20–25% | Use Gemini flash models for simple style checks, larger context models only for complex matching |
+| **Batch API calls** | 10–15% | Batch multiple citation lookups into single Crossref requests |
 | **Pre-filtering** | 15–20% | Rule-based pre-filter before AI — skip obvious matches |
 | **Prompt optimization** | 10% | Minimize prompt tokens through structured extraction prompts |
 
-Projected blended AI cost after optimization: **$0.045 per document** (Month 6+).
+Projected blended AI cost with optimizations: **~$0.05 per document** (Month 6+).
 
 ---
 
@@ -423,7 +420,7 @@ Based on the financial projections, CitePilot's maximum cumulative cash burn is 
 |----------|--------|-----------|---------|
 | Engineering (team) | $90,000 | 51% | 1 full-stack engineer + 0.5 AI/ML engineer for 9 months |
 | Marketing & Growth | $45,000 | 26% | Content, ads, community, conferences |
-| Infrastructure | $15,000 | 9% | AWS, AI API credits, SaaS tools |
+| Infrastructure | $15,000 | 9% | Vercel/Railway hosting, AI API credits, SaaS tools |
 | Legal & Compliance | $10,000 | 6% | Terms of service, privacy policy, GDPR compliance, data processing agreements |
 | Working Capital | $15,000 | 8% | Buffer for unexpected costs, 2-month runway extension |
 | **Total** | **$175,000** | **100%** | |
@@ -481,15 +478,15 @@ Based on the financial projections, CitePilot's maximum cumulative cash burn is 
 | Free-to-paid conversion rate of 5–6% | Industry benchmark for productivity SaaS tools | Revenue 30–50% lower if conversion is 3% |
 | Average 2.5 AI API calls per document | Based on pipeline design (extraction + matching + explanation) | AI costs 2× if more calls needed |
 | Monthly churn of 4–6% | Industry average for low-ACV consumer SaaS | LTV drops 30% if churn reaches 8% |
-| Crossref/OpenAlex APIs remain free | Current pricing model; Crossref polite pool is free | $2,000–$5,000/month additional cost |
-| OpenAI pricing stable or declining | Historical trend of decreasing token costs | Budget 20% AI cost buffer |
+| Crossref API remains free | Current pricing model; Crossref polite pool is free | $2,000–$5,000/month additional cost |
+| Gemini pricing stable or declining | Historical trend of decreasing token costs | Budget 20% AI cost buffer |
 | University sales cycle of 3–6 months | Industry average for library/IT procurement | Delay institutional revenue by 3–6 months |
 
 ### 10.2 Risk Mitigation
 
 | Risk | Probability | Impact | Mitigation |
 |------|------------|--------|------------|
-| AI costs spike (OpenAI price increase) | Low | High | Multi-model strategy (Claude fallback), aggressive caching, on-prem model evaluation |
+| AI costs spike (Gemini price increase) | Low | High | Gemini model tiering + prompt optimisation; batching; fallback-provider evaluation deferred to post-MVP (ADR-008) |
 | Lower-than-expected conversion rate | Medium | High | A/B test pricing, adjust free tier limits, add conversion triggers |
 | Competitor launches AI features | Medium | Medium | Speed to market, build data moats, focus on accuracy metrics |
 | GDPR/data privacy issues | Low | High | Privacy-by-design, 36-hour document deletion, encryption at rest/transit |
@@ -516,9 +513,9 @@ Based on the financial projections, CitePilot's maximum cumulative cash burn is 
 | Price | $0 | $2.99–$6.99/mo | $0 | $4.99/mo | $12.99/mo |
 | Words | 2,500 | 20,000 | 5,000 | 25,000 | 100,000 |
 | Uploads/day | 2 | Unlimited | 3 | Unlimited | Unlimited |
-| Styles | APA 6/7, Harvard | APA 6/7, Harvard | APA 7, Harvard, MLA | All 9+ | All 9+ |
+| Styles | APA 6/7, Harvard | APA 6/7, Harvard | All 9 | All 9 | All 9 |
 | AI features | ❌ | ❌ | ❌ | ✅ | ✅ |
-| Source validation | ❌ | Crossref only | ❌ | ❌ | Crossref + OpenAlex + PubMed |
+| Source validation | ❌ | Crossref only | ❌ | ❌ | Crossref |
 | Hallucination detection | ❌ | ❌ | ❌ | Basic | Advanced |
 
 CitePilot's free tier is more generous (2× words, 50% more uploads), and the paid tiers offer substantially more value at a modest premium.

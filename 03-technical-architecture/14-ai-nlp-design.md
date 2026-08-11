@@ -6,7 +6,7 @@ This document outlines the detailed design of the Artificial Intelligence (AI) a
 
 ## 1. Pipeline Overview
 
-The CitePilot processing pipeline follows an asynchronous, queue-based architecture to handle documents of varying sizes (from short essays to multi-hundred-page dissertations) without blocking web requests.
+The CitePilot processing pipeline is **synchronous and single-pass**: one request triggers the full pipeline below and returns the complete analysis in a single response. Documents range from short essays to multi-chapter dissertations; there is no queue in the MVP (ADR-011). A streaming websocket variant (`/ws/analyse`) exists for future UX upgrades.
 
 ```mermaid
 graph TD
@@ -118,9 +118,9 @@ One of CitePilot's core differentiators is validating whether the cited papers a
 
 ### 6.1 Validation Pipeline
 1. **Metadata Construction**: Use the parsed reference schema to form search queries.
-2. **External Queries**: Search APIs in order: Crossref REST API → OpenAlex API → PubMed / DOI.org.
-3. **Hallucination Flagging**: If no record is found in any registry and the reference matches patterns of generative AI hallucinations (e.g., plausible-sounding journal titles with incorrect volumes or matching author/year but wrong title), it is flagged.
-4. **Retraction Watch Integration**: Cross-references DOI/PMID metadata against the Retraction Watch database to warn users of retracted literature.
+2. **External Queries**: Search the Crossref REST API (works lookup by DOI, or title + author). DOIs are additionally resolved against DOI.org. OpenAlex and PubMed integrations are roadmap items.
+3. **Hallucination Flagging**: If no record is found in Crossref / via DOI resolution and the reference matches patterns of generative AI hallucinations (e.g., plausible-sounding journal titles with incorrect volumes or matching author/year but wrong title), it is flagged.
+4. **Retraction Checking**: Crossref retraction metadata (`is-retracted-by`) flags references to retracted papers, with a link to the retraction notice.
 
 ---
 
@@ -144,7 +144,8 @@ Instead of only flagging errors, CitePilot uses LLM synthesis to present a diff/
 To ensure an excellent user experience, the AI/NLP pipeline is optimized for latency and accuracy:
 
 - **Accuracy Target**: F1 Score $\ge 0.95$ for citation extraction.
-- **Latency Target**:
-  - Processing a 5,000-word document: $\le 10$ seconds.
-  - Processing a 50,000-word document: $\le 45$ seconds (asynchronous queue).
-- **Fallback Policy**: If OpenAI GPT-4o fails or experiences high latency, the queue switches to Claude 3.5 Sonnet, followed by deterministic fallback matching models to maintain base service.
+- **Latency Targets** (matching the support documentation):
+  - Short documents (< 5,000 words): 5–15 seconds.
+  - Medium documents (5,000–20,000 words): 15–45 seconds.
+  - Thesis-length (50,000+ words): 2–3 minutes.
+- **Provider Policy**: Google Gemini 2.5 Flash is the sole LLM provider (ADR-008). If Gemini fails or is rate-limited, the audit fails openly with a retry prompt — there is no silent fallback provider in the MVP (see `06-operations/25-runbooks.md`).

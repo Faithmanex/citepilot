@@ -30,7 +30,7 @@ CitePilot utilizes a responsive flex/grid system based on Tailwind-equivalent la
 |                                     or                                |
 |                        [ Paste your manuscript text ]                 |
 |                                                                       |
-|                     (checked over 500 million citations)              |
+|                     (design placeholder — do not publish unverified metrics)  |
 |                                                                       |
 +-----------------------------------------------------------------------+
 |  [ Features Panel ]       [ How It Works ]       [ Retraction Alert ] |
@@ -39,7 +39,9 @@ CitePilot utilizes a responsive flex/grid system based on Tailwind-equivalent la
 
 ---
 
-### 2.2 Results Page Layout (Desktop Split View)
+### 2.2 Results Page Layout (Legacy Split View)
+
+> The shipped MVP uses the **single-workspace dashboard** (8-panel sidebar per `07-information-architecture.md` §0). This three-zone split view is retained as a roadmap reference for the multi-page results experience.
 
 This is the primary user interface workspace. It is structured into three main zones:
 - **Left Column**: In-Text Citations list with status colors and filter actions.

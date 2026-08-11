@@ -1,17 +1,37 @@
 # Product Requirements Document — CitePilot
 
 > **Document ID**: CP-DS-002  
-> **Version**: 1.0  
-> **Last Updated**: 2026-07-14  
+> **Version**: 1.1  
+> **Last Updated**: 2026-08-11  
 > **Author**: Product Team  
 > **Status**: Approved  
 > **Classification**: Internal — Confidential
 
 ---
 
+## 0. Implementation Status (August 2026)
+
+This PRD describes the complete product vision. The **live MVP** (`citepilot-web` + `citepilot-ai`) currently implements a subset, aligned to actual delivery:
+
+| Area | Live MVP reality | Notes |
+|---|---|---|
+| Inputs | Upload .docx / .pdf / .txt / .rtf / .bib up to 50 MB, or paste text | F-001/F-002/F-031 lite |
+| Styles | All 9 styles (APA 7, APA 6, MLA 9, Chicago 17, Harvard, IEEE, Vancouver, Turabian, OSCOLA) | F-003 expanded |
+| AI provider | Google Gemini (Gemini 2.5 Flash) | OpenAI/Claude design was superseded — see ADR |
+| Processing | Synchronous request/response (no BullMQ queue yet) | F-021 deferred; real-time progress bar is simulated |
+| Validation | Crossref metadata + retraction flags via Crossref `is-retracted-by` | F-034/F-037/F-039-lite; OpenAlex/PubMed/Retraction Watch DB not integrated |
+| Accounts | No user accounts/auth; sessionless workspace | F-017 deferred — plan tiers enforced by request limits at a later phase |
+| Payments | PayPal Subscriptions (single Professional plan) | Stripe design superseded — see ADR |
+| Exports | PDF diagnostic report + annotated DOCX (highlights & comments) | F-040/F-010-lite |
+| Retention | Documents discarded after 36 hours (sessionless; in-memory) | F-019 |
+
+Items not listed above remain roadmap scope. The target multi-service architecture in §8 is the future state; current deployment is documented in `03-technical-architecture/15-infrastructure-deployment.md`.
+
+---
+
 ## 1. Executive Summary
 
-CitePilot is an AI-powered academic citation consistency checker that verifies in-text citations match reference list entries across 9+ citation styles, detects fabricated sources, validates references against external databases, and provides AI-generated correction suggestions. It targets students, researchers, editors, and institutions with a freemium SaaS model.
+CitePilot is an AI-powered academic citation consistency checker that verifies in-text citations match reference list entries across 9 citation styles, detects fabricated sources, validates references against external databases, and provides AI-generated correction suggestions. It targets students, researchers, editors, and institutions with a freemium SaaS model.
 
 This PRD defines the complete product requirements for CitePilot from MVP through future vision, organized by MoSCoW prioritization with measurable success criteria.
 
@@ -42,7 +62,7 @@ Reference managers (Zotero, Mendeley, EndNote) organize sources but do not valid
 
 ### 2.3 The Opportunity
 
-CitePilot uses large language models (GPT-4o with Claude fallback) to understand citation context, extract citations with near-human accuracy, match them intelligently against reference lists, and validate sources against external databases — delivering a 10x improvement in accuracy, style coverage, and actionability over existing solutions.
+CitePilot uses large language models (Gemini 2.5 Flash) to understand citation context, extract citations with near-human accuracy, match them intelligently against reference lists, and validate sources against external databases — delivering a 10x improvement in accuracy, style coverage, and actionability over existing solutions.
 
 ---
 
@@ -98,7 +118,7 @@ CitePilot uses large language models (GPT-4o with Claude fallback) to understand
 | **Willingness to Pay** | High — $12.99/month is a business expense; would pay more for guaranteed accuracy |
 | **Success Metric** | "I catch every citation error in half the time" |
 | **Usage Frequency** | Daily, multiple documents per day |
-| **Key Feature Needs** | All 9+ styles, high accuracy (low false positives), PDF export, API access, fast processing, batch upload |
+| **Key Feature Needs** | All 9 styles, high accuracy (low false positives), PDF export, API access, fast processing, batch upload |
 
 **User Journey**: Margaret receives a client manuscript in Word, uploads to CitePilot, selects the client's required style, reviews results (expects <5% false positive rate), exports PDF report with annotations, includes in her editing package to the client, invoices client.
 
@@ -149,7 +169,7 @@ CitePilot uses large language models (GPT-4o with Claude fallback) to understand
 | F-001 | Document upload (.docx) | Accept Microsoft Word .docx files up to 100,000 words | All |
 | F-002 | Plain text paste input | Accept plain text via paste or text area input | Sarah, James |
 | F-003 | Citation style selection | User selects citation style before analysis; support APA 7, APA 6, Harvard in MVP | All |
-| F-004 | AI-powered citation extraction | Use GPT-4o to extract in-text citations with contextual understanding, avoiding false positives on non-citation numbers/dates | All |
+| F-004 | AI-powered citation extraction | Use Gemini 2.5 Flash to extract in-text citations with contextual understanding, avoiding false positives on non-citation numbers/dates | All |
 | F-005 | Reference list detection | AI-based detection of reference section regardless of heading format ("References", "Bibliography", "Works Cited", etc.) | All |
 | F-006 | Citation-reference matching | Match extracted in-text citations against parsed reference list entries; detect: exact match, author mismatch, year mismatch, no match, possible match | All |
 | F-007 | Missing citation detection | Flag references in the list that are never cited in the body text (orphaned references) | All |
@@ -162,18 +182,18 @@ CitePilot uses large language models (GPT-4o with Claude fallback) to understand
 | F-014 | Stylistic checks | Check for common style errors: comma placement, "et al." usage, ampersand vs "and", page number formatting | All |
 | F-015 | Alphabetical order check | Validate that reference list entries are in correct alphabetical order per style rules | All |
 | F-016 | Reference occurrence counting | Count how many times each reference is cited in the body text | All |
-| F-017 | User authentication | Google OAuth, Microsoft OAuth, email/password registration via NextAuth.js | All |
+| F-017 | User authentication **(deferred — post-MVP, ADR-001)** | OIDC (Google/Microsoft) accounts planned for the institutional tier; MVP is anonymous with token-keyed results | Institutional |
 | F-018 | Free tier rate limiting | Enforce free tier limits: 3 uploads/day, 5,000 words, 100 references | All |
-| F-019 | Document auto-deletion | Delete uploaded documents and analysis results after 48 hours; user can manually delete earlier | All |
+| F-019 | Document auto-deletion | Delete uploaded documents and analysis results after 36 hours; user can manually delete earlier | All |
 | F-020 | Responsive web UI | Fully responsive Next.js frontend with mobile-friendly layout | All |
-| F-021 | Async processing with progress | Documents are processed asynchronously via BullMQ; show real-time progress bar | All |
+| F-021 | Synchronous processing with progress indicator | Documents processed synchronously in a single pass (ADR-011; no BullMQ in MVP); simulated real-time progress bar | All |
 | F-022 | Results summary dashboard | Overview page showing total citations found, matched, warnings, errors, with expandable detail | All |
 
 #### Should Have (V1.1 — Month 2-3)
 
 | ID | Feature | Description | Persona(s) |
 |---|---|---|---|
-| F-023 | AI explanations | GPT-4o generates natural-language explanations for each flagged issue, explaining what's wrong and why | Sarah, Marcus |
+| F-023 | AI explanations | Gemini 2.5 Flash generates natural-language explanations for each flagged issue, explaining what's wrong and why | Sarah, Marcus |
 | F-024 | AI correction suggestions | For each error, suggest the correct citation format or reference entry | Sarah, James, Marcus |
 | F-025 | Vancouver style support | Full support for Vancouver (numeric) citation style | James |
 | F-026 | IEEE style support | Full support for IEEE citation style | James |
@@ -185,14 +205,14 @@ CitePilot uses large language models (GPT-4o with Claude fallback) to understand
 | F-032 | Multi-reference-list support | Detect and independently validate multiple reference lists (e.g., per-chapter bibliographies) | James |
 | F-033 | Reference type classification | AI identifies each reference as journal article, book, chapter, website, report, thesis, conference paper, etc. | Margaret |
 | F-034 | Crossref validation | Verify reference entries against Crossref API — confirm DOI, title, authors, year | James, Margaret |
-| F-035 | OpenAlex validation | Cross-reference citations against OpenAlex database for existence verification | James, Margaret |
-| F-036 | PubMed validation | Validate biomedical references against PubMed E-utilities | James |
+| F-035 | OpenAlex validation | Cross-reference citations against OpenAlex database for existence verification **(roadmap — not in MVP)** | James, Margaret |
+| F-036 | PubMed validation | Validate biomedical references against PubMed E-utilities **(roadmap — not in MVP)** | James |
 | F-037 | DOI resolution | Resolve and validate DOIs against doi.org registry | James, Margaret |
 | F-038 | Hallucinated citation detection | Combine multi-database lookup + AI plausibility scoring to flag likely fabricated references | Sarah, James, Dr. Patel |
-| F-039 | Retraction Watch integration | Check all references against Retraction Watch database for retracted papers | James, Margaret |
+| F-039 | Retraction checking | Check all references for retracted papers via Crossref retraction metadata (`is-retracted-by`) | James, Margaret |
 | F-040 | PDF export | Export analysis results as formatted PDF report with annotations, summary, and issue details | Margaret, Marcus |
-| F-041 | Subscription management | Stripe-powered subscription management: upgrade, downgrade, cancel, billing history | All paid |
-| F-042 | Student plan features | Unlock student tier features: unlimited uploads, all styles, AI explanations, 50,000 word limit | Sarah, James |
+| F-041 | Subscription management | PayPal-powered subscription management: upgrade, downgrade, cancel, billing history (Stripe evaluated for a later phase) | All paid |
+| F-042 | Student plan features | Unlock student tier features: unlimited uploads, all styles, AI explanations, PDF export, unlimited words | Sarah, James |
 | F-043 | Professional plan features | Unlock pro tier: Crossref, retraction check, PDF export, API, unlimited words | Margaret, Marcus |
 
 #### Could Have (V2 — Month 4-8)
@@ -235,11 +255,11 @@ CitePilot uses large language models (GPT-4o with Claude fallback) to understand
 
 **Priority**: Must Have (MVP)  
 **Complexity**: High  
-**Dependencies**: OpenAI API, document parser
+**Dependencies**: Google Gemini API, document parser
 
 #### Description
 
-The system uses GPT-4o to extract in-text citations from the document body. Unlike rule-based regex extraction, the AI understands context and can:
+The system uses Gemini to extract in-text citations from the document body. Unlike rule-based regex extraction, the AI understands context and can:
 
 - Distinguish actual citations from incidental author names, dates, and numbers
 - Handle all citation formats: parenthetical `(Smith, 2023)`, narrative `Smith (2023)`, numeric `[1]`, footnote superscripts, ibid references
@@ -252,7 +272,7 @@ The system uses GPT-4o to extract in-text citations from the document body. Unli
 flowchart LR
     A["Raw Document Text"] --> B["Pre-processing\n(section splitting,\nheading detection)"]
     B --> C["Heuristic Pre-filter\n(identify candidate\ncitation regions)"]
-    C --> D["GPT-4o Citation\nExtraction\n(batch by paragraph)"]
+    C --> D["Gemini Citation\nExtraction\n(batch by paragraph)"]
     D --> E["Citation Normalization\n(standardize format)"]
     E --> F["Structured Citation\nObjects"]
 ```
@@ -358,7 +378,7 @@ flowchart TD
     I -- Match Found --> J["✅ Verified Real"]
     I -- No Match --> K["Search PubMed\n(if biomedical)"]
     K -- Match Found --> L["✅ Verified Real"]
-    K -- No Match --> M["GPT-4o Plausibility\nScoring"]
+    K -- No Match --> M["Gemini Plausibility\nScoring"]
     M --> N{"Score > 0.7?"}
     N -- Yes --> O["🟡 Unverifiable\nbut plausible"]
     N -- No --> P["🔴 Likely Fabricated\nHallucinated Citation"]
@@ -386,22 +406,20 @@ flowchart TD
 
 ### 6.1 Primary User Flow — Document Upload and Analysis
 
+> MVP flow is anonymous (ADR-001) and synchronous (ADR-011): no sign-in, no queue.
+
 ```mermaid
 flowchart TD
-    A["User lands on\nCitePilot homepage"] --> B{"Authenticated?"}
-    B -- No --> C["Sign in / Register\n(Google, Microsoft, Email)"]
-    C --> D["Dashboard"]
-    B -- Yes --> D
-    D --> E["Click 'Check Document'"]
+    A["User lands on\nCitePilot homepage"] --> E["Click 'Check Document'"]
     E --> F{"Input method?"}
-    F -- Upload --> G["Select .docx file\n(drag & drop or browse)"]
+    F -- Upload --> G["Select file\n(drag & drop or browse)"]
     F -- Paste --> H["Paste text into\ntext area"]
     G --> I["Select citation style\n(APA 7, Harvard, etc.)"]
     H --> I
     I --> J{"Within plan limits?"}
     J -- No --> K["Show upgrade prompt\nwith exceeded limit"]
-    J -- Yes --> L["Submit for processing"]
-    L --> M["Show progress bar\n(BullMQ async job)"]
+    J -- Yes --> L["Submit for processing\n(single synchronous pass)"]
+    L --> M["Show progress bar\n(simulated, synced to pipeline stages)"]
     M --> N["Processing stages:\n1. Parsing document\n2. Detecting ref section\n3. Extracting citations\n4. Matching\n5. Generating results"]
     N --> O["Results dashboard\nwith summary stats"]
     O --> P{"User action?"}
@@ -412,7 +430,7 @@ flowchart TD
     T --> L
 ```
 
-### 6.2 Institutional Admin Flow
+### 6.2 Institutional Admin Flow (roadmap — institutional tier, post-MVP)
 
 ```mermaid
 flowchart TD
@@ -444,27 +462,27 @@ flowchart TD
 
 | Dimension | Target |
 |---|---|
-| Registered users | Support 500,000 in Year 1 |
-| Monthly active users | Support 50,000 MAU |
+| Registered users | N/A — anonymous MVP (ADR-001); accounts land with the institutional tier |
+| Monthly active users | Support 50,000 MAU (Year 1) |
 | Daily document uploads | Support 10,000/day |
 | Peak concurrent users | 2,000 |
-| Database size | 500 GB (PostgreSQL RDS) |
-| File storage | 2 TB (S3, auto-archived after deletion window) |
+| Database size | Starts at 5 GB (Vercel Postgres); scale-out plan in §7.6 |
+| File storage | None — documents held in memory only, wiped ≤ 36 h |
 
 ### 7.3 Security & Privacy
 
 | Requirement | Implementation |
 |---|---|
-| Data encryption at rest | AES-256 via AWS RDS encryption and S3 SSE |
-| Data encryption in transit | TLS 1.3 for all connections |
-| Document auto-deletion | Automated deletion 48 hours after upload; user can trigger immediate deletion |
-| Authentication | NextAuth.js with OAuth 2.0 (Google, Microsoft) and bcrypt-hashed email/password |
-| Authorization | Role-based access control (RBAC): user, admin, super-admin |
+| Data encryption at rest | Platform-managed (Vercel Postgres disk encryption, AES-256) |
+| Data encryption in transit | TLS 1.2+ for all connections (platform-managed) |
+| Document auto-deletion | Bytes held in memory only; purged at request end, hard cap 36 hours |
+| Authentication | None (anonymous MVP, ADR-001); results keyed by unguessable analysis token |
+| Authorization | N/A in MVP; RBAC arrives with the institutional/accounts tier |
 | API authentication | API key + rate limiting per key |
 | GDPR compliance | Right to deletion, data export, consent management, EU data residency option |
 | SOC 2 readiness | Architecture designed for SOC 2 Type II compliance by Year 2 |
 | Document isolation | Each user's documents and results are isolated; no cross-user data access |
-| AI data policy | Documents are NOT used to train AI models; OpenAI API used with data processing agreement (zero retention) |
+| AI data policy | Documents are NOT used to train AI models; Google Gemini API used with data processing agreement (data usage controls enabled) |
 
 ### 7.4 Reliability
 
@@ -475,7 +493,7 @@ flowchart TD
 | Recovery Point Objective (RPO) | 5 minutes |
 | Error rate (5xx) | < 0.1% of requests |
 | Job failure rate | < 0.5% of processing jobs |
-| Failover | Multi-AZ deployment in AWS |
+| Failover | Platform-managed — Vercel edge + Railway health checks and auto-restart |
 
 ### 7.5 Accessibility
 
@@ -491,6 +509,8 @@ flowchart TD
 ---
 
 ## 8. Technical Architecture
+
+> The architecture below describes the **target/future state** (multi-service, queue-based, multi-database). The current MVP deployment (Vercel + Railway + Vercel Postgres, synchronous AI processing) is documented in `03-technical-architecture/15-infrastructure-deployment.md`. The current deployment intentionally omits the queue, cache, S3, and CDN layers below.
 
 ### 8.1 System Architecture
 
@@ -516,13 +536,13 @@ flowchart TB
     end
 
     subgraph "External Services"
-        H["OpenAI API\n(GPT-4o)"]
+        H["Google Gemini API\n(Gemini 2.5 Flash)"]
         I["Crossref API"]
-        J["OpenAlex API"]
-        K["PubMed E-utilities"]
+        J["OpenAlex API (roadmap)"]
+        K["PubMed E-utilities (roadmap)"]
         L["DOI.org"]
-        M["Retraction Watch DB"]
-        N["Stripe"]
+        M["Retraction Watch DB (roadmap)"]
+        N["PayPal"]
         O["Sentry + Datadog"]
     end
 
@@ -557,10 +577,10 @@ flowchart TB
 | File Storage | AWS S3 | Scalable object storage with lifecycle policies |
 | CDN | AWS CloudFront | Global edge caching for frontend assets |
 | Compute | AWS ECS/Fargate | Serverless containers, auto-scaling, no server management |
-| AI Models | OpenAI GPT-4o (primary), Claude (fallback) | Best-in-class accuracy for citation analysis |
+| AI Models | Google Gemini (Gemini 2.5 Flash) | Cost-efficient, high-accuracy citation analysis |
 | Doc Parsing | python-docx, pdfplumber, Apache Tika | Comprehensive format support |
 | Auth | NextAuth.js | Battle-tested auth with OAuth provider support |
-| Payments | Stripe | Industry standard for SaaS billing |
+| Payments | PayPal Subscriptions (Stripe planned) | Live since MVP; Stripe evaluated for a later phase |
 | Monitoring | Datadog (infra), Sentry (errors) | Full-stack observability |
 | CI/CD | GitHub Actions | Native GitHub integration, marketplace actions |
 
@@ -611,9 +631,9 @@ flowchart TB
 
 | Constraint | Description | Impact |
 |---|---|---|
-| AI API costs | GPT-4o costs ~$5/$15 per 1M input/output tokens; each document analysis uses 2,000–20,000 tokens | Limits free tier generosity; requires cost optimization |
+| AI API costs | Gemini 2.5 Flash costs ~$0.30/$2.50 per 1M input/output tokens; each document analysis uses 2,000–20,000 tokens | Limits free tier generosity; requires cost optimization |
 | External API rate limits | Crossref (50 req/s polite pool), PubMed (3 req/s without API key), OpenAlex (10 req/s) | Limits throughput for reference validation; requires queuing and caching |
-| LLM latency | GPT-4o responses take 1–5 seconds per call | Document processing cannot be real-time; requires async architecture |
+| LLM latency | Gemini 2.5 Flash responses take 1–5 seconds per call | Document processing cannot be real-time; requires async architecture |
 | Document format limitations | PDF text extraction is imperfect (especially for scanned PDFs, complex layouts) | May produce lower accuracy on PDF inputs vs .docx; communicate to users |
 | Citation style complexity | Each citation style has 100+ rules and edge cases | Requires extensive test corpora per style; phased style rollout |
 | Data privacy regulations | GDPR (EU), FERPA (US education), Australian Privacy Act | Constrains data retention, processing location, and third-party sharing |
@@ -625,7 +645,7 @@ flowchart TB
 
 | Assumption | Risk if Invalid | Validation Plan |
 |---|---|---|
-| GPT-4o can accurately extract citations across all major styles with >95% precision | Core product value proposition fails | Beta testing with 500-document test corpus; benchmark against manual expert extraction |
+| Gemini 2.5 Flash can accurately extract citations across all major styles with >95% precision | Core product value proposition fails | Beta testing with 500-document test corpus; benchmark against manual expert extraction |
 | Students and researchers will pay $4.99–$12.99/month for citation checking | Revenue model fails | Free tier usage data → conversion experiments; survey-based willingness-to-pay analysis |
 | Hallucinated citations are a growing problem that users care about | Key differentiator lacks market demand | Track LLM usage in academic writing; survey academics on AI citation concerns |
 | External API integrations (Crossref, OpenAlex, PubMed) remain free or low-cost | Source validation feature becomes cost-prohibitive | Monitor API terms of service; build caching layer to reduce API calls |
@@ -638,16 +658,16 @@ flowchart TB
 
 | Dependency | Type | Risk Level | Mitigation |
 |---|---|---|---|
-| OpenAI GPT-4o API | External service | Medium | Claude fallback; evaluate open-source models quarterly |
-| Crossref REST API | External service | Low | Well-established API; cache results aggressively |
+| Google Gemini API | External service | Medium | Fallback to alternative Gemini models when needed (ADR-008); evaluate quarterly |
+| Crossref REST API | External service | Low | Well-established API; polite-pool usage, batch requests |
 | OpenAlex API | External service | Low | Free, reliable API; cache results |
 | PubMed E-utilities | External service | Low | NCBI-managed; requires API key for higher rate limits |
-| Retraction Watch database | External data | Medium | Negotiate data access agreement; fallback to manual checks |
-| Stripe | External service | Low | Industry standard; mature API |
-| AWS infrastructure | Cloud provider | Low | Multi-AZ deployment; infrastructure-as-code for portability |
+| Retraction Watch database | External data | Medium | Not integrated in MVP — retraction flags come from Crossref `is-retracted-by`; revisit access agreement for V2 |
+| PayPal | External service | Low | Live since MVP; mature subscription API |
+| Vercel + Railway hosting | Cloud platforms | Low | Managed platforms (ADR-009); no self-managed AWS infrastructure |
 | python-docx library | Open source | Low | Mature, well-maintained library |
 | pdfplumber / Apache Tika | Open source | Low | Multiple fallback options for PDF parsing |
-| NextAuth.js | Open source | Low | Active community; well-documented |
+| Auth provider (NextAuth.js / OIDC) | Open source | Low | Not in MVP (ADR-001) — planned for accounts tier |
 
 ---
 
@@ -694,7 +714,7 @@ flowchart TB
 | 1 | Should we support LaTeX (.tex) input in MVP or V2? | Product | 2026-08-01 | Open |
 | 2 | What is the optimal document size limit for the free tier to balance acquisition vs cost? | Product + Finance | 2026-08-01 | Decided: 5,000 words |
 | 3 | Should the AI explanations feature be gated to paid tiers only? | Product | 2026-08-15 | Decided: Paid only |
-| 4 | What Retraction Watch data access model works — API, database dump, or partnership? | Engineering + BD | 2026-09-01 | Open |
+| 4 | What Retraction Watch data access model works — API, database dump, or partnership? | Engineering + BD | 2026-09-01 | Decided: not integrated in MVP — Crossref `is-retracted-by` covers retraction flags. Revisit for V2 |
 | 5 | Should we build a Word add-in or browser extension first for V2? | Product | 2026-10-01 | Open |
 | 6 | What is our data residency strategy for non-US institutional customers? | Legal + Engineering | 2026-09-15 | Open |
 
@@ -721,4 +741,4 @@ flowchart TB
 
 ---
 
-*Document End — CP-DS-002 v1.0*
+*Document End — CP-DS-002 v1.1*

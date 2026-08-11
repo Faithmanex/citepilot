@@ -1,9 +1,21 @@
 # CitePilot Information Architecture
 
-**Version:** 1.0.0
-**Last Updated:** 2026-07-14
+**Version:** 1.1.0
+**Last Updated:** 2026-08-11
 **Status:** Production-Ready
 **Audience:** Product Managers, Frontend Engineers, UX Designers
+
+---
+
+## 0. Current Scope vs Roadmap (August 2026)
+
+The **live application** implements a minimal single-workspace IA:
+
+- `/` — landing page (single page: Hero, Why It Matters, How It Works, Citation Styles, Who It's For, Testimonials, Pricing, FAQ, CTA)
+- `/dashboard` — audit workspace with an 8-panel sidebar (Overview, Citation Matching, Crossref Check, Style Rules, Uncited Claims, Recency Analysis, Document Structure, Export Report)
+- `/terms`, `/privacy`, `/404`
+
+Everything described below (auth pages, `/upload`, `/results/:id`, `/account`, `/admin`, `/pricing`, `/docs`, `/blog`, REST API routes) is **roadmap scope** for the future multi-page product. Plan-tier values in §5.2 are the canonical target; the live pricing section markets Free / Student / Professional, with a single PayPal subscription plan live (Student purchasable at a later phase). Section 4 flows describe the roadmap target; the MVP runs the audit synchronously from the dashboard workspace.
 
 ---
 
@@ -291,7 +303,7 @@ flowchart TD
     G --> J{"File validation"}
     H --> J
     I --> K["User selects citation style"]
-    J -- "Invalid type/size" --> L["Error toast:\n'Only .docx and .pdf under 10MB'"]
+    J -- "Invalid type/size" --> L["Error toast:\n'Only .docx, .pdf or .txt under 50MB'"]
     L --> E
     J -- "Valid" --> K
     K --> M{"Quota check"}
@@ -299,7 +311,7 @@ flowchart TD
     N -- "Upgrade" --> O["Redirect to /pricing"]
     N -- "Cancel" --> E
     M -- "Within limit" --> P["Upload begins\n(progress bar shown)"]
-    P --> Q["File uploaded to S3\nJob queued in BullMQ"]
+    P --> Q["File streamed to analysis API\n(synchronous processing)"]
     Q --> R["Processing screen\n3-step indicator:\n1. Parsing ✓\n2. Analyzing...\n3. Validating"]
     R --> S["Step 1: Document parsed\n(sections detected)"]
     S --> T{"Reference section found?"}
@@ -308,7 +320,7 @@ flowchart TD
     V --> W["Re-process with manual boundary"]
     T -- Yes --> X["Step 2: AI citation extraction\nand matching"]
     W --> X
-    X --> Y["Step 3: External validation\n(Crossref, OpenAlex, Retraction Watch)"]
+    X --> Y["Step 3: External validation\n(Crossref, DOI.org)"]
     Y --> Z["Processing complete"]
     Z --> AA["Redirect to\n/results/:documentId?tab=citations"]
 
@@ -343,7 +355,7 @@ flowchart TD
     J -- Yes --> K["User reads AI explanation"]
     K --> L{"User action"}
     L -- "Ignore" --> M["Citation marked ignored\n(grey, dotted underline)"]
-    L -- "View source" --> N["External link opens:\nCrossref/DOI/PubMed"]
+    L -- "View source" --> N["External link opens:\nCrossref/DOI"]
     L -- "Copy suggestion" --> O["Correction copied\nto clipboard"]
 
     J -- No --> P["Green badge confirmed\nUser moves to next"]
@@ -383,12 +395,12 @@ flowchart TD
     I -- No --> J["Redirect to /auth/register\n(return_url=/pricing?plan=X)"]
     J --> K["User registers"]
     K --> E
-    I -- Yes --> L["Stripe Checkout\nopens in overlay"]
-    L --> M["User enters payment\ninformation"]
+    I -- Yes --> L["PayPal Checkout\nopens in overlay"]
+    L --> M["User completes\npayment with PayPal"]
     M --> N{"Payment result"}
     N -- "Success" --> O["Webhook received\nPlan upgraded in database"]
     O --> P["Redirect to /dashboard\nSuccess toast: 'Welcome to [Plan]!'"]
-    N -- "Failure" --> Q["Error message in\nStripe Checkout"]
+    N -- "Failure" --> Q["Error message in\nPayPal Checkout"]
     Q --> R["User retries or cancels"]
     R -- "Retry" --> M
     R -- "Cancel" --> B
@@ -447,7 +459,7 @@ flowchart TD
     C --> D["Redirect to /dashboard\n(first visit)"]
     D --> E["Onboarding overlay:\nStep 1 of 3"]
     E --> F["Step 1: Welcome\n'CitePilot checks your citations\nusing AI. Here''s how it works.'"]
-    F --> G["Step 2: Upload\n'Upload a .docx or paste text.\nWe support 9+ citation styles.'"]
+    F --> G["Step 2: Upload\n'Upload a .docx or paste text.\nWe support 9 citation styles.'"]
     G --> H["Step 3: Review\n'We highlight every citation\nand explain any issues.'"]
     H --> I["CTA: 'Upload your first document'\nor 'Explore dashboard'"]
     I -- "Upload" --> J["Redirect to /upload"]
@@ -471,7 +483,7 @@ flowchart TD
 | Social Proof           | University logos, user count, document count                             | High     |
 | Problem Statement      | Pain points of manual citation checking                                  | High     |
 | Feature Grid           | 6 key features with icons and descriptions                               | Critical |
-| Style Support          | Visual grid of 9+ citation style logos/names                             | High     |
+| Style Support          | Visual grid of 9 citation style logos/names                             | High     |
 | How It Works           | 3-step visual: Upload → AI Analyzes → Review Results                     | Critical |
 | Comparison Table       | CitePilot vs Reciteworks feature comparison                              | High     |
 | Testimonials           | 3 user quotes with avatar, name, role, institution                       | Medium   |
@@ -498,16 +510,16 @@ flowchart TD
 | Annual Savings Badge   | —             | "Save 20%"    | "Save 20%"    | —             |
 | Tagline                | "Get started" | "For students" | "For professionals" | "For institutions" |
 | Upload limit           | 3/day         | Unlimited     | Unlimited     | Unlimited     |
-| Word limit             | 5,000         | 50,000        | 100,000       | 100,000       |
-| Reference limit        | 100           | 500           | 1,000         | 1,000         |
-| Citation styles        | 3 (APA 7, Harvard, Chicago) | All 9+ | All 9+  | All 9+        |
+| Word limit             | 5,000         | Unlimited     | 100,000       | 100,000       |
+| Reference limit        | 100           | Unlimited     | 2,000         | 2,000         |
+| Citation styles        | All 9 | All 9 | All 9 | All 9        |
 | AI explanations        | ✕             | ✓             | ✓             | ✓             |
 | Suggested corrections  | ✕             | ✓             | ✓             | ✓             |
 | Multi-ref-list support | ✕             | ✓             | ✓             | ✓             |
 | Crossref validation    | ✕             | ✕             | ✓             | ✓             |
-| Retraction Watch       | ✕             | ✕             | ✓             | ✓             |
+| Retraction checking    | ✕             | ✕             | ✓             | ✓             |
 | Hallucination detection| ✕             | Basic         | Advanced      | Advanced      |
-| PDF export             | ✕             | ✕             | ✓             | ✓             |
+| PDF export             | ✕             | ✓             | ✓             | ✓             |
 | API access             | ✕             | ✕             | ✓             | ✓             |
 | SSO                    | ✕             | ✕             | ✕             | ✓             |
 | Admin dashboard        | ✕             | ✕             | ✕             | ✓             |
@@ -598,7 +610,7 @@ This is the most complex page in the application. Content is organised across 4 
 |------------------|----------------------------------------------------------------------------|
 | Profile          | Avatar upload, display name, email (read-only), institution, role dropdown  |
 | Security         | Current password, new password, confirm password, 2FA toggle (TOTP), active sessions list with revoke |
-| Billing          | Current plan card, upgrade/downgrade buttons, Stripe billing portal link, invoice history table |
+| Billing          | Current plan card, upgrade/downgrade buttons, PayPal billing links, invoice history table |
 | API Keys         | Key list (name, prefix, created, last used), create new key, revoke key. Professional+ only. |
 | Preferences      | Theme (Light/Dark/System), default citation style, email notification toggles, data retention preference |
 
@@ -610,7 +622,7 @@ This is the most complex page in the application. Content is organised across 4 
 | Members          | Searchable/filterable member table (name, email, role, status, last active, documents), invite modal, bulk CSV import, remove/role change actions |
 | Usage            | Date-range analytics: documents/day bar chart, citations checked line chart, issues breakdown stacked bar, style distribution pie chart, CSV export |
 | Settings         | Organisation name, logo upload, domain allow-list for SSO, SSO provider configuration (SAML 2.0 / OIDC), test connection button |
-| Billing          | Current plan summary, seat count, per-seat pricing, add/remove seats, invoice history, payment method (Stripe) |
+| Billing          | Current plan summary, seat count, per-seat pricing, add/remove seats, invoice history, payment method (PayPal) |
 
 ---
 

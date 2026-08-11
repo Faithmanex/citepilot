@@ -313,7 +313,7 @@ Turnitin is **complementary but occupies the institutional budget**. Universitie
 | Feature | CitePilot | Reciteworks | Zotero | Mendeley | EndNote | Grammarly | Turnitin |
 |---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **Citation-Reference Matching** | ✅ AI-powered | ✅ Rule-based | ❌ | ❌ | ❌ | ❌ | ❌ |
-| **Citation Styles Supported** | 9+ | 3 | N/A | N/A | N/A | N/A | N/A |
+| **Citation Styles Supported** | 9 | 3 | N/A | N/A | N/A | N/A | N/A |
 | **APA 7** | ✅ | ✅ | N/A | N/A | N/A | N/A | N/A |
 | **APA 6** | ✅ | ✅ | N/A | N/A | N/A | N/A | N/A |
 | **Harvard** | ✅ | ✅ | N/A | N/A | N/A | N/A | N/A |
@@ -356,12 +356,12 @@ Turnitin is **complementary but occupies the institutional budget**. Universitie
 | # | Strength | Impact |
 |---|---|---|
 | S1 | AI-native architecture — LLM-powered extraction dramatically reduces false positives and enables contextual understanding | High |
-| S2 | 9+ citation style support covering author-date, numeric, and footnote systems — 3x more than nearest competitor | High |
+| S2 | 9 citation style support covering author-date, numeric, and footnote systems — 3x more than nearest competitor | High |
 | S3 | Hallucinated citation detection — unique feature with no competitor offering | High |
 | S4 | Multi-database validation (Crossref, OpenAlex, PubMed, DOI.org) — most comprehensive source verification in market | High |
 | S5 | AI-generated explanations and correction suggestions — transforms error flags into actionable guidance | Medium |
 | S6 | Multi-reference-list support — enables thesis and dissertation workflows | Medium |
-| S7 | Modern tech stack (Next.js, FastAPI, GPT-4o) — fast iteration, strong developer experience | Medium |
+| S7 | Modern tech stack (Next.js, FastAPI, Gemini 2.5 Flash) — fast iteration, strong developer experience | Medium |
 | S8 | Flexible reference section detection — AI finds reference lists regardless of heading format | Medium |
 | S9 | Reference type awareness — different validation rules for journals, books, websites, reports | Medium |
 | S10 | API access for professional workflows — enables editor toolchain integration | Low |
@@ -373,7 +373,7 @@ Turnitin is **complementary but occupies the institutional budget**. Universitie
 | W1 | No brand recognition — entering market as unknown against established tools | Aggressive content marketing, academic community engagement, free tier viral loop |
 | W2 | AI inference costs create higher per-unit costs than rule-based competitors | Tiered AI usage — use fast heuristics for obvious cases, reserve LLM calls for ambiguous cases; aggressive caching |
 | W3 | LLM latency — AI processing is slower than regex pattern matching | Async processing with progress indicators; optimize with streaming results and parallel API calls |
-| W4 | Dependency on OpenAI/Claude APIs — third-party reliability and pricing risk | Multi-provider strategy with fallback; evaluate fine-tuned open-source models (Llama) for cost reduction over time |
+| W4 | Dependency on LLM APIs (Google Gemini) — third-party reliability and pricing risk | Multi-provider strategy with fallback; evaluate fine-tuned open-source models (Llama) for cost reduction over time |
 | W5 | No existing institutional relationships — Turnitin and Elsevier have entrenched university contracts | Start with individual users and grassroots adoption; institutional sales in Phase 2 |
 | W6 | No reference management features — users need separate tools for organizing references | Position as complementary; build integrations with Zotero/Mendeley via API |
 
@@ -397,7 +397,7 @@ Turnitin is **complementary but occupies the institutional budget**. Universitie
 | T1 | Grammarly adds citation checking features | Medium | High | Build deep domain expertise that's difficult to replicate as a feature add-on; establish brand as the specialist tool |
 | T2 | Turnitin builds citation consistency checking into their platform | Medium | High | Differentiate on AI quality and user experience; pursue OEM/white-label partnership with Turnitin |
 | T3 | Reciteworks adopts AI and expands style support | Medium | Medium | Move fast — ship and iterate; build network effects (institutional accounts, user data moat) |
-| T4 | OpenAI/Anthropic pricing increases erode unit economics | Medium | Medium | Multi-provider strategy; invest in fine-tuning smaller models; optimize prompt engineering to reduce token usage |
+| T4 | LLM (Gemini) pricing increases erode unit economics | Medium | Medium | Multi-provider strategy; invest in fine-tuning smaller models; optimize prompt engineering to reduce token usage |
 | T5 | Academic pushback against AI tools in academic integrity context | Low | Medium | Position as verification tool (checking accuracy, not generating content); transparent about AI usage |
 | T6 | Free open-source alternative emerges | Low | Low | SaaS convenience, enterprise features, and continuous AI improvement create defensible value |
 
@@ -411,7 +411,7 @@ Turnitin is **complementary but occupies the institutional budget**. Universitie
 | **Uploads/day** | 3 | Unlimited | Unlimited | 2 | Unlimited | Unlimited |
 | **Word limit** | 5,000 | 50,000 | Unlimited | 2,500 | 25,000 | Unlimited |
 | **Reference limit** | 100 | 1,000 | Unlimited | 50 | 500 | Unlimited |
-| **Citation styles** | 3 (APA 7, Harvard, MLA) | All 9+ | All 9+ | 3 (APA 6/7, Harvard) | 3 | 3 |
+| **Citation styles** | All 9 | All 9 | All 9 | 3 (APA 6/7, Harvard) | 3 | 3 |
 | **AI explanations** | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **Crossref validation** | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
 | **Retraction check** | ❌ | ❌ | ✅ | ❌ | ❌ | ✅ |
@@ -421,7 +421,7 @@ Turnitin is **complementary but occupies the institutional budget**. Universitie
 | **Multi-ref-list** | ❌ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **SSO/Institutional** | ❌ | ❌ | Custom | ❌ | ❌ | ❌ |
 
-**Pricing Strategy Rationale**: CitePilot is priced $1/month below Reciteworks at the Student tier while offering dramatically more features (AI explanations, hallucination detection, 9+ styles, multi-reference-list support). The Professional tier is priced $1/month above Reciteworks but includes API access, which Reciteworks does not offer at any tier. The free tier is 2x more generous (5,000 vs 2,500 words; 100 vs 50 references; 3 vs 2 daily uploads) to maximize top-of-funnel volume.
+**Pricing Strategy Rationale**: CitePilot is priced $1/month below Reciteworks at the Student tier while offering dramatically more features (AI explanations, hallucination detection, 9 styles, multi-reference-list support). The Professional tier is priced $1/month above Reciteworks but includes API access, which Reciteworks does not offer at any tier. The free tier is 2x more generous (5,000 vs 2,500 words; 100 vs 50 references; 3 vs 2 daily uploads) to maximize top-of-funnel volume.
 
 ---
 
@@ -433,7 +433,7 @@ Turnitin is **complementary but occupies the institutional budget**. Universitie
 |---|---|---|---|---|
 | G1 | No tool supports numeric citation styles (Vancouver, IEEE) | Reciteworks supports author-date only | Full Vancouver, IEEE, OSCOLA support in MVP | Critical |
 | G2 | No tool detects AI-hallucinated/fabricated citations | Zero market coverage | Multi-database verification + AI plausibility scoring | Critical |
-| G3 | Citation checkers don't explain errors or suggest fixes | Reciteworks only flags errors | GPT-4o generates natural-language explanations and corrections | High |
+| G3 | Citation checkers don't explain errors or suggest fixes | Reciteworks only flags errors | Gemini 2.5 Flash generates natural-language explanations and corrections | High |
 | G4 | Multi-chapter documents with separate reference lists are unsupported | Reciteworks handles single list only | AI-based document structure detection with multi-list support | High |
 | G5 | Reference section detection requires exact heading match | Reciteworks requires "References" on its own line | AI-based section detection handles any heading or format | High |
 | G6 | No tool combines multiple external databases for source verification | Reciteworks uses Crossref only (paid) | Crossref + OpenAlex + PubMed + DOI.org in a unified verification pipeline | High |
@@ -466,7 +466,7 @@ These are features CitePilot must match to avoid competitive disadvantage:
 | P16 | PDF export | V1.1 |
 | P17 | Crossref integration | V1.1 |
 | P18 | Retraction Watch integration | V1.1 |
-| P19 | Google OAuth | MVP |
+| P19 | Google OAuth (accounts tier, post-MVP) | V2 |
 | P20 | Document auto-deletion policy | MVP |
 
 ---
@@ -475,7 +475,7 @@ These are features CitePilot must match to avoid competitive disadvantage:
 
 ### 8.1 Positioning Statement
 
-> **For** academic writers, researchers, and editors **who need** accurate citation consistency checking, **CitePilot is** an AI-powered citation verification platform **that** intelligently matches in-text citations to reference lists across 9+ citation styles, detects fabricated sources, and provides actionable correction suggestions. **Unlike** Reciteworks and manual proofreading, **CitePilot** uses large language models to understand citation context, dramatically reducing false positives while catching errors that rule-based tools miss.
+> **For** academic writers, researchers, and editors **who need** accurate citation consistency checking, **CitePilot is** an AI-powered citation verification platform **that** intelligently matches in-text citations to reference lists across 9 citation styles, detects fabricated sources, and provides actionable correction suggestions. **Unlike** Reciteworks and manual proofreading, **CitePilot** uses large language models to understand citation context, dramatically reducing false positives while catching errors that rule-based tools miss.
 
 ### 8.2 Positioning Map
 
@@ -500,7 +500,7 @@ quadrantChart
 ### 8.3 Key Differentiators (Messaging Hierarchy)
 
 1. **Primary**: "AI-powered accuracy — not just pattern matching" → Dramatically fewer false positives, contextual understanding
-2. **Secondary**: "Every citation style, one platform" → 9+ styles including numeric and footnote systems
+2. **Secondary**: "Every citation style, one platform" → 9 styles including numeric and footnote systems
 3. **Tertiary**: "Catch what others can't" → Hallucinated citation detection, multi-database source verification
 4. **Supporting**: "Fixes, not just flags" → AI-generated explanations and suggested corrections
 

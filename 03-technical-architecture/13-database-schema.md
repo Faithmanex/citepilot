@@ -1,11 +1,13 @@
 # CitePilot — Database Schema
 
 > **Document ID:** CP-ARCH-013  
-> **Version:** 1.0.0  
-> **Last Updated:** 2026-07-14  
+> **Version:** 1.1.0  
+> **Last Updated:** 2026-08-11  
 > **Status:** Approved  
 > **Owner:** Engineering — Data Team  
 > **Classification:** Internal
+
+> **Scope note:** The schema below is the design source of truth; the executable implementation lives in `supabase/migrations/` (12 SQL files). The two are structurally aligned (users, organisations, documents, citations, references, results, style_warnings, external_validations, subscriptions, usage_logs, sessions). Where deployment lags design — e.g. Stripe-typed subscription columns (see ADR-010, PayPal supersedes Stripe) — the shipped migration is authoritative and this document notes the gap.
 
 ---
 
@@ -147,7 +149,7 @@ Uploaded documents undergoing citation analysis. Partitioned by `created_at` (mo
 | `label` | `VARCHAR(200)` | YES | `NULL` | User-assigned label |
 | `mime_type` | `VARCHAR(100)` | NO | — | `application/vnd.openxmlformats-officedocument.wordprocessingml.document`, `application/pdf`, or `text/plain` |
 | `file_size` | `INTEGER` | NO | — | File size in bytes |
-| `s3_key` | `TEXT` | YES | `NULL` | S3 object key for uploaded file; NULL for pasted text |
+| `file_path` | `TEXT` | YES | `NULL` | Local reference to the uploaded file; NULL for pasted text. MVP keeps document bodies in AI-service memory during the audit — no object storage (ADR-009, ADR-011) |
 | `citation_style` | `VARCHAR(30)` | NO | — | Selected citation style |
 | `multi_ref_list` | `BOOLEAN` | NO | `FALSE` | Whether multi-reference-list mode is enabled |
 | `status` | `VARCHAR(20)` | NO | `'uploaded'` | Processing status |
@@ -331,7 +333,7 @@ Aggregated analysis results per reference (citation count, orphan status, type d
 | `is_hallucinated` | `BOOLEAN` | NO | `FALSE` | TRUE if hallucination check flagged this reference |
 | `hallucination_confidence` | `REAL` | YES | `NULL` | Confidence that the reference is fabricated (0.0–1.0) |
 | `hallucination_evidence` | `TEXT` | YES | `NULL` | Explanation of hallucination determination |
-| `retraction_detail` | `JSONB` | YES | `NULL` | Retraction Watch data if retracted |
+| `retraction_detail` | `JSONB` | YES | `NULL` | Crossref retraction metadata if retracted (resolved via `is-retracted-by` relation) |
 | `issues` | `JSONB` | NO | `'[]'` | Array of issue objects |
 | `created_at` | `TIMESTAMPTZ` | NO | `NOW()` | |
 
@@ -397,7 +399,7 @@ CREATE INDEX idx_style_warnings_severity ON style_warnings (document_id, severit
 
 ### 2.10 `external_validations`
 
-Results of external database lookups (Crossref, OpenAlex, PubMed).
+Results of external database lookups. The `source` CHECK allows `crossref`, `openalex`, `pubmed`, `doi_org`; the MVP populates `crossref` (primary) and `doi_org` (DOI resolution) — OpenAlex/PubMed are reserved for the roadmap (see `14-ai-nlp-design.md` §6.1).
 
 | Column | Type | Nullable | Default | Description |
 |---|---|---|---|---|
@@ -447,6 +449,8 @@ CREATE INDEX idx_external_validations_source ON external_validations (source, st
 ### 2.11 `subscriptions`
 
 User subscription records linked to Stripe.
+
+> **Note (ADR-010):** The shipped migration types these columns `stripe_*`, but production billing uses **PayPal Subscriptions** (web SDK, plan `P-00697875B1151583ANJV3VOY`). A migration renaming/adding PayPal identifiers is pending; the columns here are retained as the store for subscription state mirrors.
 
 | Column | Type | Nullable | Default | Description |
 |---|---|---|---|---|
@@ -787,14 +791,16 @@ CREATE EXTENSION IF NOT EXISTS "pg_stat_statements"; -- Query performance analys
 
 | Data | Retention | Implementation |
 |---|---|---|
-| **Uploaded documents (S3)** | 36 hours | S3 lifecycle policy + `document.cleanup` BullMQ job |
-| **Document database records** | 36 hours after `expires_at` | `document.cleanup` job soft-deletes, then batch `DELETE` weekly |
+| **Uploaded documents (in-memory)** | 36 hours | Documents held in AI-service memory during the audit; `expires_at` column enforces the 36-hour ceiling; hard delete by cleanup job |
+| **Document database records** | 36 hours after `expires_at` | Cleanup job soft-deletes, then batch `DELETE` weekly |
 | **Citations, references, results** | Cascades with document | `ON DELETE CASCADE` foreign keys |
 | **User accounts (deleted)** | Anonymised immediately, hard-deleted after 30 days | GDPR deletion workflow |
-| **Usage logs** | 90 days (hot), 365 days (cold/S3 export) | pg_partman drops old partitions; CSV export to S3 Glacier before dropping |
+| **Usage logs** | 90 days (hot), 365 days (cold export) | Partitioned by month; older partitions dropped/archived after 365 days |
 | **Sessions** | 7 days | Expired sessions cleaned up by daily cron job |
 | **API keys (revoked)** | 30 days | Batch deletion via weekly cron |
 | **Audit logs** | 365 days | Stored in separate `audit_logs` table (not shown — see Security Architecture) |
+
+No S3 lifecycle policies, S3 Glacier, or BullMQ jobs exist — retention is enforced by `expires_at` + scheduled cleanup (ADR-011).
 
 ---
 

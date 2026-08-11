@@ -1,8 +1,8 @@
 # 28 — Pre-Launch Checklist
 
 > **Document ID**: CP-LAUNCH-028
-> **Version**: 1.0
-> **Last Updated**: 2026-07-15
+> **Version**: 1.1
+> **Last Updated**: 2026-08-11
 > **Owner**: Product & Engineering Leadership
 > **Target Launch Date**: TBD (all items must be ✅ before launch)
 
@@ -26,17 +26,16 @@ This checklist defines every item that must be completed, verified, and signed o
 | # | Item | Priority | Owner | Acceptance Criteria | Status |
 |---|---|---|---|---|---|
 | L-01 | Terms of Service published | 🔴 | Legal | Reviewed by external counsel, published at `/terms`, covers liability limitations, user data handling, acceptable use, and AI-generated content disclaimers | ☐ |
-| L-02 | Privacy Policy published | 🔴 | Legal / DPO | GDPR and UK GDPR compliant, published at `/privacy`, covers data collection, processing, retention (36-hour document deletion), third-party sharing (OpenAI, Crossref), cookie usage, user rights (access, erasure, portability) | ☐ |
-| L-03 | Cookie consent banner implemented | 🔴 | Frontend | Granular consent (necessary, analytics, marketing), remembers preference, blocks non-essential cookies until consent, compliant with ePrivacy Directive | ☐ |
-| L-04 | GDPR Data Processing Agreements signed | 🔴 | Legal | DPAs executed with: AWS, OpenAI, Anthropic, Stripe, Datadog, Sentry, Google (OAuth) | ☐ |
+| L-02 | Privacy Policy published | 🔴 | Legal / DPO | GDPR and UK GDPR compliant, published at `/privacy`, covers data collection, processing, retention (36-hour document discard), third-party sharing (Google Gemini, Crossref, PayPal), cookie usage, user rights (access, erasure) | ☐ |
+| L-03 | Cookie usage reviewed | 🟢 | Frontend | No cookies set in MVP (sessionStorage only). If analytics cookies are added later, implement a consent banner before enabling them | ☐ |
+| L-04 | GDPR Data Processing Agreements signed | 🔴 | Legal | DPAs executed as needed with: Google (Gemini APIs), PayPal, Vercel, Railway, Crossref | ☐ |
 | L-05 | ICO registration (UK) | 🔴 | DPO | Registration number obtained and displayed in Privacy Policy | ☐ |
 | L-06 | Data Subject Access Request process documented | 🔴 | DPO | Internal SOP for handling DSAR within 30-day deadline, tested with mock request | ☐ |
-| L-07 | Right to erasure process implemented | 🔴 | Backend | Automated account deletion endpoint that purges all user data from PostgreSQL, S3, Redis, Stripe, and external API logs | ☐ |
+| L-07 | Data discard verified | 🔴 | Backend | Sessionless processing confirmed: no accounts, uploaded documents discarded after the audit (in-memory), nothing persisted beyond 36 hours | ☐ |
 | L-08 | AI-generated content disclaimer | 🔴 | Legal / Product | Clear disclaimer on all AI-generated suggestions and explanations stating they are advisory, not guaranteed, visible in UI and Terms of Service | ☐ |
-| L-09 | Accessibility statement published | 🟡 | Frontend | Published at `/accessibility`, documents WCAG 2.1 AA conformance level, known limitations, and contact for accessibility issues | ☐ |
-| L-10 | Open source licence compliance | 🟡 | Engineering | All third-party dependencies audited, licence compatibility verified (no GPL in proprietary code), NOTICE file generated | ☐ |
+| L-09 | Accessibility statement published | 🟡 | Frontend | Published at `/accessibility`, documents WCAG 2.1 AA as a target (not a conformance claim), known limitations, and contact for accessibility issues | ☐ |
 | L-11 | Trademark search for "CitePilot" | 🔴 | Legal | Trademark search completed in target markets (UK, EU, US), no conflicts identified, application filed | ☐ |
-| L-12 | Stripe terms acceptance | 🔴 | Legal | Stripe Connected Account or Direct integration terms accepted, PCI DSS SAQ-A compliance confirmed | ☐ |
+| L-12 | PayPal merchant terms accepted | 🔴 | Legal | PayPal merchant agreement accepted, subscription plan configuration confirmed (Professional at $12.99/month) | ☐ |
 
 ---
 
@@ -46,21 +45,21 @@ This checklist defines every item that must be completed, verified, and signed o
 |---|---|---|---|---|---|
 | S-01 | Penetration test completed | 🔴 | Security | Third-party pentest of production environment, all Critical and High findings remediated, report archived | ☐ |
 | S-02 | OWASP Top 10 review | 🔴 | Security | All OWASP Top 10 2021 categories reviewed and mitigated: injection, broken auth, sensitive data exposure, XXE, broken access control, security misconfiguration, XSS, insecure deserialisation, insufficient logging, SSRF | ☐ |
-| S-03 | Dependency vulnerability scan | 🔴 | Engineering | `npm audit` (Node.js), `pip audit` (Python), `next lint` — zero Critical/High vulnerabilities | ☐ |
+| S-03 | Dependency vulnerability scan | 🔴 | Engineering | `npm audit` (Node.js), `pip-audit` (Python), `npm run typecheck` — zero Critical/High vulnerabilities | ☐ |
 | S-04 | Secret scanning enabled | 🔴 | Engineering | GitHub secret scanning and push protection enabled on all repositories | ☐ |
-| S-05 | All secrets in AWS Secrets Manager | 🔴 | Platform | No hardcoded secrets in code, environment variables, or Docker images — verified via `trufflehog` scan | ☐ |
-| S-06 | API rate limiting configured | 🔴 | Backend | Rate limits enforced per plan tier: Free (10 req/min), Student (30 req/min), Professional (60 req/min), Institutional (120 req/min) | ☐ |
-| S-07 | CORS configuration locked | 🔴 | Backend | CORS allows only `https://citepilot.com`, `https://www.citepilot.com`, and `https://app.citepilot.com` | ☐ |
+| S-05 | All secrets in platform env vars | 🔴 | Platform | No hardcoded secrets in code or committed to git — secrets stored as Vercel/Railway environment variables, verified via `trufflehog` scan | ☐ |
+| S-06 | API rate limiting | 🟡 | Backend | Per-plan API rate limiting (roadmap). Free-tier daily upload cap (3/day) is enforced client-side today | ☐ |
+| S-07 | CORS configuration locked | 🔴 | Backend | CORS allows only `https://citepilot.com` and `https://www.citepilot.com` | ☐ |
 | S-08 | CSP headers configured | 🔴 | Frontend | Content Security Policy headers set — no `unsafe-inline`, no `unsafe-eval`, report-uri configured | ☐ |
 | S-09 | HTTP security headers | 🔴 | Platform | `Strict-Transport-Security`, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` all set and verified via securityheaders.com (A+ rating) | ☐ |
 | S-10 | SSL/TLS configuration | 🔴 | Platform | TLS 1.2+ only, HSTS preload submitted, SSL Labs grade A+ | ☐ |
-| S-11 | Authentication flow security review | 🔴 | Security | NextAuth.js configuration reviewed: CSRF protection, session token rotation, secure cookie flags (`HttpOnly`, `Secure`, `SameSite=Lax`) | ☐ |
-| S-12 | File upload validation | 🔴 | Backend | `.docx` and `.pdf` only, max file size 50MB, MIME type validation, virus scanning via ClamAV, file content inspection (magic bytes) | ☐ |
+| S-11 | Authentication flow security review | 🟢 | Security | Not applicable in MVP — no authentication. Revisit (OAuth + sessions) when accounts ship | ☐ |
+| S-12 | File upload validation | 🔴 | Backend | `.docx`, `.pdf`, `.txt`, `.rtf`, `.bib` only, max file size 50MB, MIME type validation, file content inspection (magic bytes). Virus scanning on roadmap | ☐ |
 | S-13 | Input sanitisation | 🔴 | Backend | All user inputs sanitised: pasted text (XSS prevention), API parameters (SQL injection prevention via parameterised queries), file names | ☐ |
 | S-14 | Logging — no sensitive data | 🔴 | Engineering | Audit of all log statements confirms no PII, passwords, API keys, document content, or session tokens are logged | ☐ |
-| S-15 | Incident response plan documented | 🔴 | Security | IR plan reviewed and approved (see Document 27), contact list verified, PagerDuty escalation policies configured | ☐ |
-| S-16 | DDoS protection | 🟡 | Platform | AWS Shield Standard enabled (automatic), CloudFront with WAF rules for rate limiting and geo-blocking | ☐ |
-| S-17 | Admin panel access controls | 🔴 | Backend | Admin routes require elevated role, IP allowlisting for admin endpoints, audit logging on all admin actions | ☐ |
+| S-15 | Incident response plan documented | 🔴 | Security | IR plan reviewed and approved (see Document 27), escalation contact list verified | ☐ |
+| S-16 | DDoS protection | 🟡 | Platform | Managed DDoS protection provided by Vercel/Railway edge (automatic). No custom WAF configured | ☐ |
+| S-17 | Admin panel access controls | 🟢 | Backend | Not applicable — no admin panel in MVP. Introduce with institutional plans (roadmap) | ☐ |
 
 ---
 
@@ -73,13 +72,13 @@ This checklist defines every item that must be completed, verified, and signed o
 | P-03 | Citation analysis performance benchmarks | 🔴 | AI Team | 5,000-word document: < 15 seconds end-to-end. 20,000-word document: < 45 seconds. 80,000-word thesis: < 3 minutes | ☐ |
 | P-04 | Frontend Core Web Vitals | 🔴 | Frontend | LCP < 2.5s, INP < 200ms, CLS < 0.1 on mobile and desktop, verified via Lighthouse CI (score > 90) | ☐ |
 | P-05 | Database query performance | 🔴 | Backend | All queries < 100ms at p95, no full table scans on tables > 10K rows, `EXPLAIN ANALYZE` review of top 20 queries | ☐ |
-| P-06 | CDN cache hit ratio | 🟡 | Platform | CloudFront cache hit ratio > 85% for static assets (JS, CSS, images, fonts) | ☐ |
+| P-06 | CDN cache hit ratio | 🟡 | Platform | Vercel CDN cache hit ratio > 85% for static assets (JS, CSS, images, fonts) | ☐ |
 | P-07 | Image optimisation | 🟡 | Frontend | All images served as WebP/AVIF via Next.js Image component, lazy loading below the fold | ☐ |
 | P-08 | Bundle size budget | 🟡 | Frontend | Initial JS bundle < 200KB gzipped, per-route code splitting configured, no unused dependencies | ☐ |
 | P-09 | Database connection pooling | 🔴 | Backend | Connection pool configured: min 5, max 20 per API instance, idle timeout 30s, connection timeout 5s | ☐ |
-| P-10 | Redis caching strategy validated | 🔴 | Backend | Cache hit rate > 70% for Crossref lookups in staging environment, TTL values tuned per key prefix | ☐ |
-| P-11 | BullMQ queue performance | 🔴 | Backend | Queue processing rate handles 100 concurrent jobs, no memory leaks over 24-hour soak test | ☐ |
-| P-12 | Auto-scaling policies configured | 🔴 | Platform | ECS auto-scaling: CPU target 65%, min 2 tasks, max 20 tasks, scale-out within 60 seconds | ☐ |
+| P-10 | Crossref lookup caching | 🟢 | Backend | No cache in MVP — Crossref lookups hit the API directly. Caching layer (roadmap) to reduce duplicate lookups and latency | ☐ |
+| P-11 | Queue / async processing | 🟢 | Backend | MVP is synchronous (per-audit processing). Queue + websocket backlog handling on roadmap | ☐ |
+| P-12 | Auto-scaling | 🟢 | Platform | Managed by Vercel/Railway (automatic). No manual scaling configuration | ☐ |
 
 ---
 
@@ -87,16 +86,16 @@ This checklist defines every item that must be completed, verified, and signed o
 
 | # | Item | Priority | Owner | Acceptance Criteria | Status |
 |---|---|---|---|---|---|
-| A-01 | Application Performance Monitoring | 🔴 | Platform | Datadog APM configured for all services: Node.js API gateway, Python FastAPI, Next.js server-side | ☐ |
-| A-02 | Error tracking | 🔴 | Engineering | Sentry configured for frontend (Next.js) and backend (Node.js, Python), source maps uploaded, alert rules set | ☐ |
-| A-03 | Product analytics | 🔴 | Product | PostHog or Mixpanel tracking: page views, feature usage (uploads, style selection, results interaction), conversion funnel (signup → upload → paid conversion) | ☐ |
-| A-04 | Uptime monitoring | 🔴 | Platform | Datadog Synthetics: API health check every 1 minute, browser test (upload flow) every 5 minutes, alerts to PagerDuty | ☐ |
-| A-05 | Log aggregation | 🔴 | Platform | All application logs centralised in Datadog Logs, structured JSON logging, log retention 30 days | ☐ |
-| A-06 | Business metrics dashboard | 🟡 | Product | Dashboard showing: daily active users, uploads per day, paid conversion rate, revenue (MRR), churn rate, average processing time | ☐ |
-| A-07 | Alert runbooks linked | 🔴 | Platform | Every Datadog/PagerDuty alert has a linked runbook URL with investigation and remediation steps | ☐ |
-| A-08 | SLO dashboards | 🟡 | Platform | SLO tracking for: API availability (99.95%), citation analysis latency (p95 < 15s), error rate (< 0.1%) | ☐ |
-| A-09 | Cost monitoring | 🟡 | Platform | AWS Cost Explorer budget alerts: warning at 80% of monthly budget, critical at 100% | ☐ |
-| A-10 | AI token usage tracking | 🔴 | AI Team | OpenAI and Anthropic API token usage tracked per user, per plan, with daily cost aggregation and anomaly alerting | ☐ |
+| A-01 | Application Performance Monitoring | 🟢 | Platform | APM on roadmap (none in MVP). Monitor: request latency, error rates via platform logs | ☐ |
+| A-02 | Error tracking | 🟡 | Engineering | Error tracking on roadmap (e.g., Sentry). For launch: review platform logs for uncaught errors | ☐ |
+| A-03 | Product analytics | 🟢 | Product | Analytics on roadmap (no tracking in MVP — privacy-first). Conversion funnel tracked when accounts ship | ☐ |
+| A-04 | Uptime monitoring | 🟡 | Platform | Scheduled availability checks against `/health`; email alerts to the team (no status page in MVP) | ☐ |
+| A-05 | Log aggregation | 🟡 | Platform | Structured JSON logging across services; review via Vercel/Railway platform logs | ☐ |
+| A-06 | Business metrics dashboard | 🟡 | Product | Dashboard showing: uploads per day, audits completed, PayPal conversion, revenue (MRR), average processing time | ☐ |
+| A-07 | Alert runbooks linked | 🟡 | Platform | Every alert (email/platform notification) has a linked runbook URL with investigation and remediation steps | ☐ |
+| A-08 | SLO dashboards | 🟢 | Platform | Target SLOs tracked manually: API availability ≥ 99.9%, citation analysis p95 < 2 min, error rate < 1% | ☐ |
+| A-09 | Cost monitoring | 🟡 | Platform | Vercel/Railway/Google Gemini API budgets: warning at 80% of monthly budget, critical at 100% | ☐ |
+| A-10 | AI token usage tracking | 🔴 | AI Team | Google Gemini token usage tracked per audit, with daily cost aggregation and anomaly alerting | ☐ |
 
 ---
 
@@ -140,19 +139,19 @@ This checklist defines every item that must be completed, verified, and signed o
 
 | # | Item | Priority | Owner | Acceptance Criteria | Status |
 |---|---|---|---|---|---|
-| I-01 | Production environment deployed | 🔴 | Platform | All ECS services running, RDS provisioned (Multi-AZ), ElastiCache running, S3 buckets created with policies | ☐ |
-| I-02 | Domain and DNS configured | 🔴 | Platform | `citepilot.com` → CloudFront, `api.citepilot.com` → ALB, `status.citepilot.com` → Statuspage, SSL certs issued via ACM | ☐ |
-| I-03 | SSL certificates | 🔴 | Platform | ACM certificates issued for `*.citepilot.com`, auto-renewal enabled, pinned to CloudFront and ALB | ☐ |
-| I-04 | CI/CD pipeline functional | 🔴 | Engineering | GitHub Actions: PR checks (lint, test, build) → staging deploy on merge to `develop` → production deploy on merge to `main` with manual approval gate | ☐ |
-| I-05 | Database migrations applied | 🔴 | Backend | All migrations run against production database, schema matches expected state, rollback scripts tested | ☐ |
-| I-06 | Backup verification | 🔴 | Platform | RDS automated backups confirmed running, S3 cross-region replication verified, at least one successful restore test completed | ☐ |
+| I-01 | Production environment deployed | 🔴 | Platform | Web app deployed on Vercel, AI service on Railway, Vercel Postgres database reachable from both, PayPal button live | ☐ |
+| I-02 | Domain and DNS configured | 🔴 | Platform | `citepilot.com` and `www.citepilot.com` → Vercel; AI API exposed via Railway/Vercel rewrites with CORS allowlist (see `citepilot-gateway/src/server.ts`) | ☐ |
+| I-03 | SSL/TLS | 🔴 | Platform | Managed certificates auto-issued and auto-renewed by Vercel/Railway (TLS 1.2+) | ☐ |
+| I-04 | CI/CD pipeline functional | 🔴 | Engineering | PR checks (typecheck, test, build) via GitHub Actions → production deploy via `vercel --prod` (web) and Railway (AI) | ☐ |
+| I-05 | Database migrations applied | 🔴 | Backend | All Drizzle migrations run against the production database, schema matches `supabase/migrations`, rollback scripts tested | ☐ |
+| I-06 | Backup verification | 🔴 | Platform | Vercel Postgres automated backups confirmed, at least one successful restore test completed | ☐ |
 | I-07 | Disaster recovery tested | 🔴 | Platform | At least one DR drill completed per DR plan (Document 27), RTO/RPO targets met in test | ☐ |
-| I-08 | Auto-scaling configured | 🔴 | Platform | ECS target tracking policies active, tested with synthetic load spike, scale-out observed within 60s | ☐ |
-| I-09 | WAF rules deployed | 🔴 | Platform | AWS WAF on CloudFront: rate limiting, SQL injection rules, XSS rules, geo-blocking (if required), bot management | ☐ |
-| I-10 | Environment isolation | 🔴 | Platform | Production, staging, and development environments fully isolated: separate VPCs, separate databases, separate API keys | ☐ |
-| I-11 | Infrastructure as Code | 🟡 | Platform | All infrastructure defined in Terraform/CloudFormation, no manual console-created resources in production | ☐ |
-| I-12 | Secrets rotation schedule | 🔴 | Security | Automatic rotation configured: RDS credentials (90 days), API keys (180 days), session secret (365 days) | ☐ |
-| I-13 | Health check endpoints | 🔴 | Backend | `/health` (shallow — returns 200), `/health/deep` (checks DB + Redis + S3 connectivity), used by ALB and monitoring | ☐ |
+| I-08 | Auto-scaling | 🟢 | Platform | Managed by Vercel/Railway (automatic); no manual configuration required | ☐ |
+| I-09 | Web Application Firewall | 🟢 | Platform | No custom WAF — Vercel/Railway edge protections only | ☐ |
+| I-10 | Environment isolation | 🔴 | Platform | Production, staging, and development environments isolated: separate projects, separate environments, separate API keys | ☐ |
+| I-11 | Infrastructure as Code | 🟢 | Platform | No IaC in MVP — environment configuration documented in runbooks (Vercel/Railway dashboards) | ☐ |
+| I-12 | Secrets rotation schedule | 🔴 | Security | API keys rotated on schedule: Google Gemini (90 days), PayPal (180 days) | ☐ |
+| I-13 | Health check endpoints | 🔴 | Backend | `/health` (shallow — returns 200) and `/health/deep` (checks DB connectivity) reachable from the public internet | ☐ |
 
 ---
 
@@ -160,15 +159,14 @@ This checklist defines every item that must be completed, verified, and signed o
 
 | # | Item | Priority | Owner | Acceptance Criteria | Status |
 |---|---|---|---|---|---|
-| SUP-01 | Help centre published | 🔴 | Product | All help centre content live at `/help` (see Document 29), covering all features and common questions | ☐ |
-| SUP-02 | Contact form functional | 🔴 | Frontend / Backend | Contact form at `/contact` sends emails via SES to `support@citepilot.com`, auto-response confirmation sent to user | ☐ |
-| SUP-03 | Support email configured | 🔴 | Operations | `support@citepilot.com` inbox monitored, auto-responder confirms receipt with expected response time (24 hours) | ☐ |
-| SUP-04 | Support ticketing system | 🟡 | Operations | Ticketing system (Intercom, Zendesk, or Linear) configured for tracking and SLA management | ☐ |
-| SUP-05 | On-call rotation established | 🔴 | Engineering | PagerDuty schedule configured with primary and secondary on-call, weekly rotation, escalation to engineering lead after 15 min | ☐ |
-| SUP-06 | Runbooks for common issues | 🔴 | Platform | Runbooks documented for: service restart, database failover, Redis flush, deployment rollback, rate limit adjustment, OpenAI quota exceeded | ☐ |
-| SUP-07 | Status page configured | 🔴 | Platform | `status.citepilot.com` on Statuspage, components defined (Upload, Analysis, Export, Auth, API, External Validations), subscriber notifications enabled | ☐ |
-| SUP-08 | Internal admin dashboard | 🟡 | Backend | Admin panel for: user management, subscription status, document processing queue, system metrics, feature flag management | ☐ |
-| SUP-09 | Feedback mechanism | 🟡 | Frontend | In-app feedback widget on results page: "Was this result helpful?" with optional free-text comment, data stored for ML fine-tuning | ☐ |
+| SUP-01 | Support documentation drafted | 🔴 | Product | Help centre content finalised (see Document 29). Publishing at `/help` is on roadmap — support runs via email today | ☐ |
+| SUP-02 | Support email configured | 🔴 | Operations | `support@citepilot.com` inbox monitored, auto-responder confirms receipt with expected response time (24 hours) | ☐ |
+| SUP-03 | Support ticketing system | 🟢 | Operations | Ticketing on roadmap (email inbox + shared tracker suffice for launch) | ☐ |
+| SUP-04 | On-call rotation established | 🟡 | Engineering | On-call rotation defined with primary and secondary contacts, escalation by email/phone | ☐ |
+| SUP-05 | Runbooks for common issues | 🔴 | Platform | Runbooks documented for: deployment rollback, Gemini quota exceeded, Crossref outage, database restore, PayPal payment failures | ☐ |
+| SUP-06 | Status page | 🟢 | Platform | No public status page in MVP (roadmap) | ☐ |
+| SUP-07 | Admin dashboard | 🟢 | Backend | Not applicable — no accounts/admin in MVP. Introduce with institutional plans | ☐ |
+| SUP-08 | Feedback mechanism | 🟡 | Frontend | In-app feedback controls (👎/👍 on flags) already present; results-page feedback widget on roadmap | ☐ |
 
 ---
 
@@ -176,8 +174,8 @@ This checklist defines every item that must be completed, verified, and signed o
 
 | # | Item | Priority | Owner | Acceptance Criteria | Status |
 |---|---|---|---|---|---|
-| M-01 | Landing page live | 🔴 | Marketing / Frontend | Compelling hero section, feature highlights, pricing table, social proof (if available), CTAs to sign up | ☐ |
-| M-02 | Pricing page live | 🔴 | Frontend | All plan tiers displayed with feature comparison table, Stripe checkout integration tested with test cards | ☐ |
+| M-01 | Landing page live | 🔴 | Marketing / Frontend | Compelling hero section, feature highlights, pricing table, CTAs to open the free workspace | ☐ |
+| M-02 | Pricing page live | 🔴 | Frontend | All plan tiers displayed with feature comparison table, PayPal subscription flow tested (sandbox + live smoke test) | ☐ |
 | M-03 | Product demo / walkthrough | 🟡 | Marketing | Interactive product tour or video walkthrough (< 3 minutes) showing upload → results → correction flow | ☐ |
 | M-04 | Email launch sequence | 🟡 | Marketing | Welcome email, onboarding tips (day 2), feature highlight (day 5), upgrade prompt (day 14) — configured in email platform | ☐ |
 | M-05 | Social media accounts | 🟡 | Marketing | Twitter/X, LinkedIn, and Instagram accounts created with consistent branding | ☐ |
@@ -201,16 +199,16 @@ This checklist defines every item that must be completed, verified, and signed o
 | F-05 | AI citation matching | 🔴 | QA / AI Team | AI correctly matches in-text citations to reference list entries with > 95% precision and > 90% recall on test corpus | ☐ |
 | F-06 | AI explanations | 🔴 | QA / AI Team | AI provides human-readable explanations for each flagged issue, explanations are contextually accurate | ☐ |
 | F-07 | Crossref validation | 🔴 | QA | References validated against Crossref API, real papers confirmed, fabricated papers flagged, within acceptable latency | ☐ |
-| F-08 | Retraction Watch check | 🔴 | QA | Known retracted papers correctly flagged when included in test document | ☐ |
+| F-08 | Retraction check | 🔴 | QA | Known retracted papers correctly flagged when included in test document | ☐ |
 | F-09 | Hallucinated citation detection | 🔴 | QA / AI Team | Fabricated citations (non-existent papers) correctly identified and flagged in 90%+ of test cases | ☐ |
 | F-10 | Multi-reference-list support | 🔴 | QA | Document with 3+ chapters, each with its own reference list, correctly parsed and cross-referenced per chapter | ☐ |
-| F-11 | User registration (email/password) | 🔴 | QA | Register, verify email, login, access dashboard — full flow on production | ☐ |
-| F-12 | Google OAuth login | 🔴 | QA | Google login, account creation, subsequent logins — verified on production with real Google account | ☐ |
-| F-13 | Microsoft OAuth login | 🔴 | QA | Microsoft login, account creation, subsequent logins — verified on production with real Microsoft account | ☐ |
-| F-14 | Stripe subscription flow | 🔴 | QA | Upgrade to Student plan, verify access to paid features, downgrade, verify access revoked — tested with Stripe test mode on staging, live mode smoke test on production | ☐ |
-| F-15 | PDF export | 🔴 | QA | Export results as PDF with colour-coded annotations, verify content accuracy and formatting | ☐ |
-| F-16 | Free tier rate limits | 🔴 | QA | Verify 3 uploads/day limit, 5000-word limit, 100-reference limit — correct error messages displayed | ☐ |
-| F-17 | 36-hour document deletion | 🔴 | QA | Upload a document, verify it is automatically deleted after 36 hours (can be tested with reduced TTL in staging) | ☐ |
+| F-11 | Sessionless usage confirmed | 🔴 | QA | No sign-in required anywhere: open workspace, upload, audit — full flow on production | ☐ |
+| F-12 | Free-tier caps enforced | 🔴 | QA | Verify 3 uploads/day limit, 5,000-word limit, 100-reference limit — correct error messages displayed | ☐ |
+| F-13 | PayPal subscription flow | 🔴 | QA | Subscribe via PayPal button, confirm activation, cancel from PayPal — sandbox + live smoke test on production | ☐ |
+| F-14 | PDF export | 🔴 | QA | Export results as PDF with colour-coded annotations, verify content accuracy and formatting | ☐ |
+| F-15 | DOCX export | 🔴 | QA | Export annotated DOCX manuscript with highlights and comments, verify content accuracy | ☐ |
+| F-16 | Publication recency analysis | 🔴 | QA | Recency breakdown by publication year computes correctly for sample documents | ☐ |
+| F-17 | Document discard | 🔴 | QA | Verify uploaded documents are discarded after the audit (in-memory processing, nothing persisted) | ☐ |
 | F-18 | Results colour coding | 🔴 | QA | Green (matched), orange (possible match), red (no match) — verified visually and with colour-blind accessible alternatives | ☐ |
 | F-19 | Filter functionality | 🟡 | QA | Filter results by: issues only, style warnings, year, author — all filters work correctly in combination | ☐ |
 | F-20 | Ignore button | 🟡 | QA | "Ignore" a flagged citation, verify it's removed from issue count, persists across page refreshes within session | ☐ |
@@ -225,9 +223,9 @@ This checklist defines every item that must be completed, verified, and signed o
 |---|---|---|
 | T-24h | Final production deployment from `main` branch | Engineering Lead |
 | T-24h | Run full end-to-end test suite against production | QA Lead |
-| T-24h | Verify all monitoring dashboards and alerts are functioning | Platform Lead |
-| T-18h | Pre-warm CloudFront cache by requesting all static pages | Platform Engineer |
-| T-12h | Final backup of production database (manual snapshot) | Platform Engineer |
+| T-24h | Verify monitoring checks and alert contacts are functioning | Platform Lead |
+| T-18h | Pre-warm Vercel CDN cache by requesting all static pages | Platform Engineer |
+| T-12h | Final backup snapshot of production database | Platform Engineer |
 | T-12h | All team members confirm availability for launch day | Engineering Lead |
 
 ### Launch (T-0)
@@ -238,7 +236,7 @@ This checklist defines every item that must be completed, verified, and signed o
 | T-0 | Publish landing page, pricing page, help centre | Marketing Lead |
 | T-0 | Send launch announcement email | Marketing |
 | T-0 | Publish social media announcements | Marketing |
-| T+5m | Verify first external user can register and upload | QA |
+| T+5m | Verify first external user can upload and audit | QA |
 | T+15m | Check error rates, response times, and system metrics | On-call Engineer |
 | T+1h | First status check — all systems nominal | Engineering Lead |
 
@@ -247,7 +245,7 @@ This checklist defines every item that must be completed, verified, and signed o
 | Time | Action | Owner |
 |---|---|---|
 | T+1h | Review first batch of user feedback | Product |
-| T+4h | Review error tracking (Sentry) for new issues | Engineering |
+| T+4h | Review error tracking and platform logs for new issues | Engineering |
 | T+24h | Daily metrics review: signups, uploads, errors, conversion | Product + Engineering |
 | T+48h | Triage and prioritise any critical bugs discovered | Engineering Lead |
 | T+72h | Launch retrospective meeting | All Leads |

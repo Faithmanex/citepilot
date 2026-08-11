@@ -21,6 +21,8 @@ All interactive elements (buttons, inputs, checkboxes, list items) must implemen
 
 ## 2. Document Upload Interaction Cycle
 
+> The sequence below describes the **roadmap target** (queue + WebSocket progress). The **MVP is synchronous**: `POST` analysis runs to completion and the UI shows simulated stage progress while awaiting the response. The WebSocket interface (`/ws/analyse`) exists in the AI service and the UI must adopt it before shipping — see `03-technical-architecture/12-api-specification.md`.
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -70,7 +72,7 @@ To ensure compliance with WCAG 2.1 AA accessibility standards:
 ## 5. Form Validation & Error Mitigation
 
 ### 5.1 Invalid Upload Scenarios
-- **Wrong Format**: Show immediate alert toast: `"Unsupported File Format. Please upload a .docx, .pdf, or .txt file"`.
+- **Wrong Format**: Show immediate alert toast: `"Unsupported File Format. Please upload a .docx, .pdf, or .txt file (max 50 MB)"`.
 - **Exceeded Word Count (Free Tier)**: Modal notification explaining limits and presenting direct upgrade/Student plan activation.
 - **Corrupted Document**: Toast warning: `"Failed to read document contents. Please check if the file is password-protected or corrupt"`.
 

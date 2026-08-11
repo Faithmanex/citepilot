@@ -1,211 +1,4 @@
-# 17 — Engineering Guidelines
-
-**Document ID:** CITE-ENG-017
-**Version:** 1.0
-**Last Updated:** 2026-07-14
-**Status:** Approved
-**Owner:** Engineering Lead
-**Audience:** All Engineers, Tech Leads, DevOps
-
----
-
-## 1. Purpose
-
-This document defines the engineering standards, conventions, and processes that all CitePilot contributors must follow. Consistent adherence to these guidelines ensures code quality, reduces review friction, accelerates onboarding, and produces a maintainable, auditable codebase across all three services.
-
----
-
-## 2. Repository Architecture
-
-### 2.1 Polyrepo Structure
-
-CitePilot uses a **polyrepo** architecture with three independently deployable repositories:
-
-| Repository | Language | Runtime | Purpose |
-|---|---|---|---|
-| `citepilot-web` | TypeScript | Next.js 16.2 (Node 22) | Frontend application, SSR, static pages |
-| `citepilot-gateway` | TypeScript | Node.js 22 (Express/tRPC) | API gateway, auth, rate limiting, billing |
-| `citepilot-ai` | Python 3.12 | FastAPI (Uvicorn) | AI processing, citation extraction, validation |
-
-Each repository is self-contained with its own CI/CD pipeline, Dockerfile, dependency manifest, and test suite. Shared types are published as versioned packages:
-
-- `@citepilot/shared-types` — TypeScript interfaces shared between `web` and `gateway`
-- `citepilot-contracts` — Python Pydantic models matching the gateway ↔ AI service contract
-
-### 2.2 Rationale
-
-Polyrepo was chosen over monorepo because:
-
-1. The frontend (TypeScript/Next.js) and AI service (Python/FastAPI) have entirely different toolchains, runtimes, and dependency graphs.
-2. Independent deployment cadences — the AI service changes far more frequently during model tuning than the frontend.
-3. Smaller CI blast radius — a Python dependency update does not trigger frontend tests.
-4. Clearer ownership boundaries for future team scaling.
-
-See **ADR-006** for the full decision record.
-
----
-
-## 3. Folder & Module Structure
-
-### 3.1 `citepilot-web` (Next.js 16.2)
-
-```
-citepilot-web/
-├── .github/
-│   └── workflows/
-│       ├── ci.yml
-│       └── deploy.yml
-├── public/
-│   ├── fonts/
-│   └── images/
-├── src/
-│   ├── app/                      # Next.js App Router
-│   │   ├── (auth)/               # Auth route group
-│   │   │   ├── login/
-│   │   │   └── register/
-│   │   ├── (dashboard)/          # Authenticated route group
-│   │   │   ├── documents/
-│   │   │   ├── results/[id]/
-│   │   │   └── settings/
-│   │   ├── (marketing)/          # Public route group
-│   │   │   ├── pricing/
-│   │   │   └── page.tsx          # Landing page
-│   │   ├── api/                  # Next.js API routes (BFF proxy)
-│   │   ├── layout.tsx
-│   │   ├── not-found.tsx
-│   │   └── error.tsx
-│   ├── components/
-│   │   ├── ui/                   # Primitives (Button, Input, Card)
-│   │   ├── features/             # Domain components (CitationCard, ResultsTable)
-│   │   └── layouts/              # Shell, Sidebar, Header
-│   ├── hooks/                    # Custom React hooks
-│   ├── lib/                      # Utilities, API client, constants
-│   │   ├── api-client.ts
-│   │   ├── constants.ts
-│   │   └── utils.ts
-│   ├── stores/                   # Zustand stores
-│   ├── styles/                   # Global CSS, Tailwind config
-│   └── types/                    # TypeScript type definitions
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── e2e/
-├── .env.example
-├── .eslintrc.cjs
-├── .prettierrc
-├── next.config.ts
-├── tailwind.config.ts
-├── tsconfig.json
-├── vitest.config.ts
-└── package.json
-```
-
-### 3.2 `citepilot-gateway` (Node.js API Gateway)
-
-```
-citepilot-gateway/
-├── .github/workflows/
-├── src/
-│   ├── config/                   # Environment config, feature flags
-│   │   ├── env.ts
-│   │   └── features.ts
-│   ├── middleware/
-│   │   ├── auth.ts
-│   │   ├── rate-limit.ts
-│   │   ├── cors.ts
-│   │   ├── error-handler.ts
-│   │   └── request-id.ts
-│   ├── modules/
-│   │   ├── auth/
-│   │   │   ├── auth.controller.ts
-│   │   │   ├── auth.service.ts
-│   │   │   ├── auth.schema.ts
-│   │   │   └── auth.routes.ts
-│   │   ├── documents/
-│   │   │   ├── documents.controller.ts
-│   │   │   ├── documents.service.ts
-│   │   │   ├── documents.schema.ts
-│   │   │   └── documents.routes.ts
-│   │   ├── billing/
-│   │   ├── users/
-│   │   └── results/
-│   ├── queues/                   # BullMQ queue producers
-│   │   ├── citation-check.queue.ts
-│   │   └── document-cleanup.queue.ts
-│   ├── db/
-│   │   ├── schema.ts             # Drizzle ORM schema
-│   │   ├── migrations/
-│   │   └── client.ts
-│   ├── lib/
-│   │   ├── logger.ts
-│   │   ├── errors.ts
-│   │   └── redis.ts
-│   ├── types/
-│   └── server.ts                 # Application entry point
-├── tests/
-│   ├── unit/
-│   └── integration/
-├── drizzle.config.ts
-├── tsconfig.json
-├── vitest.config.ts
-└── package.json
-```
-
-### 3.3 `citepilot-ai` (Python FastAPI AI Service)
-
-```
-citepilot-ai/
-├── .github/workflows/
-├── src/
-│   └── citepilot_ai/
-│       ├── __init__.py
-│       ├── main.py               # FastAPI app factory
-│       ├── config.py             # Pydantic Settings
-│       ├── dependencies.py       # FastAPI dependency injection
-│       ├── api/
-│       │   ├── __init__.py
-│       │   ├── v1/
-│       │   │   ├── __init__.py
-│       │   │   ├── router.py
-│       │   │   ├── citations.py
-│       │   │   ├── validation.py
-│       │   │   └── health.py
-│       │   └── schemas/
-│       │       ├── __init__.py
-│       │       ├── citation.py
-│       │       ├── document.py
-│       │       └── validation.py
-│       ├── core/
-│       │   ├── __init__.py
-│       │   ├── citation_extractor.py
-│       │   ├── reference_parser.py
-│       │   ├── matcher.py
-│       │   ├── style_detector.py
-│       │   └── hallucination_detector.py
-│       ├── llm/
-│       │   ├── __init__.py
-│       │   ├── client.py         # OpenAI/Claude unified client
-│       │   ├── prompts/
-│       │   │   ├── extraction.py
-│       │   │   ├── matching.py
-│       │   │   └── explanation.py
-│       │   └── output_parsers.py
-│       ├── external/
-│       │   ├── __init__.py
-│       │   ├── crossref.py
-│       │   ├── openalex.py
-│       │   ├── pubmed.py
-│       │   ├── doi_resolver.py
-│       │   └── retraction_watch.py
-│       ├── parsers/
-│       │   ├── __init__.py
-│       │   ├── docx_parser.py
-│       │   ├── pdf_parser.py
-│       │   └── text_parser.py
-│       ├── workers/
-│       │   ├── __init__.py
-│       │   └── citation_worker.py  # BullMQ consumer (via bridged interface)
-│       └── lib/
+﻿│       └── lib/
 │           ├── __init__.py
 │           ├── logger.py
 │           ├── errors.py
@@ -383,76 +176,15 @@ Rules:
 
 ## 5. Linting & Formatting Configuration
 
-### 5.1 TypeScript: ESLint + Prettier
+### 5.1 TypeScript: Typecheck + Tests (no ESLint config committed)
 
-**ESLint** (`citepilot-web/.eslintrc.cjs`):
+The repositories do **not** commit an ESLint or Prettier config, and `npm run lint` is **not** a CI gate (Next.js 16 removed `next lint`). Quality gates are:
 
-```javascript
-module.exports = {
-  root: true,
-  extends: [
-    "eslint:recommended",
-    "plugin:@typescript-eslint/strict-type-checked",
-    "plugin:@typescript-eslint/stylistic-type-checked",
-    "plugin:react/recommended",
-    "plugin:react-hooks/recommended",
-    "plugin:jsx-a11y/strict",
-    "plugin:import/recommended",
-    "plugin:import/typescript",
-    "next/core-web-vitals",
-    "prettier",
-  ],
-  parser: "@typescript-eslint/parser",
-  parserOptions: {
-    project: "./tsconfig.json",
-    tsconfigRootDir: __dirname,
-  },
-  plugins: ["@typescript-eslint", "import", "jsx-a11y"],
-  rules: {
-    "@typescript-eslint/no-explicit-any": "error",
-    "@typescript-eslint/no-non-null-assertion": "error",
-    "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
-    "@typescript-eslint/consistent-type-imports": ["error", { prefer: "type-imports" }],
-    "@typescript-eslint/naming-convention": [
-      "error",
-      { selector: "variable", format: ["camelCase", "UPPER_CASE", "PascalCase"] },
-      { selector: "function", format: ["camelCase", "PascalCase"] },
-      { selector: "typeLike", format: ["PascalCase"] },
-    ],
-    "import/order": [
-      "error",
-      {
-        groups: ["builtin", "external", "internal", "parent", "sibling", "type"],
-        "newlines-between": "always",
-        alphabetize: { order: "asc" },
-      },
-    ],
-    "react/react-in-jsx-scope": "off",
-    "react/prop-types": "off",
-    "no-console": ["error", { allow: ["warn", "error"] }],
-  },
-  settings: {
-    "import/resolver": { typescript: true, node: true },
-    react: { version: "detect" },
-  },
-};
-```
+- `npx tsc --noEmit` — strict typechecking gate.
+- `vitest` unit/integration tests — must pass on every PR.
+- Manual review per §7 (formatting and style are caught in review).
 
-**Prettier** (`.prettierrc`):
-
-```json
-{
-  "semi": true,
-  "singleQuote": false,
-  "tabWidth": 2,
-  "trailingComma": "all",
-  "printWidth": 100,
-  "bracketSpacing": true,
-  "arrowParens": "always",
-  "endOfLine": "lf",
-  "plugins": ["prettier-plugin-tailwindcss"]
-}
-```
+If the team later reintroduces linting, standardise one `eslint.config.*` (flat config, `typescript-eslint` strict + `react-hooks`) committed to `citepilot-web/` — and update this section and the CI workflow together.
 
 ### 5.2 Python: Ruff
 
@@ -815,25 +547,20 @@ DATABASE_URL=postgresql://user:pass@host:5432/citepilot
 DATABASE_POOL_MIN=5
 DATABASE_POOL_MAX=20
 
-# Redis
-REDIS_URL=redis://host:6379/0
-
-# External APIs (all secrets via AWS Secrets Manager, injected at runtime)
-OPENAI_API_KEY=sk-...
+# External APIs (secrets live in the platform dashboards — Railway/Vercel env vars)
+GOOGLE_API_KEY=AIza...             # Gemini (citepilot-ai) — rotate every 90 days (ADR-008)
 CROSSREF_MAILTO=api@citepilot.com
-STRIPE_SECRET_KEY=sk_live_...
-STRIPE_WEBHOOK_SECRET=whsec_...
 
-# Feature flags
-FF_RETRACTION_CHECK_ENABLED=true
-FF_HALLUCINATION_DETECTION_ENABLED=true
+# Feature flags (gateway)
+PAYWALL_ENABLED=true
+SHOW_PAYWALL=true
 ```
 
 Rules:
 - Never commit secrets to Git. Use `.env.example` with placeholder values.
 - All services read config via a validated config module (Pydantic Settings in Python, Zod schema in TypeScript) that fails fast on startup if required variables are missing.
 - Prefix client-exposed variables with `NEXT_PUBLIC_` in the frontend.
-- Use AWS Secrets Manager for production secrets, injected via ECS task definition.
+- Production secrets live as environment variables in the **Vercel and Railway dashboards** — there is no AWS Secrets Manager (ADR-009).
 
 ---
 
@@ -1019,7 +746,7 @@ Rules:
 
 ### 11.1 Format
 
-All services emit **structured JSON logs** to stdout. Log aggregation is handled by the infrastructure layer (CloudWatch → Datadog).
+All services emit **structured JSON logs** to stdout. Log aggregation is the platform-native log viewer (Vercel dashboard, Railway service logs) until an observability tool is adopted (roadmap — `04-engineering-standards/20-monitoring-observability.md`).
 
 ```json
 {
@@ -1057,7 +784,7 @@ Every incoming request receives a UUIDv7 `requestId` assigned by the API gateway
 2. Propagated to all downstream service calls via the same header.
 3. Included in every log line emitted during that request's lifecycle.
 4. Returned to the client in the response body's `meta.requestId` field.
-5. Attached to BullMQ job data so async workers can continue the correlation chain.
+5. Attached to downstream service calls (gateway proxying to the AI service) so the correlation chain survives. (The MVP is synchronous — no job queues exist; ADR-011.)
 
 ### 11.4 What to Log / What Not to Log
 
@@ -1167,26 +894,22 @@ CROSSREF_BATCH_DELAY_SECONDS = 0.5
 
 ### 14.1 Authentication & Authorization
 
-- All API endpoints (except health checks and public marketing pages) require authentication.
-- JWT tokens issued by NextAuth.js, verified by the gateway on every request.
-- Token expiry: 15 minutes for access tokens, 7 days for refresh tokens.
-- Role-based access control: `user`, `admin`, `institutional_admin`.
-- Subscription tier checked on every document upload to enforce quotas.
+- The MVP is **sessionless** — there is no login flow (ADR-011). The product surface is: static marketing pages + the analysis dashboard.
+- The gateway may carry auth provisions (e.g. `JWT_SECRET` env var, `users`/`sessions` tables) as groundwork — they are NOT exercised by the MVP frontend.
+- Any future auth feature ships behind its own ADR (per ADR-011's sessionless decision).
 
 ### 14.2 Input Validation
 
 - All incoming request bodies validated via Zod (TypeScript) or Pydantic (Python) before any processing.
-- File uploads validated: MIME type (`.docx`, `.pdf`, `.txt` only), file size (max 25MB), and file content (magic bytes).
-- SQL injection prevented by ORM (Drizzle / SQLAlchemy) — no raw SQL queries without parameterized inputs.
-- XSS prevented by React's default escaping + Content-Security-Policy headers.
+- File uploads validated: allowed types (`.docx`, `.pdf`, `.txt`, `.rtf`, `.bib`), max size (50 MB), and content sniffing (magic bytes) server-side.
+- SQL injection prevented by ORM (Drizzle) — no raw SQL queries without parameterized inputs.
+- XSS prevented by React's default escaping + appropriate security headers.
 
 ### 14.3 Data Handling
 
-- Documents encrypted at rest (AES-256 via AWS S3 SSE-S3).
-- Documents encrypted in transit (TLS 1.3).
-- Documents auto-deleted after 36 hours (enforced by scheduled cleanup job).
-- User passwords hashed with Argon2id.
-- PII access logged for audit compliance.
+- Documents are held in memory during the audit only and hard-deleted after ≤ 36 hours (`expires_at` + cleanup, ADR-005). No object storage.
+- All transport is HTTPS/TLS 1.2+ (platform-managed certificates, ADR-009).
+- Secrets are platform env vars, rotated per `06-operations/25-runbooks.md` Runbook 5.
 
 ---
 
@@ -1211,7 +934,7 @@ CROSSREF_BATCH_DELAY_SECONDS = 0.5
 | P95 response time (non-AI) | < 300ms |
 | P99 response time (non-AI) | < 1s |
 | Document upload + parse | < 3s for 20,000 words |
-| Full citation check (AI) | < 30s for 10,000 words, 100 refs |
+| Full citation check (AI) | 5–15 s for short docs; 15–45 s for 5–20k words; 2–3 min thesis-length (per `14-ai-nlp-design.md` §8) |
 | Availability | 99.9% uptime (8.76h downtime/year) |
 
 ---

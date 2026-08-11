@@ -123,16 +123,16 @@ The app architecture in `citepilot-dashboard.html` defines 8 modular view panels
    - Accepts standalone bibliography uploads; checks syntax, DOIs, and Crossref metadata without body text.
 3. **Panel 3: Uncited Claims AI Scanner**:
    - AI scanner highlighting factual/statistical assertions lacking citation markers.
-4. **Panel 4: Retraction Watch Inspector**:
-   - Dedicated table of references checked against Retraction Watch / Crossref `is-retracted-by` data.
+4. **Panel 4: Retraction Inspector**:
+   - Dedicated table of references flagged as retracted via Crossref `is-retracted-by` metadata.
 5. **Panel 5: Crossref Metadata Verifier**:
    - Field-by-field verification grid (Title, Authors, Year, Journal, Volume, Issue, Pages) for **all citation styles**.
 6. **Panel 6: Recency Distribution View**:
-   - Publication year breakdown chart (% of sources published in last 3, 5, 10 years vs older) with compliance badges.
+   - Source publication year breakdown (% of sources published in last 3, 5, 10 years vs older) with heuristic-based guidance.
 7. **Panel 7: Document Layout & Structure Audit**:
    - Distinct section for heading levels, margins, line spacing, font styles, and TOC generation.
 8. **Panel 8: Diagnostic Report Export**:
-   - Export configuration for PDF Diagnostic Reports & Redline `.docx` Tracked Changes documents.
+   - Export configuration for PDF Diagnostic Reports and annotated `.docx` manuscripts (highlights & comments).
 
 ---
 
@@ -141,4 +141,4 @@ The app architecture in `citepilot-dashboard.html` defines 8 modular view panels
 The source HTML design blueprints are stored directly in the repository:
 - [`02-design/citepilot-v2.html`](file:///C:/Users/DELL%20XPS%209360/Documents/GitHub/CitePilot%20-%20Deepseek/02-design/citepilot-v2.html): Editorial Landing Page & Tactile Paper Design System.
 - [`02-design/citepilot-dashboard.html`](file:///C:/Users/DELL%20XPS%209360/Documents/GitHub/CitePilot%20-%20Deepseek/02-design/citepilot-dashboard.html): Complete App Workspace Dashboard & 8-Panel Layout.
-- [`citepilot-web/index.html`](file:///C:/Users/DELL%20XPS%209360/Documents/GitHub/CitePilot%20-%20Deepseek/citepilot-web/index.html): Interactive Web Application implementation connecting to the FastAPI backend API.
+- `citepilot-web/` (Next.js): interactive implementation. The earlier standalone `citepilot-web/index.html` prototype was removed in 2026-08; use the live app routes instead.

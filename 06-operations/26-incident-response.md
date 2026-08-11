@@ -1,70 +1,85 @@
 # Incident Response Plan
 
-This document establishes the incident management framework, escalation paths, communication strategies, and post-mortem procedures for CitePilot.
+**CitePilot — AI-Powered Citation Consistency Checker**
+
+**Last Updated:** 2026-08-11
+
+> **Revision:** Supersedes the July 2026 version (AWS/PagerDuty/Datadog procedures). Alerting today is platform-native: Railway/Vercel deployment+restart notifications via the Discord integration, manual health checks, and user reports. PagerDuty, Datadog, Sentry, and a status page are roadmap items (`04-engineering-standards/20-monitoring-observability.md`).
 
 ---
 
 ## 1. Incident Classification Framework
 
-When an operational incident occurs, the on-call engineer classifies it into one of four severity levels:
-
 | Severity | Definition | Examples | Response SLA |
 |---|---|---|---|
-| **SEV 1 (Critical)** | Core service is completely down or user data is exposed. | Database unreachable, payment pipeline failure, active data breach. | 15 mins (24/7) |
-| **SEV 2 (High)** | Major features are disabled, degradation affects multiple users. | AI processing failing, document uploads failing, PDF export disabled. | 30 mins (24/7) |
-| **SEV 3 (Medium)** | Non-critical functionality is degraded, workarounds exist. | Stripe dashboard stats slow, formatting style preview failing. | 4 hours (Biz hours)|
-| **SEV 4 (Low)** | Small cosmetic or minor functional issues. | Typo in help page, support widget button misalignment. | Next business day |
+| **SEV 1 (Critical)** | Core service completely down; data exposure suspected. | AI service down (audits fail for everyone), payment flow broken, suspected breach. | 15 mins (24/7 if reported) |
+| **SEV 2 (High)** | Major features disabled or degraded for many users. | Gemini quota exhausted, Crossref outage affecting validation, exports failing. | 30 mins |
+| **SEV 3 (Medium)** | Non-critical degradation with workarounds. | Style panel bug, slow audits on long docs, minor UI issue. | 4 hours (business hours) |
+| **SEV 4 (Low)** | Cosmetic/minor issues. | Typos, layout glitches, copy errors. | Next business day |
 
 ---
 
 ## 2. On-Call Incident Response Checklist
 
-When a SEV 1 or SEV 2 alert triggers, follow this sequence:
+For SEV 1/SEV 2, follow this sequence:
 
 ```
-[ALERT TRIGGERED]
-       │
-       ▼
- 1. Acknowledge Alert (PagerDuty)
-       │
-       ▼
+[ALERT / USER REPORT / DISCORD NOTIFICATION]
+         │
+         ▼
+ 1. Acknowledge (reply in #incidents or direct message)
+         │
+         ▼
  2. Appoint Incident Commander (IC)
-       │
-       ▼
- 3. Open Slack Channel #inc-yyyy-mm-dd-name
-       │
-       ▼
- 4. Diagnose and Apply Workarounds / Rollbacks
-       │
-       ▼
- 5. Post Status Updates (Statuspage.io every 30 mins)
-       │
-       ▼
- 6. Resolve Incident and Schedule Post-Mortem
+         │
+         ▼
+ 3. Open a thread / incident channel
+         │
+         ▼
+ 4. Diagnose, apply workarounds or rollbacks (06-operations/25-runbooks.md)
+         │
+         ▼
+ 5. Communicate status (internal channel; external only if users are affected)
+         │
+         ▼
+ 6. Resolve, monitor 30 min, schedule post-mortem (if SEV 1/2)
 ```
 
 ---
 
 ## 3. Communication Templates
 
-### 3.1 Statuspage.io Notification (SEV 1 - Outage)
-> **Title**: Identifying Document Processing Issues
-> **Message**: We are currently investigating reports of document processing failures. Uploads are failing or timing out. Our engineering team is actively diagnosing the root cause. Further updates will be posted here as they become available.
-> **Affected Systems**: Document Processing, AI Analysis.
+### 3.1 Outage message (SEV 1)
+> **Title**: Audits temporarily unavailable
+> **Message**: We are investigating reports that document audits are failing. Uploads/analyses may be interrupted. Engineering is diagnosing the cause and will post updates here. Affected systems: AI analysis, citation validation.
 
-### 3.2 Resolution Update
-> **Title**: Document Processing Restored
-> **Message**: The issue causing document processing failures has been resolved. The processing queue backlog has cleared, and system performance is back to normal baseline operations. We apologize for the inconvenience.
+### 3.2 Resolution update
+> **Title**: Audits restored
+> **Message**: The issue affecting document audits has been resolved. Analysis is back to normal. If a document failed mid-audit, please re-upload — audits are not stored server-side.
 
 ---
 
 ## 4. Post-Mortem Process
 
-Every SEV 1 or SEV 2 incident requires a blameless post-mortem review within **48 hours** of resolution.
+Every SEV 1/SEV 2 requires a **blameless post-mortem within 48 hours** of resolution:
 
-### 4.1 Post-Mortem Action Template
-1. **Summary**: Describe what happened, how users were affected, and the final resolution.
-2. **Timeline**: Exact times of detection, response, mitigation, and resolution (with logs).
-3. **Root Cause**: Five-Whys analysis of the failure source.
-4. **Action Items**: Preventative measures to ensure this specific failure pattern cannot reoccur. Include Jira tickets and assignments.
-5. **Lessons Learned**: What went well, what went poorly, and where our alerts/runbooks failed.
+1. **Summary** — what happened, user impact, resolution.
+2. **Timeline** — detection, response, mitigation, resolution (from Railway/Vercel logs).
+3. **Root cause** — Five-Whys.
+4. **Action items** — preventive measures with owners and due dates (tracked in GitHub issues).
+5. **Lessons learned** — what worked, what didn't, where runbooks/alerts failed.
+6. **Update runbooks** — `06-operations/25-runbooks.md` gains/fixes the relevant procedure.
+
+---
+
+## 5. Known Single Points of Failure & Owners
+
+| Failure | Detected via | Runbook | Owner |
+|---|---|---|---|
+| AI service down/restarting | Railway Discord notification, `/health` | Runbook 4 | Engineering |
+| Gemini outage/quota | Railway logs (`429`), Google status page | Runbook 7 | Engineering |
+| Crossref outage | Validation panels show unavailable; status.crossref.org | Runbook 8 | Engineering |
+| Vercel/Postgres incident | Vercel status/Dashboard, `/health/deep` | Runbook 3 | Engineering |
+| CORS/domain issue | Browser console; E2E check | Runbook 10 | Engineering |
+
+*Internal document — do not distribute externally.*

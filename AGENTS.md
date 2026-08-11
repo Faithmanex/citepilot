@@ -51,5 +51,5 @@ For system understanding, read in this order:
 ## Deployment automation rules
 
 - **Always set missing env vars** — when a deployment error points to a missing or incorrect environment variable, set it immediately via CLI (e.g., `vercel env add`, Railway dashboard). Do not leave it for later.
-- **Always redeploy after env changes** — after setting or updating environment variables, trigger a redeploy immediately. For Vercel: `npx vercel --prod` from `citepilot-web/`. For Railway: trigger via dashboard or `railway up`.
+- **Always redeploy after env changes** — after setting or updating environment variables, trigger a redeploy immediately. For Vercel: `npx vercel --prod` **from the monorepo root** (Vercel Root Directory is set to `citepilot-web/` — do NOT `cd` into it, per `LEARNING.md`). For Railway: trigger via dashboard or `railway up`.
 - **Verify CORS allowlist** — when changing API URLs or domains, ensure the gateway CORS config (`citepilot-gateway/src/server.ts`) includes the new origin.

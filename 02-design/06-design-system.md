@@ -1,8 +1,11 @@
 # CitePilot Design System Specification
 
-**Version:** 1.0.0
-**Last Updated:** 2026-07-14
-**Status:** Production-Ready
+> **⚠️ SUPERSEDED — this document describes an unshipped indigo visual system.**
+> The canonical design system is [`DESIGN.md`](DESIGN.md) (Paper & Ink palette, "Audit" language), which matches the shipped `citepilot-web` application. This document is retained for historical reference and future re-skin evaluation only — do not use its tokens in new work.
+
+**Version:** 1.1.0
+**Last Updated:** 2026-08-11
+**Status:** Superseded
 **Audience:** Frontend Engineers, UI/UX Designers, QA
 
 ---

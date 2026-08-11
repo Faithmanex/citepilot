@@ -107,10 +107,10 @@ Conservative target capturing 0.05% of SAM within 12 months:
 | Capability | CitePilot | Reciteworks | Grammarly | Zotero | Turnitin |
 |-----------|-----------|-------------|-----------|--------|----------|
 | Citation consistency check | ✅ AI-powered | ✅ Rule-based | ❌ | ❌ | ❌ |
-| Citation styles supported | 9+ | 3 (APA 6/7, Harvard) | N/A | N/A | N/A |
+| Citation styles supported | 9 | 3 (APA 6/7, Harvard) | N/A | N/A | N/A |
 | Source existence validation | ✅ All tiers | ⚠️ Paid only (Crossref) | ❌ | ❌ | ❌ |
 | Hallucinated citation detection | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Retraction Watch integration | ✅ | ⚠️ Paid only | ❌ | ❌ | ❌ |
+| Retraction checking | ✅ | ⚠️ Paid only | ❌ | ❌ | ❌ |
 | AI-generated corrections | ✅ | ❌ (flags only) | ❌ | ❌ | ❌ |
 | Multi-reference-list support | ✅ | ❌ | N/A | N/A | N/A |
 | False-positive reduction | ✅ AI context | ❌ Flags 4-digit nums | N/A | N/A | N/A |
@@ -119,7 +119,7 @@ Conservative target capturing 0.05% of SAM within 12 months:
 ### 3.3 Key Differentiators (Messaging Hierarchy)
 
 1. **Lead message**: "AI-powered citation checking that actually understands your paper" — emphasizes intelligence over pattern matching
-2. **Supporting proof point**: "Validates your sources exist using Crossref, OpenAlex, and PubMed — and catches AI-hallucinated citations"
+2. **Supporting proof point**: "Validates your sources exist using Crossref metadata — and catches AI-hallucinated citations"
 3. **Style breadth**: "Supports APA, Harvard, Vancouver, Chicago, MLA, IEEE, OSCOLA, Turabian, and more"
 4. **Ease differentiator**: "Get suggested corrections, not just error flags"
 5. **Trust signal**: "Used by researchers at [X universities] — documents deleted after 36 hours, never stored unencrypted"
@@ -129,8 +129,8 @@ Conservative target capturing 0.05% of SAM within 12 months:
 | Segment | Primary Message | Secondary Message |
 |---------|----------------|-------------------|
 | PhD students | "Submit with confidence — catch every citation error before your committee does" | "Free for short papers, affordable for dissertations" |
-| Researchers | "Journal-ready citations in minutes, not hours" | "Validates against Crossref and PubMed — catches what Zotero misses" |
-| Editors | "Check 9+ citation styles from one dashboard" | "Process more papers with AI-suggested corrections" |
+| Researchers | "Journal-ready citations in minutes, not hours" | "Validates against Crossref — catches what Zotero misses" |
+| Editors | "Check 9 citation styles from one dashboard" | "Process more papers with AI-suggested corrections" |
 | Institutions | "Reduce citation-related rejections across your university" | "Admin dashboard, SSO, usage analytics, institutional pricing" |
 
 ---
@@ -236,7 +236,7 @@ gantt
 | Action | Target |
 |--------|--------|
 | Remove waitlist — open registration | 10,000 signups in month 1 |
-| Activate Stripe billing (Student + Professional) | 5% conversion rate |
+| Activate PayPal billing (Student + Professional) | 5% conversion rate |
 | Launch referral program | 15% of signups via referral |
 | Run Google Ads campaign (academic keywords) | $2,000/month budget, $8 CAC |
 | Academic blog SEO ramp (20 articles/month) | 50,000 organic monthly visits by month 3 |
@@ -430,13 +430,13 @@ flowchart TD
 | Uploads per day | 3 | Unlimited | Unlimited | Unlimited |
 | Word limit per document | 5,000 | 25,000 | 100,000 | 100,000 |
 | Reference limit per document | 100 | 500 | 2,000 | 2,000 |
-| Citation styles | APA 7, Harvard, MLA | All 9+ styles | All 9+ styles | All 9+ styles |
+| Citation styles | All 9 styles | All 9 styles | All 9 styles | All 9 styles |
 | Basic citation matching | ✅ | ✅ | ✅ | ✅ |
 | AI explanations | ❌ | ✅ | ✅ | ✅ |
 | AI suggested corrections | ❌ | ✅ | ✅ | ✅ |
-| Crossref/OpenAlex validation | ❌ | ❌ | ✅ | ✅ |
-| PubMed validation | ❌ | ❌ | ✅ | ✅ |
-| Retraction Watch check | ❌ | ❌ | ✅ | ✅ |
+| Crossref validation | ❌ | ❌ | ✅ | ✅ |
+| PubMed validation (roadmap) | ❌ | ❌ | ❌ | ❌ |
+| Retraction checking | ❌ | ❌ | ✅ | ✅ |
 | Hallucinated citation detection | ❌ | Basic | Advanced | Advanced |
 | Multi-reference-list support | ❌ | ✅ | ✅ | ✅ |
 | PDF export | ❌ | ✅ | ✅ | ✅ |
@@ -466,7 +466,7 @@ flowchart TD
 | **Grammarly** | Basic grammar only | $12/mo | No citation checking |
 | **Turnitin** | No free tier | Institutional only | Plagiarism only, no citation check |
 
-**Price premium justification**: CitePilot commands a ~70% premium over Reciteworks because it provides AI-powered analysis (not rule-based), supports 9+ citation styles (not 3), includes source validation and hallucination detection in paid tiers, and provides actionable corrections rather than error flags.
+**Price premium justification**: CitePilot commands a ~70% premium over Reciteworks because it provides AI-powered analysis (not rule-based), supports 9 citation styles (not 3), includes source validation and hallucination detection in paid tiers, and provides actionable corrections rather than error flags.
 
 ---
 
@@ -560,9 +560,9 @@ flowchart TD
 | Partner | Type | Value to CitePilot | Value to Partner | Status |
 |---------|------|-------------------|------------------|--------|
 | **Crossref** | API integration | Metadata validation for 140M+ records | Usage of REST API, potential featured integration | API available, apply for Metadata Plus |
-| **OpenAlex** | API integration | Open-access metadata for 250M+ works | Showcase of API in production tool | API available (free) |
-| **PubMed/NCBI** | API integration | Biomedical source validation | E-utilities usage | API available (API key needed) |
-| **Retraction Watch** | Data licensing | Retracted paper database access | Revenue from licensing, expanded reach | Contact for licensing terms |
+| **OpenAlex (roadmap)** | API integration | Open-access metadata for 250M+ works | Showcase of API in production tool | API available (free) |
+| **PubMed/NCBI (roadmap)** | API integration | Biomedical source validation | E-utilities usage | API available (API key needed) |
+| **Retraction Watch (roadmap)** | Data licensing | Retracted paper database access | Revenue from licensing, expanded reach | Contact for licensing terms |
 | **ORCID** | Authentication + data | Researcher identity verification | Increased ORCID adoption | Open API, membership optional |
 
 ### 9.2 Academic Partnerships

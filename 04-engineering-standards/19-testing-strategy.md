@@ -45,7 +45,7 @@ graph TB
 | E2E Tests | Playwright | ~50 | 8 minutes | Core user journeys |
 | AI Output Tests | pytest (golden datasets) | ~150 | 5 minutes | 95%+ accuracy on golden set |
 | Load Tests | k6 | ~10 scenarios | 10 minutes | Meet SLO targets |
-| Security Tests | Snyk + custom | Continuous | Per CI run | Zero critical/high CVEs |
+| Security Tests | `trufflehog` (secret scan) + `npm audit` + `pip-audit` | Continuous | Per CI run | Zero critical/high CVEs, no committed secrets |
 | Accessibility Tests | axe-core + Playwright | ~30 | 3 minutes | WCAG 2.1 AA compliance |
 
 ---
@@ -181,7 +181,7 @@ addopts = [
     "--strict-markers",
     "--tb=short",
     "-q",
-    "--cov=app",
+    "--cov=citepilot_ai",
     "--cov-report=term-missing",
     "--cov-report=xml:coverage.xml",
     "--cov-fail-under=80",
@@ -195,8 +195,8 @@ markers = [
 filterwarnings = ["error", "ignore::DeprecationWarning"]
 
 [tool.coverage.run]
-source = ["app"]
-omit = ["app/tests/*", "app/migrations/*", "app/scripts/*"]
+source = ["citepilot_ai"]
+omit = ["citepilot_ai/tests/*", "citepilot_ai/migrations/*", "citepilot_ai/scripts/*"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -293,88 +293,43 @@ Integration tests validate interactions between components using real service in
 
 | Dependency | Test Approach | Configuration |
 |---|---|---|
-| PostgreSQL | GitHub Actions service container (`postgres:16-alpine`) | Test database with migrations applied |
-| Redis | GitHub Actions service container (`redis:7-alpine`) | Ephemeral instance, flushed between tests |
-| S3 | LocalStack in Docker | S3-compatible API on localhost |
-| OpenAI API | Recorded HTTP fixtures (VCR.py / MSW) | Deterministic responses, no real API calls |
-| Crossref API | Recorded HTTP fixtures | Real response snapshots |
+| PostgreSQL | GitHub Actions service container (`postgres:16-alpine`) or Testcontainers | Test database with migrations applied |
+| FastAPI app | `httpx.AsyncClient(transport=ASGITransport(app))` with SQLite/Postgres per test | In-process, deterministic |
+| Gemini API | Recorded HTTP fixtures + injected mock client | Deterministic responses, no real API calls in CI |
+| Crossref API | Recorded HTTP fixtures (VCR pattern) | Real response snapshots |
 
 ### 4.3 Example — API Integration Test
 
+The MVP is sessionless and **synchronous** (ADR-011): `POST /api/v1/analyse` returns the full `AuditResponse` in one response — there are no job IDs, no polling, and no auth headers.
+
 ```typescript
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { createTestApp } from '@/test/create-test-app';
-import { createTestUser, createAuthToken } from '@/test/helpers';
+import { describe, it, expect } from 'vitest';
+import { runAudit } from '@/lib/api';
 
-describe('POST /api/v1/documents/check', () => {
-  let app: TestApp;
-  let authToken: string;
+describe('POST /api/v1/analyse', () => {
+  it('should audit pasted text and return citation results', async () => {
+    const formData = new FormData();
+    formData.append('text', [
+      'According to Smith (2023), AI is transforming education.',
+      '',
+      'References',
+      'Smith, A. (2023). AI in education. Journal of Tech, 15(2), 45-60.',
+    ].join('\n'));
+    formData.append('citation_style', 'apa7');
 
-  beforeAll(async () => {
-    app = await createTestApp(); // Starts with real Postgres + Redis
-    const user = await createTestUser(app.db, { plan: 'student' });
-    authToken = await createAuthToken(user);
+    const response = await runAudit(formData);
+
+    expect(response.citations?.length).toBe(1);
+    expect(response.citations?.[0].status).toBe('matched');
+    expect(response.references?.[0].status).toBe('matched');
   });
 
-  afterAll(async () => {
-    await app.teardown();
-  });
+  it('should reject unknown citation styles', async () => {
+    const formData = new FormData();
+    formData.append('text', 'Some text (Jones, 2021).');
+    formData.append('citation_style', 'chicago_fake');
 
-  it('should accept a valid document and return job ID', async () => {
-    const response = await app.request
-      .post('/api/v1/documents/check')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({
-        text: 'According to Smith (2023), AI is transforming education.\n\nReferences\nSmith, A. (2023). AI in education. Journal of Tech, 15(2), 45-60.',
-        style: 'apa7',
-      });
-
-    expect(response.status).toBe(202);
-    expect(response.body).toMatchObject({
-      jobId: expect.stringMatching(/^job_[a-z0-9]+$/),
-      status: 'queued',
-      estimatedWaitSeconds: expect.any(Number),
-    });
-  });
-
-  it('should reject requests without authentication', async () => {
-    const response = await app.request
-      .post('/api/v1/documents/check')
-      .send({ text: 'Some text', style: 'apa7' });
-
-    expect(response.status).toBe(401);
-    expect(response.body.error.code).toBe('UNAUTHORIZED');
-  });
-
-  it('should enforce rate limits for free tier', async () => {
-    const freeUser = await createTestUser(app.db, { plan: 'free' });
-    const freeToken = await createAuthToken(freeUser);
-
-    // Exhaust free tier limit (3/day)
-    for (let i = 0; i < 3; i++) {
-      await app.request
-        .post('/api/v1/documents/check')
-        .set('Authorization', `Bearer ${freeToken}`)
-        .send({ text: `Text ${i}`, style: 'apa7' });
-    }
-
-    const response = await app.request
-      .post('/api/v1/documents/check')
-      .set('Authorization', `Bearer ${freeToken}`)
-      .send({ text: 'One more', style: 'apa7' });
-
-    expect(response.status).toBe(429);
-    expect(response.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
-  });
-
-  it('should validate citation style parameter', async () => {
-    const response = await app.request
-      .post('/api/v1/documents/check')
-      .set('Authorization', `Bearer ${authToken}`)
-      .send({ text: 'Some text', style: 'invalid_style' });
-
-    expect(response.status).toBe(400);
-    expect(response.body.error.code).toBe('VALIDATION_ERROR');
+    await expect(runAudit(formData)).rejects.toThrow(/citation style/i);
   });
 });
 ```
@@ -431,14 +386,13 @@ export default defineConfig({
 
 | Journey | Test File | Steps |
 |---|---|---|
-| **Free user upload** | `e2e/upload-free.spec.ts` | Sign up → paste text → select APA 7 → submit → view results → see matched/unmatched citations |
-| **Paid user DOCX upload** | `e2e/upload-docx.spec.ts` | Sign in → upload .docx → select style → submit → wait for processing → view annotated results |
+| **Paste-text audit** | `e2e/paste-text.spec.ts` | Open dashboard → paste text → select APA 7 → submit → view results → see matched/unmatched chips |
+| **DOCX upload audit** | `e2e/upload-docx.spec.ts` | Open dashboard → upload .docx → select style → submit → view annotated results |
 | **Citation style switching** | `e2e/style-switch.spec.ts` | Upload document → switch from APA 7 to Harvard → verify results update |
-| **Crossref validation** | `e2e/crossref-validation.spec.ts` | Pro user → upload → enable Crossref check → verify external validation badges |
-| **Account management** | `e2e/account.spec.ts` | Sign in → change plan → update profile → request data export → delete account |
-| **Rate limit experience** | `e2e/rate-limit.spec.ts` | Free user → exhaust uploads → verify upgrade prompt shown |
-| **PDF export** | `e2e/pdf-export.spec.ts` | Pro user → upload → view results → export PDF → verify download |
-| **Institutional login** | `e2e/institutional-login.spec.ts` | SSO login → verify institutional dashboard → manage users |
+| **Crossref validation** | `e2e/crossref-validation.spec.ts` | Upload → enable validation → verify external validation badges (and "Crossref unavailable" state when stubbed) |
+| **Paywall upgrade prompt** | `e2e/paywall.spec.ts` | With `SHOW_PAYWALL=true`, verify the PayPal Professional upsell renders and plan ID is embedded |
+| **PDF export** | `e2e/pdf-export.spec.ts` | Audit → view results → export PDF → verify download |
+| **DOCX annotated export** | `e2e/docx-export.spec.ts` | Audit → export annotated DOCX → verify download |
 
 ### 5.3 Example — Upload Flow E2E Test
 
@@ -447,7 +401,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Document Upload and Citation Check', () => {
   test.beforeEach(async ({ page }) => {
-    // Authenticate via stored auth state
+    // Sessionless: no stored auth state, open the dashboard directly
     await page.goto('/');
   });
 
@@ -625,7 +579,7 @@ When a bug is found in AI output:
 
 ### 6.6 AI Drift Detection
 
-A weekly scheduled CI job runs the full golden dataset evaluation and publishes results to a dashboard. If F1 drops below 0.93 (warning) or 0.90 (critical), an alert fires to the engineering Slack channel. This detects drift from OpenAI model updates or prompt regressions.
+A weekly scheduled CI job runs the full golden dataset evaluation and publishes results to a dashboard. If F1 drops below 0.93 (warning) or 0.90 (critical), an alert fires to the engineering channel. This detects drift from Gemini model updates or prompt regressions.
 
 ---
 
@@ -690,7 +644,7 @@ export const options = {
 };
 
 const BASE_URL = __ENV.BASE_URL || 'https://staging.citepilot.com';
-const AUTH_TOKEN = __ENV.AUTH_TOKEN;
+const AUTH_TOKEN = __ENV.AUTH_TOKEN || 'sessionless';
 
 const sampleDocument = `
 According to Smith (2023), AI is transforming education in significant ways.
@@ -704,52 +658,25 @@ García, M., Chen, W., & Park, S. (2022). Educational outcomes with AI. Educatio
 `;
 
 export default function () {
-  // Submit citation check
+  // Submit citation audit (synchronous — the full result returns in one response)
   const submitRes = http.post(
-    `${BASE_URL}/api/v1/documents/check`,
-    JSON.stringify({ text: sampleDocument, style: 'apa7' }),
+    `${BASE_URL}/api/v1/analyse`,
+    JSON.stringify({
+      text: sampleDocument,
+      citation_style: 'apa7',
+    }),
     {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${AUTH_TOKEN}`,
-      },
+      headers: { 'Content-Type': 'application/json' },
     }
   );
 
   check(submitRes, {
-    'submit status is 202': (r) => r.status === 202,
-    'submit returns jobId': (r) => JSON.parse(r.body).jobId !== undefined,
+    'submit status is 200': (r) => r.status === 200,
+    'response contains citations': (r) => JSON.parse(r.body).citations !== undefined,
   }) || errorRate.add(1);
 
-  if (submitRes.status !== 202) return;
-
-  const jobId = JSON.parse(submitRes.body).jobId;
-
-  // Poll for results (max 30 seconds)
-  let attempts = 0;
-  let resultRes;
-  do {
-    sleep(2);
-    resultRes = http.get(`${BASE_URL}/api/v1/documents/jobs/${jobId}`, {
-      headers: { Authorization: `Bearer ${AUTH_TOKEN}` },
-    });
-    attempts++;
-  } while (
-    resultRes.status === 200 &&
-    JSON.parse(resultRes.body).status === 'processing' &&
-    attempts < 15
-  );
-
-  const completed = resultRes.status === 200 &&
-    JSON.parse(resultRes.body).status === 'completed';
-
-  check(resultRes, {
-    'result status is 200': (r) => r.status === 200,
-    'job completed': () => completed,
-  }) || errorRate.add(1);
-
-  if (completed) {
-    checkDuration.add(attempts * 2000); // Approximate total wait time
+  if (submitRes.status === 200) {
+    checkDuration.add(submitRes.timings.duration);
   }
 }
 ```
@@ -758,9 +685,9 @@ export default function () {
 
 | Metric | Target (p95) | Target (p99) | Measurement |
 |---|---|---|---|
-| API response time (submit) | < 500ms | < 1,500ms | Time to accept and queue document |
-| Full citation check (end-to-end) | < 15s (5000 words) | < 30s (5000 words) | Submit to completed results |
-| Concurrent users | 500 | 1,000 | Simultaneous active sessions |
+| API response time (analyse, short doc) | < 15s | < 30s | Single synchronous response duration |
+| Full citation audit (5,000 words) | < 15s | < 30s | `/api/v1/analyse` end-to-end |
+| Concurrent users | 500 | 1,000 | Simultaneous active sessions (platform-scaled, ADR-009) |
 | Throughput | 30 req/s (steady) | 90 req/s (peak) | Requests per second |
 | Error rate | < 1% | < 5% | 4xx + 5xx responses |
 
@@ -782,13 +709,11 @@ export default function () {
 
 | Tool | Scan Type | Frequency | Integration |
 |---|---|---|---|
-| **Snyk** (Open Source) | Dependency vulnerability scanning | Every CI run | GitHub Actions step; blocks on critical/high |
-| **Snyk Code** | Static Application Security Testing (SAST) | Every PR | PR comment with findings |
-| **Snyk Container** | Docker image vulnerability scanning | Every build | Blocks deployment on critical |
-| **Snyk IaC** | Terraform misconfiguration detection | Every PR modifying `*.tf` | PR comment with findings |
-| **tfsec** | Terraform security linting | Every PR modifying `*.tf` | Redundant check alongside Snyk IaC |
-| **npm audit** | Node.js dependency audit | Every CI run | Advisory only (Snyk is authoritative) |
-| **pip-audit** | Python dependency audit | Every CI run | Advisory only |
+| **trufflehog** | Secret scanning (any committed credential) | Every CI run | GitHub Actions step; blocks merge on findings |
+| **npm audit** | Node.js dependency audit | Every CI run | Blocks on critical/high |
+| **pip-audit** | Python dependency audit | Every CI run | Blocks on critical/high |
+| **GHSA / npm advisories** | Vulnerability monitoring | Continuous | GitHub Dependabot alerts |
+| Provider scanning | Platform-managed (Vercel/Railway/GitHub) | Continuous | Dependency review + secret scanning built-in |
 
 ### 8.2 CI Security Gate
 
@@ -798,36 +723,21 @@ security-scan:
   runs-on: ubuntu-latest
   steps:
     - uses: actions/checkout@v4
-
-    - name: Snyk Open Source Scan (Node.js)
-      uses: snyk/actions/node@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
       with:
-        args: --severity-threshold=high
+        fetch-depth: 0
 
-    - name: Snyk Open Source Scan (Python)
-      uses: snyk/actions/python@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    - name: Secret scan
+      uses: trufflesecurity/trufflehog@main
       with:
-        args: --severity-threshold=high
+        path: ./
 
-    - name: Snyk Code (SAST)
-      uses: snyk/actions/node@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        command: code test
-        args: --severity-threshold=high
+    - name: npm audit (web + gateway)
+      working-directory: citepilot-web
+      run: pnpm audit --audit-level high
 
-    - name: Snyk IaC
-      uses: snyk/actions/iac@master
-      env:
-        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-      with:
-        args: --severity-threshold=medium
-        file: infrastructure/terraform/
+    - name: pip-audit (AI service)
+      working-directory: citepilot-ai
+      run: uv run pip-audit
 ```
 
 ### 8.3 Manual Security Testing
@@ -855,8 +765,6 @@ test.describe('Accessibility Compliance', () => {
     { name: 'Check Page', path: '/check' },
     { name: 'Results Page', path: '/results/sample' },
     { name: 'Pricing', path: '/pricing' },
-    { name: 'Account Settings', path: '/account' },
-    { name: 'Login', path: '/auth/signin' },
   ];
 
   for (const { name, path } of pages) {
@@ -924,37 +832,34 @@ test.describe('Accessibility Compliance', () => {
 
 ```mermaid
 graph TD
-    PR["Pull Request Opened"] --> LINT["Lint + Type Check<br/>~45 seconds"]
-    LINT --> UNIT["Unit Tests<br/>(Vitest + pytest)<br/>~2 minutes"]
-    LINT --> SEC["Security Scan<br/>(Snyk)<br/>~2 minutes"]
+    PR["Pull Request Opened"] --> TC["Typecheck + Lint-equivalent gates<br/>~45 seconds"]
+    TC --> UNIT["Unit Tests<br/>(Vitest + pytest)<br/>~2 minutes"]
+    TC --> SEC["Security Scan<br/>(trufflehog + audits)<br/>~90 seconds"]
     UNIT --> COV["Coverage Check<br/>≥ 80%"]
     UNIT --> INT["Integration Tests<br/>~4 minutes"]
     INT --> A11Y["Accessibility Tests<br/>(axe-core)<br/>~3 minutes"]
     SEC --> GATE["Quality Gate"]
     COV --> GATE
     A11Y --> GATE
-    GATE -->|Pass| BUILD["Docker Build<br/>~3 minutes"]
-    BUILD --> PUSH["Push to ECR"]
-    PUSH --> STAGING["Deploy Staging"]
+    GATE -->|Pass| STAGING["Deploy Staging<br/>(Vercel preview + Railway)"]
     STAGING --> E2E["E2E Tests<br/>(Playwright)<br/>~8 minutes"]
     E2E --> AI_TEST["AI Golden Dataset<br/>~5 minutes"]
     AI_TEST --> APPROVAL["Manual Approval"]
-    APPROVAL --> PROD["Deploy Production"]
+    APPROVAL --> PROD["Deploy Production<br/>(vercel --prod + railway up)"]
 ```
 
 ### 10.2 Quality Gates
 
 | Gate | Condition | Action on Failure |
 |---|---|---|
-| **Lint** | Zero ESLint errors, zero Ruff errors | Block PR merge |
-| **Type Check** | Zero TypeScript errors, zero mypy errors | Block PR merge |
+| **Type Check** | Zero TypeScript errors (`tsc --noEmit`), zero mypy errors (where enabled) | Block PR merge |
 | **Unit Test Coverage** | Node.js ≥ 85%, Python ≥ 80% | Block PR merge |
-| **Security Scan** | Zero critical/high vulnerabilities | Block PR merge |
+| **Security Scan** | Zero committed secrets, zero critical/high vulnerabilities | Block PR merge |
 | **Integration Tests** | 100% pass rate | Block PR merge |
 | **Accessibility** | Zero WCAG 2.1 AA violations | Block PR merge |
 | **E2E Tests** | 100% pass rate (with 2 retries) | Block staging promotion |
 | **AI Golden Dataset** | F1 ≥ 0.95 overall; ≥ 0.90 per style | Block production deployment |
-| **Load Test (smoke)** | p95 < 3s, error rate < 5% | Warning (does not block) |
+| **Load Test (smoke)** | p95 < 3s (non-AI), error rate < 5% | Warning (does not block) |
 
 ### 10.3 Test Environment Management
 
@@ -975,7 +880,7 @@ graph TD
 |---|---|---|
 | Sample documents (.docx, .pdf, .txt) | `tests/fixtures/documents/` | Hand-crafted covering all styles |
 | Golden dataset annotations | `tests/golden_datasets/v2/` | Manually annotated, version-controlled |
-| API response fixtures (OpenAI) | `tests/fixtures/api_responses/` | Recorded from real API calls (VCR pattern) |
+| API response fixtures (Gemini) | `tests/fixtures/api_responses/` | Recorded from real API calls (VCR pattern) |
 | API response fixtures (Crossref) | `tests/fixtures/api_responses/` | Recorded from real API calls |
 | User factory | `tests/factories/user.ts` | Programmatic generation per test |
 | Document factory | `tests/factories/document.ts` | Programmatic generation per test |

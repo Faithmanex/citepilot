@@ -35,13 +35,13 @@ The Service is available through web-based access at citepilot.com and, for elig
 
 ## 3. Account Creation and Security
 
-3.1. To access certain features of the Service, you must create an account by providing accurate, current, and complete information. You may register using an email address and password, or through a supported third-party authentication provider (Google or Microsoft).
+3.1. The Service is anonymous by design: you do not need to create an account to use it, and we do not collect registration data. Analysis results are associated with an unguessable token saved on your device; losing that token means you can no longer access those results.
 
-3.2. You are responsible for maintaining the confidentiality of your account credentials. You must not share your login credentials with any third party.
+3.2. You are responsible for safeguarding your analysis token. Anyone who obtains your token can view the corresponding results.
 
-3.3. You agree to notify us immediately at security@citepilot.com if you become aware of any unauthorised access to or use of your account.
+3.3. You agree to notify us immediately at security@citepilot.com if you become aware of any unauthorised access to or use of a results token.
 
-3.4. We reserve the right to suspend or terminate accounts that we reasonably believe have been compromised, are being shared in violation of these Terms, or are being used fraudulently.
+3.4. If we introduce accounts (e.g., for institutional customers), the provisions of this section will be updated before launch, and account security requirements will apply from that date.
 
 3.5. For Institutional accounts, the designated administrator is responsible for managing user access and ensuring that all users under the institutional licence comply with these Terms.
 
@@ -96,7 +96,7 @@ If you voluntarily provide suggestions, feature requests, bug reports, or other 
 
 ## 7. Artificial Intelligence Usage Disclosure
 
-7.1. The Service uses large language models (LLMs) provided by OpenAI to perform citation extraction, matching, validation, and correction generation. Your document content is transmitted to OpenAI's API for processing. OpenAI's data usage policy, which prohibits the use of API inputs and outputs for model training, applies to this processing. For details, refer to OpenAI's API data usage policy at https://openai.com/policies/api-data-usage-policies.
+7.1. The Service uses large language models (LLMs) provided by Google (the Gemini API) to perform citation extraction, matching, validation, and correction generation. Citation-relevant excerpts of your document content are transmitted to Google's API for processing. Google's data usage terms, which prohibit the use of API inputs and outputs for model training, apply to this processing. For details, refer to Google's Gemini API data usage terms at https://cloud.google.com/terms/service-terms.
 
 7.2. AI-generated outputs, including suggested corrections, confidence scores, and explanations, are produced algorithmically and may contain errors. The Service's AI analysis is advisory in nature and must not be treated as a substitute for manual review by a qualified academic, editor, or subject-matter expert.
 
@@ -127,7 +127,7 @@ If you voluntarily provide suggestions, feature requests, bug reports, or other 
 | Professional | $12.99/month | Monthly |
 | Institutional | Custom pricing | Annual invoicing |
 
-9.2. **Payment Processing.** All payments are processed securely through Stripe. We do not store your full credit card number, CVV, or other sensitive payment credentials on our servers. By providing payment information, you authorise us to charge the applicable subscription fee.
+9.2. **Payment Processing.** All payments are processed securely through PayPal. Checkout takes place on PayPal's own hosted pages; we do not collect, store, or process your credit card number, CVV, or other payment credentials. By completing a purchase, you authorise us (through PayPal) to charge the applicable subscription fee.
 
 9.3. **Taxes.** All prices are exclusive of applicable taxes (including VAT, GST, and sales tax) unless otherwise stated. You are responsible for all taxes associated with your use of the Service, and applicable taxes will be added to your invoice.
 
@@ -254,7 +254,7 @@ If you voluntarily provide suggestions, feature requests, bug reports, or other 
 
 ## 20. Third-Party Services
 
-20.1. The Service integrates with and relies upon third-party services, including but not limited to OpenAI (AI processing), Crossref (reference validation), OpenAlex (reference validation), PubMed (reference validation), Retraction Watch (retraction detection), Stripe (payment processing), and Amazon Web Services (hosting and infrastructure).
+20.1. The Service integrates with and relies upon third-party services, including but not limited to Google (Gemini AI processing), Crossref (reference validation), DOI.org (DOI resolution), OpenAlex (reference validation), PubMed (reference validation), PayPal (payment processing), Vercel (hosting and database), and Railway (hosting).
 
 20.2. Your use of the Service is also subject to the terms and policies of these third-party providers to the extent applicable. We are not responsible for the availability, accuracy, or policies of third-party services.
 
