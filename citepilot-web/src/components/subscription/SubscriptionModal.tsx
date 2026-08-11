@@ -45,9 +45,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             <div className="w-16 h-16 rounded-full bg-[#DEE8DD] border-2 border-[#1E5E4B] flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-8 h-8 text-[#1E5E4B]" />
             </div>
-            <h3 className="text-2xl font-black text-ink mb-2">You're now on Professional!</h3>
+            <h3 className="text-2xl font-black text-ink mb-2">You&apos;re now on Professional!</h3>
             <p className="text-ink-soft text-sm font-medium mb-6">
-              Your CitePilot Professional subscription is active. Enjoy unlimited audits, all citation styles, and priority export.
+              Your CitePilot Professional subscription is active. Enjoy unlimited audits, all citation styles, and DOCX/PDF export.
             </p>
             <button
               onClick={onClose}

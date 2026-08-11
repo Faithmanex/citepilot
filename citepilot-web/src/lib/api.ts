@@ -1,4 +1,4 @@
-import type { AuditResponse, CitationStyle, AuditMode } from "./types";
+import type { AuditResponse } from "./types";
 
 function getApiBase(): string {
   if (process.env.NEXT_PUBLIC_API_URL) {

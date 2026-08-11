@@ -1,7 +1,7 @@
 "use client";
 
 import type { AuditResponse } from "@/lib/types";
-import { Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Clock, CheckCircle2 } from "lucide-react";
 
 interface RecencyPanelProps {
   data: AuditResponse | null;

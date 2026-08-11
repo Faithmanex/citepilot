@@ -30,7 +30,7 @@ export default function PrivacyPage() {
           Legal
         </span>
         <h1 className="font-type font-bold text-4xl text-ink mb-2">Privacy Policy</h1>
-        <p className="text-sm text-ink-faint font-mono mb-10">Last updated: July 2026</p>
+        <p className="text-sm text-ink-faint font-mono mb-10">Last updated: August 2026</p>
 
         <div className="prose-style space-y-8 text-ink-soft text-[15px] leading-relaxed">
           <section>
@@ -39,8 +39,8 @@ export default function PrivacyPage() {
               CitePilot is a <strong className="text-ink">sessionless</strong> tool — we do not require account creation, store user accounts, or maintain persistent user profiles. The only data processed is the manuscript content you submit during a session.
             </p>
             <ul className="list-disc pl-5 mt-3 space-y-2">
-              <li>Manuscript text or files uploaded during an audit session (processed in memory, not stored)</li>
-              <li>PayPal subscription data — handled entirely by PayPal's secure infrastructure</li>
+              <li>Manuscript text or files uploaded during an audit session (processed in memory, never stored on disk or sent to our database)</li>
+              <li>PayPal subscription data — handled entirely by PayPal&apos;s secure infrastructure</li>
               <li>Anonymous usage analytics (page views, session counts) via standard server logs</li>
             </ul>
           </section>
@@ -56,9 +56,9 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-extrabold text-ink mb-3">3. Third-Party Services</h2>
             <p>CitePilot integrates with the following third-party services:</p>
             <ul className="list-disc pl-5 mt-3 space-y-2">
-              <li><strong className="text-ink">Google Gemini API</strong> — for AI-powered citation analysis (data usage governed by Google's AI Privacy Notice)</li>
-              <li><strong className="text-ink">Crossref API</strong> — for DOI verification and bibliographic metadata</li>
-              <li><strong className="text-ink">PayPal</strong> — for subscription billing (governed by PayPal's Privacy Policy)</li>
+              <li><strong className="text-ink">Google Gemini API</strong> — for AI-powered citation analysis (data usage governed by Google&apos;s AI Privacy Notice)</li>
+              <li><strong className="text-ink">Crossref, doi.org, OpenAlex & PubMed</strong> — for DOI verification and bibliographic metadata (reference data only, no manuscript text)</li>
+              <li><strong className="text-ink">PayPal</strong> — for subscription billing (governed by PayPal&apos;s Privacy Policy)</li>
               <li><strong className="text-ink">Vercel / Railway</strong> — for hosting and edge delivery (governed by their respective privacy policies)</li>
             </ul>
           </section>
@@ -66,14 +66,25 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-xl font-extrabold text-ink mb-3">4. Cookies</h2>
             <p>
-              CitePilot uses only essential session cookies necessary for the application to function. No tracking or advertising cookies are used.
+              CitePilot sets no authentication or session cookies and no tracking or advertising
+              cookies. Interface preferences are kept in your browser&apos;s local storage, and at most
+              one first-party consent-preference cookie is set. See our{" "}
+              <Link href="/cookie-policy" className="text-brand underline font-semibold">
+                Cookie Policy
+              </Link>{" "}
+              for details.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-extrabold text-ink mb-3">5. Data Retention</h2>
             <p>
-              Since CitePilot is sessionless, no user data is retained beyond the active browser session. Manuscript content is processed in memory and discarded immediately after the audit response is returned.
+              Manuscript content exists only in the memory of our processing servers while an
+              audit runs; it is purged when the audit completes, with a hard cap of 36 hours from
+              upload. Only the citation metadata in your result report (bibliographic facts such
+              as authors, titles, years, and DOIs) is persisted, keyed to an unguessable token on
+              your device, so you can re-open your report. Payment records are kept for tax
+              compliance.
             </p>
           </section>
 

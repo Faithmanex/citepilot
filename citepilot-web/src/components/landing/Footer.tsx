@@ -13,6 +13,7 @@ const footerLinks = {
   Company: [
     { label: "Privacy Policy", href: "/privacy" },
     { label: "Terms of Service", href: "/terms" },
+    { label: "Cookie Policy", href: "/cookie-policy" },
     { label: "Contact", href: "mailto:hello@citepilot.com" },
   ],
   Resources: [
@@ -90,6 +91,7 @@ export default function Footer() {
           <div className="flex items-center gap-4">
             <Link href="/privacy" className="hover:text-ink transition-colors">Privacy</Link>
             <Link href="/terms" className="hover:text-ink transition-colors">Terms</Link>
+            <Link href="/cookie-policy" className="hover:text-ink transition-colors">Cookies</Link>
             <a href="mailto:hello@citepilot.com" className="hover:text-ink transition-colors">Contact</a>
           </div>
           <span>v2.0 · Academic Citation Audit Platform</span>

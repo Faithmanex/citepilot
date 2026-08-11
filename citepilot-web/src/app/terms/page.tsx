@@ -29,13 +29,13 @@ export default function TermsPage() {
           Legal
         </span>
         <h1 className="font-type font-bold text-4xl text-ink mb-2">Terms of Service</h1>
-        <p className="text-sm text-ink-faint font-mono mb-10">Last updated: July 2026</p>
+        <p className="text-sm text-ink-faint font-mono mb-10">Last updated: August 2026</p>
 
         <div className="space-y-8 text-ink-soft text-[15px] leading-relaxed">
           <section>
             <h2 className="text-xl font-extrabold text-ink mb-3">1. Acceptance of Terms</h2>
             <p>
-              By accessing or using CitePilot ("the Service"), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use the Service.
+              By accessing or using CitePilot (&quot;the Service&quot;), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use the Service.
             </p>
           </section>
 
@@ -50,8 +50,8 @@ export default function TermsPage() {
             <h2 className="text-xl font-extrabold text-ink mb-3">3. Service Tiers</h2>
             <p>CitePilot offers the following service tiers:</p>
             <ul className="list-disc pl-5 mt-3 space-y-2">
-              <li><strong className="text-ink">Free Tier</strong> — up to 3 manuscript audits per day, APA 7 / Harvard / MLA style checks</li>
-              <li><strong className="text-ink">Professional Tier ($12.99/month)</strong> — unlimited audits, all citation styles, Crossref verification, DOCX/PDF export, priority processing. Billed monthly via PayPal subscription. Cancel anytime from your PayPal account.</li>
+              <li><strong className="text-ink">Free Tier</strong> — up to 3 manuscript audits per day, checks across all supported citation styles (APA, MLA, Chicago, Harvard, IEEE, Vancouver, Turabian, OSCOLA)</li>
+              <li><strong className="text-ink">Professional Tier ($12.99/month)</strong> — unlimited audits, Crossref verification, annotated DOCX and PDF export. Billed monthly via PayPal subscription. Cancel anytime from your PayPal account.</li>
             </ul>
           </section>
 
@@ -69,7 +69,7 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-extrabold text-ink mb-3">5. Disclaimer of Warranties</h2>
             <p>
-              The Service is provided "as is" without warranties of any kind. CitePilot does not guarantee that audit results are error-free or constitute professional academic advice. Always verify critical citations independently.
+              The Service is provided &quot;as is&quot; without warranties of any kind. CitePilot does not guarantee that audit results are error-free or constitute professional academic advice. Always verify critical citations independently.
             </p>
           </section>
 

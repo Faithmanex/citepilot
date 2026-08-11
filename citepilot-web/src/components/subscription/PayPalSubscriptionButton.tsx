@@ -132,7 +132,7 @@ export default function PayPalSubscriptionButton({
       };
     }
 
-    let existingScript = document.getElementById(scriptId) as HTMLScriptElement;
+    const existingScript = document.getElementById(scriptId) as HTMLScriptElement;
 
     if (!existingScript) {
       const script = document.createElement("script");
