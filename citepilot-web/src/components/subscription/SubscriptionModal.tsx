@@ -45,9 +45,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             <div className="w-16 h-16 rounded-full bg-[#DEE8DD] border-2 border-[#1E5E4B] flex items-center justify-center mx-auto mb-4">
               <CheckCircle2 className="w-8 h-8 text-[#1E5E4B]" />
             </div>
-            <h3 className="text-2xl font-black text-ink mb-2">You're now Pro!</h3>
+            <h3 className="text-2xl font-black text-ink mb-2">You're now on Professional!</h3>
             <p className="text-ink-soft text-sm font-medium mb-6">
-              Your CitePilot Pro subscription is active. Enjoy unlimited audits, all citation styles, and priority export.
+              Your CitePilot Professional subscription is active. Enjoy unlimited audits, all citation styles, and priority export.
             </p>
             <button
               onClick={onClose}
@@ -61,10 +61,10 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
           <>
             <div className="text-center mb-6">
               <span className="inline-block px-3 py-1 rounded-full bg-brand/10 text-brand border border-brand/30 font-extrabold text-xs uppercase tracking-wider mb-2">
-                CitePilot Pro — $10/month
+                CitePilot Professional — $12.99/month
               </span>
               <h3 id="subscription-modal-title" className="text-2xl font-black text-ink">
-                Upgrade to CitePilot Pro
+                Upgrade to CitePilot Professional
               </h3>
               <p className="text-sm text-ink-soft mt-1 font-medium">
                 Unlock unlimited manuscript verification & style rule inspection
@@ -74,9 +74,9 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             <div className="space-y-3 mb-6 bg-paper-card p-4 rounded-xl border-2 border-rule text-xs sm:text-sm font-medium">
               {[
                 "Unlimited Manuscript & Reference audits",
-                "Cross-verification with Crossref & Retraction Watch",
+                "Cross-verification with Crossref metadata & retraction flags",
                 "Detailed style violation warnings & citation guidance",
-                "Export DOCX (Tracked Changes) & PDF Diagnostic Reports",
+                "Export annotated DOCX & PDF Diagnostic Reports",
                 "Priority Processing & Email Support",
               ].map((feature) => (
                 <div key={feature} className="flex items-center gap-2 text-ink">

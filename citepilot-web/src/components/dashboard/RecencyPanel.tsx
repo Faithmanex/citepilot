@@ -14,10 +14,10 @@ export default function RecencyPanel({ data }: RecencyPanelProps) {
     <section className="space-y-5 animate-fade-in" id="panel-recency">
       <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5">
         <h1 className="text-base font-extrabold text-[#221D16] mb-1 font-dash">
-          Publication Recency Analytics
+          Source Recency Analysis
         </h1>
         <p className="text-xs text-[#696050]">
-          Evaluate how current your source list is against typical university and journal recency standards.
+          Evaluate how current your source list is, using recency thresholds common in academic settings.
         </p>
       </div>
 
@@ -68,19 +68,22 @@ export default function RecencyPanel({ data }: RecencyPanelProps) {
             <h2 className="text-xs font-bold text-[#353027] uppercase tracking-wider font-mono mb-4">
               Recency Guidelines
             </h2>
+            <p className="text-[11px] text-[#696050] -mt-2 mb-3">
+              Heuristic thresholds — requirements vary by discipline and assignment brief.
+            </p>
             <div className="space-y-3 text-xs">
               <div className="flex gap-3 items-start p-3 bg-[#F1EBDC] border border-[#C7BC9F] rounded-xl">
                 <CheckCircle2 className="w-4 h-4 text-[#1E5E4B] flex-none mt-0.5" />
                 <div>
-                  <div className="font-bold text-[#221D16] mb-0.5">STEM & Medicine Target</div>
-                  <div className="text-[#696050]">Minimum 60% of cited sources published within the last 5 years.</div>
+                  <div className="font-bold text-[#221D16] mb-0.5">Common STEM heuristic</div>
+                  <div className="text-[#696050]">Around 60% of cited sources published within the last 5 years.</div>
                 </div>
               </div>
               <div className="flex gap-3 items-start p-3 bg-[#F1EBDC] border border-[#C7BC9F] rounded-xl">
                 <CheckCircle2 className="w-4 h-4 text-[#1E5E4B] flex-none mt-0.5" />
                 <div>
-                  <div className="font-bold text-[#221D16] mb-0.5">Social Sciences Target</div>
-                  <div className="text-[#696050]">Minimum 70% of cited sources published within the last 10 years.</div>
+                  <div className="font-bold text-[#221D16] mb-0.5">Common social-sciences heuristic</div>
+                  <div className="text-[#696050]">Around 70% of cited sources published within the last 10 years.</div>
                 </div>
               </div>
             </div>

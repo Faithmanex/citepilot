@@ -6,11 +6,11 @@ import { UploadCloud, FileText, Trash2, Sparkles } from "lucide-react";
 const ALLOWED_EXTENSIONS = [".docx", ".pdf", ".txt", ".rtf", ".bib"];
 
 const SAMPLE_TEXT = `Abstract
-Recent advancements in deep learning have transformed biomedical research (Smith et al., 2021). However, citation integrity remains a critical issue in academic literature (Johnson & Lee, 2019).
+Deep learning has driven major advances across artificial intelligence research (LeCun et al., 2015). Dimensionality reduction methods such as t-SNE remain widely used for visualising high-dimensional data (van der Maaten & Hinton, 2008).
 
 References
-Smith, J., Davis, R., & Taylor, M. (2021). Neural Networks in Genomics. Nature Biotechnology, 39(4), 450-462.
-Johnson, K., & Lee, S. (2019). Citation Accuracy in Modern Publishing. Journal of Academic Integrity, 12(2), 115-130.`;
+LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. Nature, 521(7553), 436-444. https://doi.org/10.1038/nature14539
+Van der Maaten, L., & Hinton, G. (2008). Visualizing data using t-SNE. Journal of Machine Learning Research, 9, 2579-2605.`;
 
 interface InputAreaProps {
   onFileSelect: (file: File) => void;
@@ -138,7 +138,7 @@ export default function InputArea({
         <textarea
           className="w-full h-[140px] border border-[#C7BC9F] focus:border-[#1E5E4B] rounded-xl p-3 font-mono text-xs text-[#221D16] resize-none outline-none bg-[#F1EBDC] placeholder:text-[#C7BC9F] transition-colors"
           value={pastedText}
-          placeholder="Or paste manuscript text / bibliography directly here…"
+          placeholder="Or paste manuscript text or reference list directly here…"
           onChange={(e) => {
             setPastedText(e.target.value);
             onTextChange(e.target.value);

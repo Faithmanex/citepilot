@@ -42,18 +42,22 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
     claims.length * 5;
   const integrityScore = data
     ? Math.max(0, Math.min(100, 100 - totalDeductions))
-    : 96;
+    : null;
 
   const isRefOnly = mode === "reference_only";
 
   const scoreColor =
-    integrityScore >= 80
+    integrityScore === null
+      ? "#696050"
+      : integrityScore >= 80
       ? "#1E5E4B"
       : integrityScore >= 60
       ? "#825500"
       : "#961E14";
   const scoreBg =
-    integrityScore >= 80
+    integrityScore === null
+      ? "#E8E0CE"
+      : integrityScore >= 80
       ? "#DEE8DD"
       : integrityScore >= 60
       ? "#F1E4C8"
@@ -91,23 +95,23 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
 
   const summaryCards = [
     {
-      label: "Ghost Citations",
+      label: "Missing References",
       value: missingRefs,
-      sub: "Unmatched in text",
+      sub: "No reference list entry found",
       icon: SearchX,
       color: "#961E14",
       bg: "#F3DCD6",
     },
     {
-      label: "Uncited Refs",
+      label: "Uncited References",
       value: uncitedRefs,
-      sub: "Orphaned in bibliography",
+      sub: "Entries never cited in text",
       icon: Link2Off,
       color: "#825500",
       bg: "#F1E4C8",
     },
     {
-      label: "Crossref Issues",
+      label: "Reference Validation Issues",
       value: crDiscrepancies + retractedCount,
       sub: "Discrepancies & retractions",
       icon: FileQuestion,
@@ -116,8 +120,8 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
     },
     {
       label: "Match Rate",
-      value: `${matchRate}%`,
-      sub: "Linked to bibliography",
+      value: data ? `${matchRate}%` : "—",
+      sub: "Linked to reference list",
       icon: CheckCircle2,
       color: "#1E5E4B",
       bg: "#DEE8DD",
@@ -148,14 +152,16 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
             className="font-mono text-3xl font-black"
             style={{ color: scoreColor }}
           >
-            {integrityScore}
-            <span className="text-sm font-normal text-[#696050]">/100</span>
+            {integrityScore ?? "—"}
+            {integrityScore !== null && (
+              <span className="text-sm font-normal text-[#696050]">/100</span>
+            )}
           </div>
           <div
             className="text-[11px] font-bold uppercase tracking-wider font-mono border-l pl-3"
             style={{ color: scoreColor, borderColor: scoreColor + "30" }}
           >
-            Integrity
+            Consistency
             <br />
             Score
           </div>

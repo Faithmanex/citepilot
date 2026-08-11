@@ -34,7 +34,7 @@ export default function Footer() {
           <div className="lg:col-span-2">
             <BrandLogo variant="light" size="md" className="mb-4" />
             <p className="text-sm text-ink-soft font-medium leading-relaxed max-w-xs">
-              AI-powered citation and reference audit for academic manuscripts. Verify against Crossref and Retraction Watch before submission.
+              AI-powered citation and reference audit for academic manuscripts. Check your manuscript against Crossref metadata before submission.
             </p>
             <div className="flex items-center gap-3 mt-5">
               <a href="https://twitter.com/citepilot" target="_blank" rel="noopener noreferrer" aria-label="CitePilot on Twitter" className="w-9 h-9 rounded-full border-2 border-rule flex items-center justify-center text-ink-faint hover:text-ink hover:border-ink transition-colors">

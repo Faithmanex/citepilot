@@ -13,11 +13,11 @@ const faqs = [
   },
   {
     q: "What does Crossref verification check?",
-    a: "CitePilot queries the Crossref API using parsed DOIs from your reference list. It verifies author names, publication titles, journal names, year of publication, and volume/page ranges — flagging any discrepancies between what you cited and the official record.",
+    a: "CitePilot queries the Crossref API using parsed DOIs from your reference list. It verifies author names, publication titles, journal names, year of publication, and volume/page ranges — flagging any discrepancies between what you cited and the Crossref record.",
   },
   {
     q: "Does CitePilot check for retracted papers?",
-    a: "Yes. CitePilot checks your references against the Retraction Watch database. Any retracted publication in your bibliography is flagged as a critical error with guidance on how to update your citation.",
+    a: "Yes. CitePilot flags references that Crossref metadata marks as retracted, with guidance on how to update your citation.",
   },
   {
     q: "Is my manuscript stored or used for AI training?",
@@ -28,12 +28,12 @@ const faqs = [
     a: "CitePilot supports APA 7th, APA 6th, MLA 9th, Chicago 17th, Harvard, IEEE, Vancouver, Turabian, and OSCOLA. More styles are added regularly.",
   },
   {
-    q: "What is the difference between the Free and Pro plans?",
-    a: "The Free plan allows up to 10 audits per month with basic DOI verification. The Pro plan ($10/month) includes unlimited audits, retraction detection, DOCX and PDF export, style violation analysis, and priority processing.",
+    q: "What is the difference between the Free and Professional plans?",
+    a: "The Free plan allows up to 3 manuscript audits per day with checks across all 9 citation styles. The Professional plan ($12.99/month) includes unlimited audits, Crossref verification, annotated DOCX and PDF exports, and priority support.",
   },
   {
-    q: "How do I cancel my Pro subscription?",
-    a: "You can cancel your Pro subscription at any time directly from your PayPal account — no need to contact us. Your Pro access continues until the end of the current billing period.",
+    q: "How do I cancel my subscription?",
+    a: "You can cancel your subscription at any time directly from your PayPal account — no need to contact us. Your access continues until the end of the current billing period.",
   },
 ];
 

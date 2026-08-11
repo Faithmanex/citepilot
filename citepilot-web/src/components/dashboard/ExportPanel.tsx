@@ -82,7 +82,7 @@ export default function ExportPanel({ data, manuscriptText }: ExportPanelProps) 
     {
       id: "docx",
       label: "Download Redline DOCX",
-      sub: "Formatted manuscript with Word Tracked Changes",
+      sub: "Annotated manuscript with highlights & comments",
       icon: FileDown,
       tag: "DOC",
       status: docxStatus,

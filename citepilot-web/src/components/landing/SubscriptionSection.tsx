@@ -25,12 +25,12 @@ export default function SubscriptionSection() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto items-stretch">
           {/* Free Tier */}
           <div className="bg-paper-card border-2 border-rule rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-ink transition-all duration-200">
             <div>
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xl font-extrabold text-ink">Standard Free</h3>
+                <h3 className="text-xl font-extrabold text-ink">Free</h3>
                 <span className="px-3 py-1 bg-paper border border-rule text-xs font-bold rounded-full text-ink-soft">
                   Basic Access
                 </span>
@@ -40,16 +40,16 @@ export default function SubscriptionSection() {
                 <span className="text-ink-soft text-sm font-semibold ml-2">/ month</span>
               </div>
               <p className="text-sm text-ink-soft mb-6 font-medium">
-                Perfect for quick individual citation style checks and manual inspections.
+                Perfect for quick citation checks and reference list inspection.
               </p>
 
               <ul className="space-y-3 mb-8 text-sm text-ink">
                 {[
-                  { ok: true,  text: "Up to 10 manuscript audits per month" },
-                  { ok: true,  text: "APA, MLA, Chicago, IEEE, Harvard support" },
-                  { ok: true,  text: "Basic DOI cross-verification" },
-                  { ok: false, text: "Export DOCX (Tracked Changes) & PDF reports" },
-                  { ok: false, text: "Style violation warnings & citation guidance" },
+                  { ok: true,  text: "Up to 3 manuscript audits per day" },
+                  { ok: true,  text: "All 9 citation style checks" },
+                  { ok: true,  text: "Up to 5,000 words & 100 references" },
+                  { ok: true,  text: "Basic citation explanations" },
+                  { ok: false, text: "PDF & annotated DOCX exports" },
                 ].map(({ ok, text }) => (
                   <li key={text} className={`flex items-start gap-2.5 ${!ok ? "opacity-50" : ""}`}>
                     <i className={`fas ${ok ? "fa-check text-emerald-600" : "fa-times text-rule"} mt-0.5 text-xs`} />
@@ -66,22 +66,68 @@ export default function SubscriptionSection() {
             </button>
           </div>
 
-          {/* Pro Tier */}
-          <div className="bg-paper-card border-3 border-ink rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden">
+          {/* Student Tier */}
+          <div className="bg-paper-card border-2 border-rule rounded-2xl p-6 sm:p-8 flex flex-col justify-between hover:border-ink transition-all duration-200 relative overflow-hidden">
             <div className="absolute top-0 right-0 bg-ink text-paper text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">
+              Coming Soon
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-extrabold text-ink">CitePilot Student</h3>
+              </div>
+
+              <div className="mb-6">
+                <span className="text-4xl font-black text-ink">$4.99</span>
+                <span className="text-ink-soft text-sm font-semibold ml-1">/ month</span>
+              </div>
+
+              <p className="text-sm text-ink-soft mb-6 font-medium">
+                Built for students writing theses and dissertations.
+              </p>
+
+              <ul className="space-y-3 mb-8 text-sm text-ink">
+                {[
+                  "<strong>Unlimited</strong> manuscript & reference audits",
+                  "<strong>All citation styles</strong> — APA, MLA, Chicago, Harvard & more",
+                  "Unlimited words & references",
+                  "Export PDF diagnostic reports & annotated DOCX",
+                  "Detailed AI explanations on every finding",
+                ].map((text) => (
+                  <li key={text} className="flex items-start gap-2.5">
+                    <i className="fas fa-check text-emerald-600 mt-0.5 text-xs flex-none" />
+                    <span dangerouslySetInnerHTML={{ __html: text }} />
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mt-4 pt-4 border-t border-rule">
+              <a
+                href="mailto:support@citepilot.ai?subject=CitePilot%20Student%20Plan"
+                className="w-full py-3 px-4 border-2 border-rule rounded-xl font-extrabold text-ink-soft bg-paper hover:bg-paper-card transition-colors text-center block"
+              >
+                Email us to join the waitlist
+              </a>
+            </div>
+          </div>
+
+          {/* Professional Tier */}
+          <div className="bg-paper-card border-3 border-ink rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-[#1E5E4B] text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">
               Recommended
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-extrabold text-ink flex items-center gap-2">
-                  <i className="fas fa-bolt text-amber-500" /> CitePilot Pro
+                  <i className="fas fa-bolt text-amber-500" /> CitePilot Professional
                 </h3>
               </div>
 
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black text-ink">$10</span>
+                  <span className="text-4xl font-black text-ink">$12.99</span>
                   <span className="text-ink-soft text-sm font-semibold ml-1">/ month</span>
                 </div>
                 <p className="text-xs text-ink-soft font-semibold mt-1">
@@ -96,9 +142,9 @@ export default function SubscriptionSection() {
               <ul className="space-y-3 mb-6 text-sm text-ink font-medium">
                 {[
                   "<strong>Unlimited</strong> Manuscript & Reference Audits",
-                  "<strong>Cross-verification</strong> with Crossref & Retraction Watch",
-                  "<strong>In-text citation matching</strong> & style violation inspection",
-                  "Export DOCX (Tracked Changes) & PDF Diagnostic Reports",
+                  "<strong>Cross-verification</strong> with Crossref metadata & retraction flags",
+                  "<strong>All 9 citation styles</strong> & style rule inspection",
+                  "Annotated DOCX & PDF Diagnostic Reports",
                   "Priority Processing & Responsive Email Support",
                 ].map((text) => (
                   <li key={text} className="flex items-start gap-2.5">

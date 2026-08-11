@@ -56,9 +56,10 @@ export default function PrivacyPage() {
             <h2 className="text-xl font-extrabold text-ink mb-3">3. Third-Party Services</h2>
             <p>CitePilot integrates with the following third-party services:</p>
             <ul className="list-disc pl-5 mt-3 space-y-2">
+              <li><strong className="text-ink">Google Gemini API</strong> — for AI-powered citation analysis (data usage governed by Google's AI Privacy Notice)</li>
               <li><strong className="text-ink">Crossref API</strong> — for DOI verification and bibliographic metadata</li>
               <li><strong className="text-ink">PayPal</strong> — for subscription billing (governed by PayPal's Privacy Policy)</li>
-              <li><strong className="text-ink">Vercel</strong> — for hosting and edge delivery (governed by Vercel's Privacy Policy)</li>
+              <li><strong className="text-ink">Vercel / Railway</strong> — for hosting and edge delivery (governed by their respective privacy policies)</li>
             </ul>
           </section>
 

@@ -13,7 +13,7 @@ export default function HowItWorks() {
     {
       num: "03",
       title: "Sources get verified",
-      desc: "Each reference is cross-verified against official Crossref and Retraction Watch registries.",
+      desc: "Each reference is checked against Crossref metadata, and retracted sources are flagged automatically.",
     },
     {
       num: "04",

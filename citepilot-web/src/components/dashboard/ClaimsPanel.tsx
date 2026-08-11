@@ -38,7 +38,7 @@ export default function ClaimsPanel({ data }: ClaimsPanelProps) {
       ) : (
         <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5 space-y-3">
           <h2 className="text-xs font-bold text-[#353027] uppercase tracking-wider font-mono flex items-center gap-2 mb-4">
-            <AlertTriangle className="w-4 h-4 text-[#825500]" /> {claims.length} Uncited Assertion{claims.length !== 1 ? "s" : ""}
+            <AlertTriangle className="w-4 h-4 text-[#825500]" /> {claims.length} Uncited Claim{claims.length !== 1 ? "s" : ""}
           </h2>
           {claims.map((c, i) => (
             <div
@@ -50,7 +50,7 @@ export default function ClaimsPanel({ data }: ClaimsPanelProps) {
               </div>
               <div className="flex gap-3 font-mono text-[11px] font-bold text-[#696050]">
                 <span>PARAGRAPH {(c.paragraph_index ?? 0) + 1}</span>
-                <span className="text-[#961E14]">UNAUTHORED ASSERTION</span>
+                <span className="text-[#961E14]">UNCITED CLAIM</span>
               </div>
               {c.educational_context && (
                 <div className="text-xs text-[#696050] leading-relaxed pt-2 border-t border-dashed border-[#C7BC9F]">

@@ -5,18 +5,18 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://citepilot.com"),
   title: "CitePilot — Academic Citation & Reference List Audit",
   description:
-    "Check your citations before you submit. CitePilot cross-checks your manuscript references against official Crossref and Retraction Watch registries — so you can submit your research with complete confidence.",
+    "Check your citations before you submit. CitePilot audits your in-text citations and reference list against Crossref metadata — so you can submit your research with complete confidence.",
   icons: { icon: "/brand/icon-mark.svg", apple: "/brand/icon-app.svg" },
   openGraph: {
     title: "CitePilot — Academic Citation & Reference List Audit",
     description:
-      "Check your citations before you submit. Verify manuscript citations & reference entries against official publisher registries.",
+      "Check your citations before you submit. Audit manuscript citations and reference entries against Crossref metadata.",
     images: [{ url: "/brand/og-image.svg", width: 1200, height: 630, alt: "CitePilot Social Preview" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "CitePilot — Academic Citation Audit",
-    description: "Check your citations before you submit. Verified against official registries.",
+    description: "Check your citations before you submit. Audited against Crossref metadata.",
     images: ["/brand/twitter-card.svg"],
   },
 };

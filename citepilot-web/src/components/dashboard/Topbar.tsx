@@ -114,7 +114,7 @@ export default function Topbar({
               }`}
               onClick={() => onModeChange("reference_only")}
             >
-              Ref List Only
+              Reference List Only
             </button>
           </div>
 

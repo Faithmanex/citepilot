@@ -92,7 +92,7 @@ export default function Hero() {
               </div>
               <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-200 p-2 rounded-lg">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-600 flex-none" />
-                <span className="truncate">Check Info</span>
+                <span className="truncate">Review</span>
               </div>
               <div className="flex items-center gap-1.5 bg-red-50 border border-red-200 p-2 rounded-lg">
                 <span className="w-2.5 h-2.5 rounded-full bg-red flex-none" />

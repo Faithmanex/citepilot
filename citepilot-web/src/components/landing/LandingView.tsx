@@ -1,6 +1,5 @@
 "use client";
 
-import LandingView from "@/components/landing/LandingView";
 import Testimonials from "@/components/landing/Testimonials";
 import FAQ from "@/components/landing/FAQ";
 import Header from "@/components/landing/Header";

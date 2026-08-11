@@ -106,7 +106,7 @@ export default function DashboardView() {
       return;
     }
 
-    setProgress({ visible: true, message: "Extracting manuscript structure & AST…", pct: 25 });
+    setProgress({ visible: true, message: "Parsing document structure…", pct: 25 });
 
     const formData = new FormData();
     if (uploadedFile) formData.append("file", uploadedFile);

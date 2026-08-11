@@ -42,16 +42,16 @@ export default function TermsPage() {
           <section>
             <h2 className="text-xl font-extrabold text-ink mb-3">2. Description of Service</h2>
             <p>
-              CitePilot is an AI-powered academic citation and reference audit platform. The Service cross-checks manuscript citations and reference list entries against the Crossref bibliographic registry and Retraction Watch. CitePilot is a verification aid and does not guarantee academic accuracy or journal acceptance.
+              CitePilot is an AI-powered academic citation and reference audit platform. The Service cross-checks manuscript citations and reference list entries against Crossref metadata. CitePilot is a verification aid and does not guarantee academic accuracy or journal acceptance.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-extrabold text-ink mb-3">3. Free and Pro Tiers</h2>
-            <p>CitePilot offers two service tiers:</p>
+            <h2 className="text-xl font-extrabold text-ink mb-3">3. Service Tiers</h2>
+            <p>CitePilot offers the following service tiers:</p>
             <ul className="list-disc pl-5 mt-3 space-y-2">
-              <li><strong className="text-ink">Free Tier</strong> — up to 10 manuscript audits per month, basic citation style support</li>
-              <li><strong className="text-ink">Pro Tier ($10/month)</strong> — unlimited audits, all citation styles, DOCX/PDF export, priority processing. Billed monthly via PayPal subscription. Cancel anytime from your PayPal account.</li>
+              <li><strong className="text-ink">Free Tier</strong> — up to 3 manuscript audits per day, APA 7 / Harvard / MLA style checks</li>
+              <li><strong className="text-ink">Professional Tier ($12.99/month)</strong> — unlimited audits, all citation styles, Crossref verification, DOCX/PDF export, priority processing. Billed monthly via PayPal subscription. Cancel anytime from your PayPal account.</li>
             </ul>
           </section>
 

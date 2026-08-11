@@ -35,7 +35,7 @@ export default function WhyItMatters() {
               Mismatched Reference Details
             </h3>
             <p className="text-[14.5px] leading-[1.6] text-ink-soft m-0 font-medium">
-              Discrepancies in publication year, author spelling, page numbers, or journal titles between your text and reference list.
+              Discrepancies in publication year, author name, page numbers, or journal titles between your text and reference list.
             </p>
           </div>
 
