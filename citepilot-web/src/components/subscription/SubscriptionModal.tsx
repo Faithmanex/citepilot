@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckCircle2, X } from "lucide-react";
+import { useAuth } from "@/lib/auth/AuthContext";
 import PayPalSubscriptionButton from "./PayPalSubscriptionButton";
 
 interface SubscriptionModalProps {
@@ -10,16 +11,17 @@ interface SubscriptionModalProps {
 }
 
 export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModalProps) {
+  const { user, profile, refreshProfile } = useAuth();
   const [subscribed, setSubscribed] = useState(false);
 
   if (!isOpen) return null;
 
   const handleSuccess = (subscriptionId: string) => {
-    // Store subscription state in sessionStorage (sessionless — no backend auth)
     if (typeof window !== "undefined") {
       sessionStorage.setItem("citepilot_pro", "true");
       sessionStorage.setItem("citepilot_sub_id", subscriptionId);
     }
+    refreshProfile();
     setSubscribed(true);
   };
 
@@ -90,7 +92,10 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
               <p className="text-xs font-bold text-ink-soft uppercase tracking-wider mb-2">
                 Complete Subscription via PayPal
               </p>
-              <PayPalSubscriptionButton onSuccess={handleSuccess} />
+              <PayPalSubscriptionButton
+                customId={profile?.id || user?.id}
+                onSuccess={handleSuccess}
+              />
             </div>
 
             <div className="text-center pt-2">

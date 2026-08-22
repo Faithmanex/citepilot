@@ -37,6 +37,7 @@ declare global {
 interface PayPalSubscriptionButtonProps {
   planId?: string;
   clientId?: string;
+  customId?: string;
   onSuccess?: (subscriptionId: string) => void;
   onError?: (error: unknown) => void;
 }
@@ -48,6 +49,7 @@ const DEFAULT_CLIENT_ID =
 export default function PayPalSubscriptionButton({
   planId = DEFAULT_PLAN_ID,
   clientId = DEFAULT_CLIENT_ID,
+  customId,
   onSuccess,
   onError,
 }: PayPalSubscriptionButtonProps) {
@@ -83,18 +85,33 @@ export default function PayPalSubscriptionButton({
               label: "subscribe",
             },
             createSubscription: function (_data, actions) {
-              return actions.subscription.create({
-                plan_id: planId,
-              });
+              const opts: { plan_id: string; custom_id?: string } = { plan_id: planId };
+              if (customId) {
+                opts.custom_id = customId;
+              }
+              return actions.subscription.create(opts as { plan_id: string });
             },
-            onApprove: function (data) {
+            onApprove: async function (data) {
               if (isMounted) {
                 setSubscribedId(data.subscriptionID);
               }
+              // Attempt server-side activation immediately
+              try {
+                await fetch("/api/subscription/activate", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    subscriptionId: data.subscriptionID,
+                    planId,
+                    tier: "professional",
+                  }),
+                });
+              } catch (e) {
+                console.warn("Direct activation fallback triggered:", e);
+              }
+
               if (onSuccess) {
                 onSuccess(data.subscriptionID);
-              } else {
-                alert(`Subscription successful! ID: ${data.subscriptionID}`);
               }
             },
             onError: function (err) {
@@ -163,7 +180,7 @@ export default function PayPalSubscriptionButton({
         existingScript.removeEventListener("load", renderPayPalButtons);
       }
     };
-  }, [planId, clientId, containerId, onSuccess, onError]);
+  }, [planId, clientId, containerId, customId, onSuccess, onError]);
 
   return (
     <div className="w-full flex flex-col items-center justify-center my-4">
