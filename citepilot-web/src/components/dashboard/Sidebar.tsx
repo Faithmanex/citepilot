@@ -12,6 +12,7 @@ import {
   Clock,
   FileSpreadsheet,
   FileDown,
+  History,
   Sparkles,
   X,
   ArrowLeft,
@@ -34,6 +35,7 @@ const navItems = [
   { panel: "claims",    icon: AlertTriangle,    label: "Uncited Claims",     badgeKey: "claims" },
   { panel: "recency",   icon: Clock,            label: "Recency Analysis",   badgeKey: null },
   { panel: "structure", icon: FileSpreadsheet,  label: "Document Structure", badgeKey: null },
+  { panel: "history",   icon: History,          label: "Audit History",      badgeKey: null },
   { panel: "export",    icon: FileDown,         label: "Export Report",      badgeKey: null },
 ];
 

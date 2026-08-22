@@ -21,7 +21,7 @@ export interface CitationIssue {
 
 export interface Reference {
   raw_entry: string;
-  status: "matched" | "orphaned" | "retracted";
+  status: "cited" | "orphaned" | "retracted";
   parsed_doi?: string;
   crossref_validation?: CrossrefValidation;
   retraction_info?: RetractionInfo;
@@ -90,8 +90,4 @@ export interface AuditResponse {
   document_structure?: StructureIssue[];
   text?: string;
   manuscript_text?: string;
-}
-
-export interface PanelId {
-  panel: string;
 }

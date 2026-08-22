@@ -9,6 +9,8 @@ import {
   Loader2,
 } from "lucide-react";
 
+import UserMenu from "../auth/UserMenu";
+
 interface TopbarProps {
   mode: AuditMode;
   onModeChange: (mode: AuditMode) => void;
@@ -20,6 +22,8 @@ interface TopbarProps {
   onClearDocument: () => void;
   progress: { visible: boolean; message: string; pct: number };
   onToggleMobileSidebar?: () => void;
+  onOpenAuth: () => void;
+  onOpenSubscription: () => void;
 }
 
 const STYLE_LABELS: Record<CitationStyle, string> = {
@@ -45,6 +49,8 @@ export default function Topbar({
   onClearDocument,
   progress,
   onToggleMobileSidebar,
+  onOpenAuth,
+  onOpenSubscription,
 }: TopbarProps) {
   return (
     <header
@@ -146,6 +152,13 @@ export default function Topbar({
             )}
             <span>{progress.visible ? "Auditing…" : "Run Audit"}</span>
           </button>
+
+          <div className="pl-1 border-l border-[#C7BC9F]/60">
+            <UserMenu
+              onOpenAuth={onOpenAuth}
+              onOpenSubscription={onOpenSubscription}
+            />
+          </div>
         </div>
       </div>
 

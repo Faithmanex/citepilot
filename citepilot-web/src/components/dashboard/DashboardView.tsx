@@ -2,7 +2,9 @@
 
 import { useState, useCallback, useEffect } from "react";
 import type { AuditResponse, CitationStyle, AuditMode } from "@/lib/types";
-import { runAudit } from "@/lib/api";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { useAudit } from "@/lib/useAudit";
+import { computeAuditStats } from "@/lib/auditStats";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import InputArea from "./InputArea";
@@ -14,10 +16,14 @@ import ClaimsPanel from "./ClaimsPanel";
 import RecencyPanel from "./RecencyPanel";
 import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
+import HistoryPanel from "./HistoryPanel";
+import AuthModal from "../auth/AuthModal";
 import SubscriptionModal from "../subscription/SubscriptionModal";
 import { AlertOctagon, CheckCircle2 } from "lucide-react";
 
 export default function DashboardView() {
+  const { user, isPro } = useAuth();
+  const [authModalOpen, setAuthModalOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
   const [activePanel, setActivePanel] = useState("overview");
   const [currentMode, setCurrentMode] = useState<AuditMode>("full");
@@ -26,18 +32,8 @@ export default function DashboardView() {
   const [manuscriptText, setManuscriptText] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [progress, setProgress] = useState({
-    visible: false,
-    message: "Parsing document…",
-    pct: 0,
-  });
   const [toastMsg, setToastMsg] = useState("");
   const [toastVisible, setToastVisible] = useState(false);
-  const [errorModal, setErrorModal] = useState({
-    visible: false,
-    title: "",
-    message: "",
-  });
 
   const hasDocument = !!(uploadedFile || manuscriptText.trim());
   const documentName = uploadedFile
@@ -51,6 +47,31 @@ export default function DashboardView() {
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 3500);
   }, []);
+
+  const handleAuditSuccess = useCallback((data: AuditResponse) => {
+    if (data.text || data.manuscript_text) {
+      setManuscriptText(data.text || data.manuscript_text || "");
+    }
+    setAnalysisData(data);
+  }, []);
+
+  const {
+    progress,
+    errorModal,
+    runAudit,
+    closeErrorModal,
+  } = useAudit({
+    text: manuscriptText,
+    file: uploadedFile,
+    style,
+    mode: currentMode,
+    documentName,
+    isPro,
+    user,
+    showToast,
+    onSuccess: handleAuditSuccess,
+    onUpgradeRequired: () => setSubscriptionModalOpen(true),
+  });
 
   const handlePanelChange = useCallback((panel: string) => {
     setActivePanel(panel);
@@ -99,95 +120,30 @@ export default function DashboardView() {
     setManuscriptText("");
   }, []);
 
-  const handleRunAudit = useCallback(async () => {
-    const textVal = manuscriptText.trim();
-    if (!textVal && !uploadedFile) {
-      showToast("Please upload a document file or paste manuscript text.");
-      return;
-    }
-
-    setProgress({ visible: true, message: "Parsing document structure…", pct: 25 });
-
-    const formData = new FormData();
-    if (uploadedFile) formData.append("file", uploadedFile);
-    if (textVal) formData.append("text", textVal);
-    formData.append("citation_style", style);
-    formData.append("mode", currentMode);
-
-    try {
-      setProgress((p) => ({
-        ...p,
-        message: "Matching citations & querying Crossref APIs…",
-        pct: 70,
-      }));
-      const data = await runAudit(formData);
-      if (data.text || data.manuscript_text) {
-        setManuscriptText(data.text || data.manuscript_text || "");
-      }
-      setAnalysisData(data);
-      setProgress({ visible: false, message: "Audit Complete!", pct: 100 });
-      showToast("Manuscript audit completed successfully!");
-    } catch (err) {
-      setProgress({ visible: false, message: "", pct: 0 });
-      const msg = (err as Error).message;
-      showToast("Audit Error: " + msg);
-      setErrorModal({
-        visible: true,
-        title: "Audit Execution Error",
-        message: msg,
-      });
-    }
-  }, [manuscriptText, uploadedFile, style, currentMode, showToast]);
-
   // Keyboard shortcut (Cmd/Ctrl + Enter to trigger audit)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();
-        handleRunAudit();
+        runAudit();
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [handleRunAudit]);
+  }, [runAudit]);
 
-  const handleCloseErrorModal = useCallback(() => {
-    setErrorModal((prev) => ({ ...prev, visible: false }));
-  }, []);
+  const handleLoadAudit = useCallback((audit: { results: AuditResponse; document_name: string; citation_style: string; audit_mode: string }) => {
+    setAnalysisData(audit.results);
+    setStyle(audit.citation_style as CitationStyle);
+    setCurrentMode(audit.audit_mode as AuditMode);
+    if (audit.results.text || audit.results.manuscript_text) {
+      setManuscriptText(audit.results.text || audit.results.manuscript_text || "");
+    }
+    setActivePanel("overview");
+    showToast(`Loaded audit: ${audit.document_name}`);
+  }, [showToast]);
 
-  const badges: Record<string, number> = (() => {
-    if (!analysisData) return { matching: 0, crossref: 0, style: 0, claims: 0 };
-    const citations = analysisData.citations ?? [];
-    const refs = analysisData.references ?? [];
-    const warnings = analysisData.style_warnings ?? [];
-    const claims = analysisData.uncited_claims ?? [];
-    const missingRefs = citations.filter((c) => c.status === "no_match").length;
-    const uncitedRefs = refs.filter((r) => r.status === "orphaned").length;
-    const spellingMismatches = citations.filter((c) =>
-      (c.issues ?? []).some(
-        (i) =>
-          i.type === "spelling_mismatch" ||
-          i.code === "SPELLING_MISMATCH" ||
-          c.match_type === "fuzzy"
-      )
-    ).length;
-    const yearMismatches = citations.filter((c) =>
-      (c.issues ?? []).some(
-        (i) => i.type === "year_mismatch" || i.code === "YEAR_MISMATCH"
-      )
-    ).length;
-    const retractedCount = refs.filter((r) => r.status === "retracted").length;
-    const crDiscrepancies = refs.reduce(
-      (acc, r) => acc + (r.crossref_validation?.discrepancies?.length ?? 0),
-      0
-    );
-    return {
-      matching: missingRefs + uncitedRefs + spellingMismatches + yearMismatches,
-      crossref: retractedCount + crDiscrepancies,
-      style: warnings.length,
-      claims: claims.length,
-    };
-  })();
+  const badges = computeAuditStats(analysisData);
 
   return (
     <div className="dash-body bg-[#F4F3EE] text-ink min-h-screen selection:bg-[#1E5E4B] selection:text-white font-dash">
@@ -206,12 +162,14 @@ export default function DashboardView() {
             onModeChange={handleModeChange}
             style={style}
             onStyleChange={handleStyleChange}
-            onRunAudit={handleRunAudit}
+            onRunAudit={runAudit}
             hasDocument={hasDocument}
             documentName={documentName}
             onClearDocument={handleClearDocument}
             progress={progress}
             onToggleMobileSidebar={() => setMobileNavOpen((prev) => !prev)}
+            onOpenAuth={() => setAuthModalOpen(true)}
+            onOpenSubscription={() => setSubscriptionModalOpen(true)}
           />
 
           <div className="flex-1 px-4 sm:px-8 py-6 pb-20 max-w-7xl w-full mx-auto space-y-6">
@@ -251,6 +209,12 @@ export default function DashboardView() {
                 {activePanel === "recency" && <RecencyPanel data={analysisData} />}
                 {activePanel === "structure" && (
                   <StructurePanel data={analysisData} />
+                )}
+                {activePanel === "history" && (
+                  <HistoryPanel
+                    onLoadAudit={handleLoadAudit}
+                    onOpenAuth={() => setAuthModalOpen(true)}
+                  />
                 )}
                 {activePanel === "export" && (
                   <ExportPanel
@@ -304,7 +268,7 @@ export default function DashboardView() {
             <div className="text-right pt-2">
               <button
                 className="px-4 py-2 bg-[#221D16] hover:bg-[#353027] text-[#F1EBDC] font-bold text-xs rounded-xl border border-[#221D16] transition-colors cursor-pointer"
-                onClick={handleCloseErrorModal}
+                onClick={closeErrorModal}
               >
                 Dismiss
               </button>
@@ -312,6 +276,13 @@ export default function DashboardView() {
           </div>
         </div>
       )}
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        onSuccess={() => showToast("Signed in successfully!")}
+      />
 
       {/* Subscription Modal */}
       <SubscriptionModal
@@ -321,4 +292,3 @@ export default function DashboardView() {
     </div>
   );
 }
-

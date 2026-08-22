@@ -1,6 +1,7 @@
 "use client";
 
 import type { AuditResponse } from "@/lib/types";
+import { computeAuditStats, computeScore } from "@/lib/auditStats";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -19,30 +20,9 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
   const citations = data?.citations ?? [];
   const refs = data?.references ?? [];
   const warnings = data?.style_warnings ?? [];
-  const claims = data?.uncited_claims ?? [];
 
-  const missingRefs = citations.filter((c) => c.status === "no_match").length;
-  const uncitedRefs = refs.filter((r) => r.status === "orphaned").length;
-  const retractedCount = refs.filter((r) => r.status === "retracted").length;
-  const crDiscrepancies = refs.reduce(
-    (acc, r) => acc + (r.crossref_validation?.discrepancies?.length ?? 0),
-    0
-  );
-  const matchedCount = citations.filter((c) => c.status === "matched").length;
-  const matchRate = citations.length
-    ? Math.round((matchedCount / citations.length) * 100)
-    : 100;
-
-  const totalDeductions =
-    missingRefs * 12 +
-    uncitedRefs * 8 +
-    retractedCount * 25 +
-    crDiscrepancies * 5 +
-    warnings.length * 3 +
-    claims.length * 5;
-  const integrityScore = data
-    ? Math.max(0, Math.min(100, 100 - totalDeductions))
-    : null;
+  const stats = computeAuditStats(data);
+  const integrityScore = data ? computeScore(data) : null;
 
   const isRefOnly = mode === "reference_only";
 
@@ -96,7 +76,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
   const summaryCards = [
     {
       label: "Missing References",
-      value: missingRefs,
+      value: stats.missingRefs,
       sub: "No reference list entry found",
       icon: SearchX,
       color: "#961E14",
@@ -104,7 +84,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
     },
     {
       label: "Uncited References",
-      value: uncitedRefs,
+      value: stats.uncitedRefs,
       sub: "Entries never cited in text",
       icon: Link2Off,
       color: "#825500",
@@ -112,7 +92,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
     },
     {
       label: "Reference Validation Issues",
-      value: crDiscrepancies + retractedCount,
+      value: stats.crDiscrepancies + stats.retractedCount,
       sub: "Discrepancies & retractions",
       icon: FileQuestion,
       color: "#1E3A8A",
@@ -120,7 +100,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
     },
     {
       label: "Match Rate",
-      value: data ? `${matchRate}%` : "—",
+      value: data ? `${stats.matchRate}%` : "—",
       sub: "Linked to reference list",
       icon: CheckCircle2,
       color: "#1E5E4B",
