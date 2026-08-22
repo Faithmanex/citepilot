@@ -1,7 +1,7 @@
 import logging
 import re
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import pdfplumber
 from docx import Document as DocxDocument
@@ -91,6 +91,28 @@ def _parse_docx_structured(path: Path) -> Tuple[str, List[Dict]]:
     return "\n\n".join(text_parts), paragraphs_meta
 
 
+def _append_paragraph(
+    paragraphs_meta: List[Dict],
+    text_parts: List[str],
+    idx: int,
+    text: str,
+    page_number: Optional[int] = None,
+) -> int:
+    """Appends a paragraph to the metadata and text lists, returning the next index."""
+    meta: Dict = {
+        "paragraph_index": idx,
+        "text": text,
+        "style_name": "Normal",
+        "is_heading": False,
+        "char_count": len(text),
+    }
+    if page_number is not None:
+        meta["page_number"] = page_number
+    paragraphs_meta.append(meta)
+    text_parts.append(text)
+    return idx + 1
+
+
 def _parse_pdf_structured(path: Path) -> Tuple[str, List[Dict]]:
     paragraphs_meta = []
     text_parts = []
@@ -111,48 +133,21 @@ def _parse_pdf_structured(path: Path) -> Tuple[str, List[Dict]]:
                 if not l_str:
                     if current_para:
                         p_text = " ".join(current_para)
-                        paragraphs_meta.append({
-                            "paragraph_index": idx,
-                            "page_number": page_num,
-                            "text": p_text,
-                            "style_name": "Normal",
-                            "is_heading": False,
-                            "char_count": len(p_text)
-                        })
-                        text_parts.append(p_text)
-                        idx += 1
+                        idx = _append_paragraph(paragraphs_meta, text_parts, idx, p_text, page_number=page_num)
                         current_para = []
                 else:
                     # If line looks like a heading or new paragraph (e.g. starts with indent or number)
                     # and current_para ends with a period, flush current paragraph
                     if current_para and current_para[-1].endswith((".", ":", ";")) and (l_str[0].isupper() or l_str.startswith(("[", "(", "1", "2", "3", "4", "5", "6", "7", "8", "9"))):
                         p_text = " ".join(current_para)
-                        paragraphs_meta.append({
-                            "paragraph_index": idx,
-                            "page_number": page_num,
-                            "text": p_text,
-                            "style_name": "Normal",
-                            "is_heading": False,
-                            "char_count": len(p_text)
-                        })
-                        text_parts.append(p_text)
-                        idx += 1
+                        idx = _append_paragraph(paragraphs_meta, text_parts, idx, p_text, page_number=page_num)
                         current_para = [l_str]
                     else:
                         current_para.append(l_str)
 
             if current_para:
                 p_text = " ".join(current_para)
-                paragraphs_meta.append({
-                    "paragraph_index": idx,
-                    "page_number": page_num,
-                    "text": p_text,
-                    "style_name": "Normal",
-                    "is_heading": False,
-                    "char_count": len(p_text)
-                })
-                text_parts.append(p_text)
-                idx += 1
+                idx = _append_paragraph(paragraphs_meta, text_parts, idx, p_text, page_number=page_num)
 
     return "\n\n".join(text_parts), paragraphs_meta
 
@@ -173,7 +168,4 @@ def parse_txt_structured(raw_text: str) -> List[Dict]:
             })
             idx += 1
     return meta
-
-
-_parse_txt_structured = parse_txt_structured
 

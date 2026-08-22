@@ -28,15 +28,17 @@ def test_analyse_endpoint_invalid_mode():
     assert "Invalid mode" in response.json()["detail"]
 
 
-@patch("citepilot_ai.api.v1.endpoints.extract_citations", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.detect_uncited_claims", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.match_citations_to_references", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.check_style", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.validate_reference_with_crossref", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.check_retraction_status", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.extract_citations", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.parse_references", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.detect_uncited_claims", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.match_citations_to_references", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.check_style", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.validate_reference_with_crossref", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.validate_reference_with_openalex", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.check_retraction_status", new_callable=AsyncMock)
 def test_analyse_endpoint_valid_text(
     mock_retraction,
+    mock_openalex,
     mock_crossref,
     mock_style,
     mock_match,
@@ -56,6 +58,7 @@ def test_analyse_endpoint_valid_text(
     ]
     mock_style.return_value = []
     mock_crossref.return_value = {"crossref_verified": True, "status": "verified"}
+    mock_openalex.return_value = {"verified": False, "provider": "openalex"}
     mock_retraction.return_value = {"is_retracted": False, "status": "normal"}
 
     response = client.post(
@@ -80,7 +83,7 @@ def test_analyse_endpoint_valid_text(
 
 
 def test_analyse_endpoint_mode_normalization():
-    with patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock) as mock_refs:
+    with patch("citepilot_ai.services.analysis_pipeline.parse_references", new_callable=AsyncMock) as mock_refs:
         mock_refs.return_value = []
         response = client.post(
             "/api/v1/analyse",

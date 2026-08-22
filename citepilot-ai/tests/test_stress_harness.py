@@ -23,15 +23,17 @@ client = TestClient(app)
 
 
 # 1. Non-blocking async performance test (<10s response under 20 concurrent requests)
-@patch("citepilot_ai.api.v1.endpoints.extract_citations", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.detect_uncited_claims", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.match_citations_to_references", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.check_style", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.validate_reference_with_crossref", new_callable=AsyncMock)
-@patch("citepilot_ai.api.v1.endpoints.check_retraction_status", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.extract_citations", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.parse_references", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.detect_uncited_claims", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.match_citations_to_references", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.check_style", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.validate_reference_with_crossref", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.validate_reference_with_openalex", new_callable=AsyncMock)
+@patch("citepilot_ai.services.analysis_pipeline.check_retraction_status", new_callable=AsyncMock)
 def test_async_concurrency_performance(
     mock_retraction,
+    mock_openalex,
     mock_crossref,
     mock_style,
     mock_match,
@@ -59,6 +61,10 @@ def test_async_concurrency_performance(
         await asyncio.sleep(0.05)
         return {"crossref_verified": True, "status": "verified"}
 
+    async def simulated_openalex(*args, **kwargs):
+        await asyncio.sleep(0.02)
+        return {"verified": False, "provider": "openalex"}
+
     async def simulated_retraction(*args, **kwargs):
         await asyncio.sleep(0.02)
         return {"is_retracted": False, "status": "normal"}
@@ -69,6 +75,7 @@ def test_async_concurrency_performance(
     mock_match.side_effect = simulated_match
     mock_style.side_effect = simulated_empty
     mock_crossref.side_effect = simulated_crossref
+    mock_openalex.side_effect = simulated_openalex
     mock_retraction.side_effect = simulated_retraction
 
     async def run_concurrent_requests():

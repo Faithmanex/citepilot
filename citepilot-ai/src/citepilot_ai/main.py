@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .api.v1.router import router as v1_router
 from .config import settings
-from .services.crossref_service import close_http_client
+from .services.http_client import close_http_client
 
 logger = logging.getLogger(__name__)
 

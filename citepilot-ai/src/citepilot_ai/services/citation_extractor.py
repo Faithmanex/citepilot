@@ -1,5 +1,8 @@
+import asyncio
 import json
 import logging
+import re
+from typing import Dict, List
 
 from ..models.schemas import (
     CitationsResponseSchema,
@@ -28,31 +31,17 @@ STEP 2 — EXTRACTION & DISCRIMINATION RULES
 5. DO NOT flag generic year references like "the 2020 pandemic" or "in 2007" as citations
 6. DO NOT flag section headings, chapter titles, figure captions, or Table of Contents items as in-text citations
 7. Return the exact raw text of each citation found
-8. Note paragraph index (0-based), character start/end, surrounding context (±100 chars), type, author surnames, and year."""
+8. Preserve the exact paragraph_index given in the input payload, character start/end, surrounding context (±100 chars), type, author surnames, and year."""
 
 
-async def extract_citations(text: str, citation_style: str) -> list[dict]:
-    paragraphs = text.split("\n\n")
-    doc_structure = []
-    current_char_count = 0
-    for i, para in enumerate(paragraphs):
-        p_str = para.strip()
-        if p_str:
-            item = {"index": i, "text": p_str[:2000]}
-            item_len = len(p_str[:2000])
-            if current_char_count + item_len > 115000:
-                break
-            doc_structure.append(item)
-            current_char_count += item_len
-
-    truncated = json.dumps(doc_structure, ensure_ascii=False)
-
-    prompt = f"""Analyze the following document text and extract all in-text citations.
+async def _extract_citations_single_batch(paragraphs_batch: List[Dict], citation_style: str) -> List[Dict]:
+    payload = json.dumps(paragraphs_batch, ensure_ascii=False)
+    prompt = f"""Analyze the following document paragraphs and extract all in-text citations.
 
 Citation style: {citation_style}
 
 Document paragraphs:
-{truncated}
+{payload}
 
 Return a JSON object with this structure:
 {{
@@ -75,10 +64,64 @@ Return a JSON object with this structure:
         system_instruction=CITATION_EXTRACTION_SYSTEM_PROMPT,
         response_schema=CitationsResponseSchema
     )
-    logger.debug("AI RAW RESPONSE [CITATIONS EXTRACTION]: %s", raw)
+    logger.debug("AI RAW RESPONSE [CITATIONS EXTRACTION BATCH]: %s", raw)
 
     validated = parse_and_validate_ai_response(raw, CitationsResponseSchema)
     return [item.model_dump() for item in validated.citations]
+
+
+async def extract_citations(text: str, citation_style: str) -> List[Dict]:
+    """
+    Extracts in-text citations with intelligent paragraph chunking to support long manuscripts
+    without token truncation or data loss.
+    """
+    paragraphs = text.split("\n\n")
+    doc_structure = []
+    for i, para in enumerate(paragraphs):
+        p_str = para.strip()
+        if p_str:
+            doc_structure.append({"paragraph_index": i, "text": p_str[:3000]})
+
+    if not doc_structure:
+        return []
+
+    # If small to medium manuscript, process in a single call
+    if len(doc_structure) <= 30:
+        return await _extract_citations_single_batch(doc_structure, citation_style)
+
+    # For larger manuscripts, chunk with a 2-paragraph overlap to prevent splitting citations across batch boundaries
+    chunk_size = 25
+    overlap = 2
+    step = chunk_size - overlap
+    batches = []
+
+    for start_idx in range(0, len(doc_structure), step):
+        batch = doc_structure[start_idx : start_idx + chunk_size]
+        if batch:
+            batches.append(batch)
+        if start_idx + chunk_size >= len(doc_structure):
+            break
+
+    tasks = [_extract_citations_single_batch(batch, citation_style) for batch in batches]
+    batch_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    all_citations = []
+    seen = set()
+
+    for res in batch_results:
+        if isinstance(res, Exception):
+            logger.error(f"Error in citation extraction batch: {res}")
+            continue
+        for c in res:
+            p_idx = c.get("paragraph_index", 0)
+            raw = re.sub(r"\s+", " ", c.get("raw_text", "").strip().lower())
+            key = (p_idx, raw)
+            if key not in seen and raw:
+                seen.add(key)
+                all_citations.append(c)
+
+    all_citations.sort(key=lambda x: (x.get("paragraph_index", 0), x.get("char_start", 0)))
+    return all_citations
 
 
 REFERENCE_PARSING_SYSTEM_PROMPT = """You are an expert academic document parser and bibliographic classifier based on Formatly's multi-step document architecture.
@@ -98,25 +141,20 @@ Only extract items that are TRUE EXTERNAL REFERENCE LIST / BIBLIOGRAPHY ENTRIES 
 
 ABSOLUTE EXCLUSIONS — DO NOT EXTRACT THE FOLLOWING AS REFERENCES UNDER ANY CIRCUMSTANCES:
 1. Table of Contents lines & Section Titles (e.g. "Chapter 1: Embodied Teaching...", "Organization of Dissertation...", "Historical Roots of Embodied Pedagogy...", "Reclaiming the Body in Education...", "Humanistic Foundations...", "Transpersonal Education...").
-2. Figure Captions & Table Titles (e.g. "Figure 1: An integrative framework...", "Figure 2: Integrating Lived...", "Table 1: Participant Characteristics...", "Table 2: Emergent Themes...").
-3. Narrative Body Paragraphs & Autobiographical Positionality (e.g. "I grew up in India...", "In 2007, I delved into...", "This dissertation is structured across...", "My research investigates...", "The connection between embodied practices...").
-4. Abstract text, Dedications, Acknowledgments, or Page headers.
-
-═══════════════════════════════════════════════════════
-STEP 3 — REQUIRED METADATA FIELDS
-═══════════════════════════════════════════════════════
-A valid reference entry MUST represent a published external source and contain formal bibliographic metadata (authors + year + title + journal/publisher/source/DOI). If a paragraph does not represent a published external work, omit it entirely."""
+2. Figure Captions and Table Titles (e.g. "Figure 1: Conceptual Framework...", "Table 2: Participant Demographics...").
+3. Narrative Body Paragraphs, positionality statements, interview transcripts, or methodology excerpts that happen to discuss literature in running sentences.
+4. Header/Footer artifacts, page numbers, or university administrative frontmatter."""
 
 
-async def parse_references(reference_text: str) -> list[dict]:
+async def _parse_references_single_batch(chunk_text: str, starting_pos: int = 1) -> List[Dict]:
     schema_example = json.dumps({
         "references": [{
-            "raw_entry": "full reference entry as it appears",
-            "position": 1,
-            "parsed_authors": [{"family": "Smith", "given": "A. B."}],
-            "parsed_year": 2024,
-            "parsed_title": "Article title",
-            "parsed_journal": "Journal Name",
+            "raw_entry": "Smith, J. (2020). Example title. Journal of Testing, 15(3), 112-128. https://doi.org/10.1000/xyz123",
+            "position": starting_pos,
+            "parsed_authors": [{"family": "Smith", "given": "J."}],
+            "parsed_year": 2020,
+            "parsed_title": "Example title",
+            "parsed_journal": "Journal of Testing",
             "parsed_volume": "15",
             "parsed_issue": "3",
             "parsed_pages": "112-128",
@@ -126,12 +164,10 @@ async def parse_references(reference_text: str) -> list[dict]:
         }],
     }, indent=2)
 
-    prompt_ref_text = reference_text[:80000] if len(reference_text) > 80000 else reference_text
-
     prompt = f"""Identify and parse ONLY actual published reference list entries from the text below into structured metadata. Completely skip and ignore all Table of Contents lines, figure captions, table titles, chapter headings, and narrative body paragraphs.
 
 Reference text:
-{prompt_ref_text}
+{chunk_text}
 
 Return a JSON object with this structure:
 {schema_example}"""
@@ -141,10 +177,58 @@ Return a JSON object with this structure:
         system_instruction=REFERENCE_PARSING_SYSTEM_PROMPT,
         response_schema=ReferencesResponseSchema
     )
-    logger.debug("AI RAW RESPONSE [REFERENCES PARSING]: %s", raw)
+    logger.debug("AI RAW RESPONSE [REFERENCES PARSING BATCH]: %s", raw)
 
     validated = parse_and_validate_ai_response(raw, ReferencesResponseSchema)
     return [item.model_dump() for item in validated.references]
+
+
+async def parse_references(reference_text: str) -> List[Dict]:
+    """
+    Parses bibliography / reference list into structured metadata with chunking for large lists.
+    """
+    if not reference_text or not reference_text.strip():
+        return []
+
+    clean_text = reference_text.strip()
+    if len(clean_text) <= 30000:
+        return await _parse_references_single_batch(clean_text, 1)
+
+    # Split large reference lists into chunks of ~25,000 characters
+    lines = clean_text.split("\n")
+    chunks = []
+    curr = []
+    curr_len = 0
+    for line in lines:
+        curr.append(line)
+        curr_len += len(line) + 1
+        if curr_len >= 20000:
+            chunks.append("\n".join(curr))
+            curr = []
+            curr_len = 0
+    if curr:
+        chunks.append("\n".join(curr))
+
+    tasks = [_parse_references_single_batch(c, 1) for c in chunks]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    all_refs = []
+    seen = set()
+    pos = 1
+
+    for res in results:
+        if isinstance(res, Exception):
+            logger.error(f"Error parsing reference chunk: {res}")
+            continue
+        for r in res:
+            raw_entry = re.sub(r"\s+", " ", r.get("raw_entry", "").strip())
+            if raw_entry and raw_entry.lower() not in seen:
+                seen.add(raw_entry.lower())
+                r["position"] = pos
+                pos += 1
+                all_refs.append(r)
+
+    return all_refs
 
 
 MATCHING_SYSTEM_PROMPT = """You are an expert citation matching system. Match in-text citations to reference list entries and determine the match quality.
@@ -159,9 +243,12 @@ Rules:
 
 
 async def match_citations_to_references(
-    citations: list[dict],
-    references: list[dict],
-) -> list[dict]:
+    citations: List[Dict],
+    references: List[Dict],
+) -> List[Dict]:
+    if not citations or not references:
+        return []
+
     schema_example = json.dumps({
         "matches": [{
             "citation_raw_text": "the exact citation text",
@@ -174,6 +261,7 @@ async def match_citations_to_references(
             "issues": [{"type": "spelling_mismatch|year_mismatch|style_warning", "code": "SPELLING_MISMATCH", "message": "Author spelling mismatch detected", "severity": "warning"}],
         }],
     }, indent=2)
+
     prompt = f"""Match the following in-text citations to reference list entries.
 
 Citations:
@@ -220,9 +308,9 @@ Rules & Guidelines:
 async def check_style(
     text: str,
     citation_style: str,
-    citations: list[dict],
-    references: list[dict],
-) -> list[dict]:
+    citations: List[Dict],
+    references: List[Dict],
+) -> List[Dict]:
     schema_example = json.dumps({
         "style_warnings": [{
             "code": "MISSING_COMMA_OR_PAGE_INDICATOR",
@@ -233,6 +321,7 @@ async def check_style(
             "severity": "warning",
         }],
     }, indent=2)
+
     prompt = f"""Analyze the document text, citations, and reference list for compliance with the {citation_style} style manual.
 
 Document text sample:
@@ -258,4 +347,3 @@ Return a JSON object:
 
     validated = parse_and_validate_ai_response(raw, StyleWarningsResponseSchema)
     return [item.model_dump() for item in validated.style_warnings]
-

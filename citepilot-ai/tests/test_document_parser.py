@@ -2,7 +2,6 @@ import pytest
 from citepilot_ai.services.document_parser import (
     split_body_and_references,
     parse_document,
-    _parse_txt_structured,
 )
 
 

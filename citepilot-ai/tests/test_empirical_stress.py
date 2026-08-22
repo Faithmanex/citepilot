@@ -94,10 +94,10 @@ def test_analyse_truncated_pdf_syntax():
     assert "Invalid or corrupt document file" in response.json()["detail"]
 
 
-@patch("citepilot_ai.api.v1.endpoints.extract_citations", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.check_style", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.extract_citations", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.parse_references", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.check_style", new_callable=AsyncMock, return_value=[])
 def test_analyse_malformed_binary_upload(mock_style, mock_claims, mock_refs, mock_cites):
     """Verify arbitrary malformed binary upload with non-standard extension returns clean response or 400 without crashing."""
     binary_data = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01"
@@ -204,7 +204,7 @@ def test_unhandled_routes_return_404_json(route_path):
 
 
 # ============================================================================
-# 5. Additional Edge Cases: Method Not Allowed, Payload Combinations, WebSocket
+# 5. Additional Edge Cases: Method Not Allowed, Payload Combinations
 # ============================================================================
 
 @pytest.mark.parametrize("endpoint,method", [
@@ -222,10 +222,10 @@ def test_disallowed_http_methods_return_405(endpoint, method):
 
 
 
-@patch("citepilot_ai.api.v1.endpoints.extract_citations", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.check_style", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.extract_citations", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.parse_references", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.check_style", new_callable=AsyncMock, return_value=[])
 def test_analyse_both_file_and_text_provided(mock_style, mock_claims, mock_refs, mock_cites):
     """Verify that when both 'file' and 'text' are provided, 'file' takes precedence cleanly without 500 error."""
     files = {"file": ("test.txt", io.BytesIO(b"File text content with (Smith, 2020)"), "text/plain")}
@@ -234,10 +234,10 @@ def test_analyse_both_file_and_text_provided(mock_style, mock_claims, mock_refs,
     assert response.headers["content-type"].startswith("application/json")
 
 
-@patch("citepilot_ai.api.v1.endpoints.extract_citations", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.check_style", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.extract_citations", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.parse_references", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.check_style", new_callable=AsyncMock, return_value=[])
 def test_analyse_unicode_null_bytes_and_emojis(mock_style, mock_claims, mock_refs, mock_cites):
     """Verify text containing null bytes, zero-width spaces, and emojis executes without crashing."""
     text = "Manuscript text \x00\x00 with emojis 🔥🚀 and zero-width \u200b spaces (Smith, 2020)."
@@ -246,10 +246,10 @@ def test_analyse_unicode_null_bytes_and_emojis(mock_style, mock_claims, mock_ref
     assert response.headers["content-type"].startswith("application/json")
 
 
-@patch("citepilot_ai.api.v1.endpoints.extract_citations", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.check_style", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.extract_citations", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.parse_references", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.detect_uncited_claims", new_callable=AsyncMock, return_value=[])
+@patch("citepilot_ai.services.analysis_pipeline.check_style", new_callable=AsyncMock, return_value=[])
 def test_analyse_oversized_text_payload(mock_style, mock_claims, mock_refs, mock_cites):
     """Verify handling of oversized text payload (1 MB string)."""
     large_text = "Paragraph with citation (Author, 2024).\n\n" * 25000  # ~1MB
@@ -257,32 +257,4 @@ def test_analyse_oversized_text_payload(mock_style, mock_claims, mock_refs, mock
     assert response.status_code in (200, 400)
     assert response.headers["content-type"].startswith("application/json")
 
-
-def test_ws_analyse_websocket_bad_json():
-    """Verify WebSocket /api/v1/ws/analyse gracefully handles invalid JSON string."""
-    with client.websocket_connect("/api/v1/ws/analyse") as websocket:
-        websocket.send_text("INVALID_NON_JSON_DATA{")
-        data = websocket.receive_json()
-        assert data.get("event") == "error"
-        assert "error" in data.get("message", "").lower()
-
-
-@patch("citepilot_ai.api.v1.endpoints.extract_citations", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.parse_references", new_callable=AsyncMock, return_value=[])
-@patch("citepilot_ai.api.v1.endpoints.check_style", new_callable=AsyncMock, return_value=[])
-def test_ws_analyse_websocket_valid_flow(mock_style, mock_refs, mock_cites):
-    """Verify WebSocket /api/v1/ws/analyse handles valid manuscript analysis flow."""
-    with client.websocket_connect("/api/v1/ws/analyse") as websocket:
-        websocket.send_json({"text": "Test manuscript text (Smith, 2020).", "mode": "full"})
-        messages = []
-        try:
-            while True:
-                msg = websocket.receive_json()
-                messages.append(msg)
-                if msg.get("event") == "complete":
-                    break
-        except Exception:
-            pass
-        assert len(messages) > 0
-        assert any(m.get("event") in ("progress", "complete") for m in messages)
 
