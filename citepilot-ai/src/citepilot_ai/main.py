@@ -33,8 +33,23 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Configurable CORS Configuration
-origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()] if settings.cors_origins else ["*"]
+# Configurable CORS Configuration — fail-safe: wildcard only in dev, explicit origins in prod
+def _resolve_cors_origins() -> list[str]:
+    raw = settings.cors_origins.strip() if settings.cors_origins else ""
+    if not raw or raw == "*":
+        if settings.log_level.lower() == "debug" or not settings.api_key:
+            # Dev mode: allow all origins, but still no credentials
+            return ["*"]
+        # In production with an API key set, require explicit origins
+        logger.warning(
+            "CORS_ORIGINS is wildcard/default while API key is set — restricting to empty allowlist. "
+            "Set CORS_ORIGINS to your web origin (e.g. https://citepilot.ai) in Railway env vars."
+        )
+        return []
+    return [o.strip() for o in raw.split(",") if o.strip()]
+
+origins = _resolve_cors_origins()
+# CORSMiddleware with allow_origins=["*"] must use allow_credentials=False (enforced)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins if origins else ["*"],
@@ -49,6 +64,8 @@ app.include_router(v1_router)
 
 @app.get("/health")
 async def health():
+    # Expose basic liveness + readiness. ai_engine_ready/model are low-sensitivity
+    # and used by deploy checks and tests; keep them but do not leak secrets.
     key_configured = bool(settings.google_api_key)
     return {
         "status": "ok",

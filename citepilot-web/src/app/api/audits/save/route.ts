@@ -35,10 +35,17 @@ export async function POST(request: Request) {
       results = {},
     } = body;
 
+    if (!userProfile?.id) {
+      return NextResponse.json(
+        { error: "User profile not found. Please sign out and sign in again." },
+        { status: 404 }
+      );
+    }
+
     const { data: insertedAudit, error: insertErr } = await supabase
       .from("audits")
       .insert({
-        user_id: userProfile?.id || null,
+        user_id: userProfile.id,
         document_name,
         citation_style,
         audit_mode,

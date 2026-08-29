@@ -8,7 +8,7 @@ CitePilot checks in-text citations against reference lists, validates sources ag
 
 **System at a glance:** web on **Vercel** (Next.js 16.2) · gateway + AI service on **Railway** (Node 22/Express + Python 3.12/FastAPI) · **Vercel Postgres** (PostgreSQL 16, Drizzle) · **Google Gemini 2.5 Flash** as the sole LLM · **Crossref** validation · **PayPal** subscriptions. Sessionless, synchronous MVP (see `04-engineering-standards/18-architecture-decision-records.md` ADR-008–011).
 
-> **Note:** the working code lives in polyrepos (`citepilot-web`, `citepilot-gateway`, `citepilot-ai`); the AI service and web repos are checked out here alongside the docs. See `AGENTS.md` and `LEARNING.md` for navigation rules and deployment quirks.
+> **Note:** the working code is vendored in this monorepo (`citepilot-web/`, `citepilot-ai/`, `supabase/migrations/`) — not as git submodules. The `citepilot-gateway` referenced in older docs is not present as a separate checkout; AI calls go via `next.config.ts` rewrites to `NEXT_PUBLIC_API_URL` (Railway). See `AGENTS.md` and `LEARNING.md` for navigation rules and deployment quirks.
 
 ---
 
@@ -140,10 +140,10 @@ citepilot-docs/
 ├── 07-launch/
 │   ├── 28-launch-checklist.md
 │   └── 29-support-documentation.md
-├── citepilot-web/                     # Next.js 16.2 frontend (checked out polyrepo)
-├── citepilot-ai/                      # Python 3.12 FastAPI AI service (checked out)
+├── citepilot-web/                     # Next.js 16.2 frontend (vendored)
+├── citepilot-ai/                      # Python 3.12 FastAPI AI service (vendored)
 ├── supabase/
-│   └── migrations/                    # SQL schema (12 files) — DB source of truth
+│   └── migrations/                    # SQL schema (14 files) — DB source of truth
 └── brand/
     └── guidelines/
 ```

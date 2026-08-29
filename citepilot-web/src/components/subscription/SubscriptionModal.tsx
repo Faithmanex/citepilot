@@ -32,10 +32,10 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
       aria-modal="true"
       aria-labelledby="subscription-modal-title"
     >
-      <div className="bg-paper border-3 border-ink rounded-2xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-[#ffffff] border border-[#ebebeb] rounded-lg max-w-lg w-full p-6 sm:p-8 shadow-none relative max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-ink-soft hover:text-ink w-9 h-9 flex items-center justify-center rounded-full border-2 border-rule hover:border-ink transition-colors"
+          className="absolute top-4 right-4 text-[#707070] hover:text-[#0e101a] w-8 h-8 flex items-center justify-center rounded-lg hover:bg-[#f5f5f5] transition-colors"
           aria-label="Close subscription modal"
         >
           <X className="w-5 h-5" />
@@ -44,16 +44,16 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
         {subscribed ? (
           /* Success State */
           <div className="text-center py-6">
-            <div className="w-16 h-16 rounded-full bg-[#DEE8DD] border-2 border-[#1E5E4B] flex items-center justify-center mx-auto mb-4">
-              <CheckCircle2 className="w-8 h-8 text-[#1E5E4B]" />
+            <div className="w-16 h-16 rounded-full bg-[#e6f4f2] border border-[#a7dcd4] flex items-center justify-center mx-auto mb-4">
+              <CheckCircle2 className="w-8 h-8 text-[#027e6f]" />
             </div>
-            <h3 className="text-2xl font-black text-ink mb-2">You&apos;re now on Professional!</h3>
-            <p className="text-ink-soft text-sm font-medium mb-6">
+            <h3 className="text-2xl font-extrabold text-[#0e101a] font-display mb-2">You&apos;re now on Professional!</h3>
+            <p className="text-[#545454] text-sm font-medium mb-6">
               Your CitePilot Professional subscription is active. Enjoy unlimited audits, all citation styles, and DOCX/PDF export.
             </p>
             <button
               onClick={onClose}
-              className="btn btn-primary w-full"
+              className="w-full py-2.5 px-4 bg-[#027e6f] hover:bg-[#02665a] text-white text-sm font-semibold rounded-lg shadow-none cursor-pointer"
             >
               Start Auditing
             </button>
@@ -62,18 +62,18 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
           /* Upgrade State */
           <>
             <div className="text-center mb-6">
-              <span className="inline-block px-3 py-1 rounded-full bg-brand/10 text-brand border border-brand/30 font-extrabold text-xs uppercase tracking-wider mb-2">
+              <span className="inline-block px-3 py-1 rounded-[4px] bg-[#e6f4f2] text-[#027e6f] border border-[#a7dcd4] font-bold text-xs uppercase tracking-wider mb-2 font-mono">
                 CitePilot Professional — $12.99/month
               </span>
-              <h3 id="subscription-modal-title" className="text-2xl font-black text-ink">
+              <h3 id="subscription-modal-title" className="text-2xl font-extrabold text-[#0e101a] font-display">
                 Upgrade to CitePilot Professional
               </h3>
-              <p className="text-sm text-ink-soft mt-1 font-medium">
+              <p className="text-sm text-[#545454] mt-1 font-medium">
                 Unlock unlimited manuscript verification & style rule inspection
               </p>
             </div>
 
-            <div className="space-y-3 mb-6 bg-paper-card p-4 rounded-xl border-2 border-rule text-xs sm:text-sm font-medium">
+            <div className="space-y-3 mb-6 bg-[#f5f5f5] p-4 rounded-lg border border-[#ebebeb] text-xs sm:text-sm font-medium">
               {[
                 "Unlimited Manuscript & Reference audits",
                 "Cross-verification with Crossref metadata & retraction flags",
@@ -81,15 +81,15 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
                 "Export annotated DOCX & PDF Diagnostic Reports",
                 "Priority Processing & Email Support",
               ].map((feature) => (
-                <div key={feature} className="flex items-center gap-2 text-ink">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-none" />
+                <div key={feature} className="flex items-center gap-2 text-[#0e101a]">
+                  <CheckCircle2 className="w-4 h-4 text-[#027e6f] flex-none" />
                   <span>{feature}</span>
                 </div>
               ))}
             </div>
 
             <div className="text-center mb-4">
-              <p className="text-xs font-bold text-ink-soft uppercase tracking-wider mb-2">
+              <p className="text-xs font-bold text-[#707070] uppercase tracking-wider mb-2 font-mono">
                 Complete Subscription via PayPal
               </p>
               <PayPalSubscriptionButton
@@ -101,7 +101,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
             <div className="text-center pt-2">
               <button
                 onClick={onClose}
-                className="text-xs text-ink-soft hover:text-ink font-bold underline"
+                className="text-xs text-[#707070] hover:text-[#0e101a] font-bold underline cursor-pointer"
               >
                 Continue using free tier for now
               </button>

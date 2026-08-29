@@ -55,6 +55,17 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Resolve public.users id for ownership check
+    const { data: userProfile } = await supabase
+      .from("users")
+      .select("id")
+      .eq("auth_user_id", user.id)
+      .maybeSingle();
+
+    if (!userProfile) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
+
     const { searchParams } = new URL(request.url);
     const auditId = searchParams.get("id");
 
@@ -65,7 +76,8 @@ export async function DELETE(request: Request) {
     const { error: deleteErr } = await supabase
       .from("audits")
       .delete()
-      .eq("id", auditId);
+      .eq("id", auditId)
+      .eq("user_id", userProfile.id);
 
     if (deleteErr) {
       return NextResponse.json({ error: deleteErr.message }, { status: 500 });

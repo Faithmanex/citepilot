@@ -43,10 +43,10 @@ export default function BrandLogo({
     >
       {/* Signature Concentric Checkmark Emblem */}
       <span
-        className={`${iconSize} rounded-full border-2 flex items-center justify-center flex-none font-black shadow-sm transition-transform hover:scale-105 ${
+        className={`${iconSize} rounded-full border flex items-center justify-center flex-none font-black shadow-none transition-transform hover:scale-105 ${
           isDark
-            ? "border-emerald-500 bg-slate-900 text-emerald-400"
-            : "border-emerald-700 bg-emerald-50 text-emerald-800"
+            ? "border-[#027e6f] bg-[#027e6f]/20 text-[#a7dcd4]"
+            : "border-[#a7dcd4] bg-[#e6f4f2] text-[#027e6f]"
         }`}
         aria-hidden="true"
       >
@@ -56,8 +56,8 @@ export default function BrandLogo({
       {showText && (
         <div className="flex items-baseline gap-1.5 leading-none">
           <span
-            className={`font-type font-extrabold tracking-tight ${textSize} ${
-              isDark ? "text-white" : "text-ink"
+            className={`font-display font-extrabold tracking-tight ${textSize} ${
+              isDark ? "text-white" : "text-[#0e101a]"
             }`}
           >
             CitePilot
@@ -65,7 +65,7 @@ export default function BrandLogo({
           {subtitle && (
             <span
               className={`text-xs font-mono font-bold uppercase tracking-wider ${
-                isDark ? "text-slate-400" : "text-ink-soft"
+                isDark ? "text-slate-400" : "text-[#707070]"
               }`}
             >
               {subtitle}

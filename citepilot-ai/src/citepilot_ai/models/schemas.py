@@ -67,12 +67,26 @@ class AnalyseResponse(BaseModel):
 
 
 class PdfExportRequest(BaseModel):
-    data: Dict[str, Any] = Field(..., description="Analysis data containing citations, references, style_warnings, recency")
+    # Supports both {"data": {...}} (preferred) and flat {...} for backward compat
+    data: Optional[Dict[str, Any]] = Field(default=None, description="Analysis data containing citations, references, style_warnings, recency")
+
+    model_config = {"extra": "allow"}
+
+    def resolve_data(self) -> Dict[str, Any]:
+        if self.data is not None:
+            return self.data
+        # Fallback: treat any extra top-level keys as the payload itself (flat shape)
+        extra = getattr(self, "model_extra", None) or {}
+        if extra:
+            return dict(extra)
+        return {}
 
 
 class DocxExportRequest(BaseModel):
     text: str = Field(default="", description="Original manuscript text")
     analysis_data: Dict[str, Any] = Field(default_factory=dict, description="Analysis data")
+
+    model_config = {"extra": "allow"}
 
 
 # LLM Response Validation Schemas

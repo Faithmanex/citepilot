@@ -75,17 +75,17 @@ export default function HistoryPanel({ onLoadAudit, onOpenAuth }: HistoryPanelPr
 
   if (!user) {
     return (
-      <div className="bg-[#FAF9F5] rounded-2xl border border-[#E6E4DC] p-8 text-center max-w-2xl mx-auto shadow-xs">
-        <div className="w-14 h-14 rounded-2xl bg-[#1E5E4B]/10 text-[#1E5E4B] flex items-center justify-center mx-auto mb-4">
+      <div className="bg-[#ffffff] rounded-lg border border-[#ebebeb] p-8 text-center max-w-2xl mx-auto shadow-none">
+        <div className="w-14 h-14 rounded-lg bg-[#e6f4f2] text-[#027e6f] flex items-center justify-center mx-auto mb-4">
           <History className="w-7 h-7" />
         </div>
-        <h3 className="text-xl font-bold text-ink font-serif mb-2">Audit History & Saved Reports</h3>
-        <p className="text-sm text-ink-muted mb-6 max-w-md mx-auto">
+        <h3 className="text-xl font-extrabold text-[#0e101a] font-display mb-2">Audit History & Saved Reports</h3>
+        <p className="text-sm text-[#545454] mb-6 max-w-md mx-auto">
           Sign in or create a free CitePilot account to automatically save your manuscript audits and reload past diagnostic reports at any time.
         </p>
         <button
           onClick={onOpenAuth}
-          className="px-6 py-2.5 bg-[#1E5E4B] hover:bg-[#164739] text-white font-semibold text-sm rounded-lg shadow-sm transition-all cursor-pointer inline-flex items-center gap-2"
+          className="px-6 py-2.5 bg-[#027e6f] hover:bg-[#02665a] text-white font-semibold text-sm rounded-lg shadow-none transition-all cursor-pointer inline-flex items-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
           Sign In / Create Account
@@ -96,21 +96,21 @@ export default function HistoryPanel({ onLoadAudit, onOpenAuth }: HistoryPanelPr
 
   if (loading) {
     return (
-      <div className="bg-[#FAF9F5] rounded-2xl border border-[#E6E4DC] p-12 text-center shadow-xs">
-        <Loader2 className="w-6 h-6 animate-spin text-[#1E5E4B] mx-auto mb-3" />
-        <p className="text-sm text-ink-muted">Loading your past manuscript audits...</p>
+      <div className="bg-[#ffffff] rounded-lg border border-[#ebebeb] p-12 text-center shadow-none">
+        <Loader2 className="w-6 h-6 animate-spin text-[#027e6f] mx-auto mb-3" />
+        <p className="text-sm text-[#545454]">Loading your past manuscript audits...</p>
       </div>
     );
   }
 
   if (audits.length === 0) {
     return (
-      <div className="bg-[#FAF9F5] rounded-2xl border border-[#E6E4DC] p-12 text-center shadow-xs">
-        <div className="w-12 h-12 rounded-xl bg-[#EAE8E0] text-ink-muted flex items-center justify-center mx-auto mb-3">
+      <div className="bg-[#ffffff] rounded-lg border border-[#ebebeb] p-12 text-center shadow-none">
+        <div className="w-12 h-12 rounded-lg bg-[#f5f5f5] text-[#545454] flex items-center justify-center mx-auto mb-3">
           <FileText className="w-6 h-6" />
         </div>
-        <h3 className="text-lg font-bold text-ink mb-1">No Saved Audits Yet</h3>
-        <p className="text-sm text-ink-muted max-w-md mx-auto">
+        <h3 className="text-lg font-extrabold text-[#0e101a] font-display mb-1">No Saved Audits Yet</h3>
+        <p className="text-sm text-[#545454] max-w-md mx-auto">
           Run your first citation audit in the Manuscript tab. Your diagnostic findings and reports will be saved here automatically.
         </p>
       </div>
@@ -121,12 +121,12 @@ export default function HistoryPanel({ onLoadAudit, onOpenAuth }: HistoryPanelPr
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold text-ink font-serif">Audit History</h2>
-          <p className="text-xs text-ink-muted mt-0.5">
+          <h2 className="text-xl font-extrabold text-[#0e101a] font-display">Audit History</h2>
+          <p className="text-xs text-[#545454] mt-0.5">
             Select any previously audited document to reload full findings, style warnings, and export reports.
           </p>
         </div>
-        <span className="text-xs font-semibold px-2.5 py-1 bg-white border border-[#DCDAD0] rounded-full text-ink-muted">
+        <span className="text-xs font-semibold px-2.5 py-1 bg-[#ffffff] border border-[#ebebeb] rounded-lg text-[#545454]">
           {audits.length} Saved {audits.length === 1 ? "Audit" : "Audits"}
         </span>
       </div>
@@ -145,19 +145,19 @@ export default function HistoryPanel({ onLoadAudit, onOpenAuth }: HistoryPanelPr
             <div
               key={audit.id}
               onClick={() => onLoadAudit(audit)}
-              className="group bg-[#FAF9F5] hover:bg-white border border-[#E6E4DC] hover:border-[#1E5E4B]/40 rounded-xl p-5 shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
+              className="group bg-[#ffffff] hover:bg-[#f5f5f5] border border-[#ebebeb] hover:border-[#027e6f]/40 rounded-lg p-5 shadow-none transition-all cursor-pointer flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#1E5E4B]/10 text-[#1E5E4B] flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-[#e6f4f2] text-[#027e6f] flex items-center justify-center shrink-0">
                       <FileText className="w-4 h-4" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-ink group-hover:text-[#1E5E4B] transition-colors line-clamp-1">
+                      <h4 className="text-sm font-bold text-[#0e101a] group-hover:text-[#027e6f] transition-colors line-clamp-1">
                         {audit.document_name}
                       </h4>
-                      <div className="flex items-center gap-2 text-[11px] text-ink-muted">
+                      <div className="flex items-center gap-2 text-[11px] text-[#707070]">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           {formattedDate}
@@ -168,38 +168,38 @@ export default function HistoryPanel({ onLoadAudit, onOpenAuth }: HistoryPanelPr
                   <button
                     onClick={(e) => handleDelete(e, audit.id)}
                     disabled={deletingId === audit.id}
-                    className="text-ink-muted hover:text-red-600 p-1.5 rounded-md hover:bg-red-50 transition-colors opacity-0 group-hover:opacity-100"
+                    className="text-[#707070] hover:text-[#b91c1c] p-1.5 rounded-lg hover:bg-[#fee2e2]/60 transition-colors opacity-0 group-hover:opacity-100"
                     title="Delete saved audit"
                   >
                     {deletingId === audit.id ? (
-                      <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                      <Loader2 className="w-4 h-4 animate-spin text-[#b91c1c]" />
                     ) : (
                       <Trash2 className="w-4 h-4" />
                     )}
                   </button>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 my-3 p-2.5 bg-white border border-[#EBE8DF] rounded-lg text-center">
+                <div className="grid grid-cols-3 gap-2 my-3 p-2.5 bg-[#f5f5f5] border border-[#ebebeb] rounded-lg text-center">
                   <div>
-                    <span className="block text-[10px] uppercase font-bold text-ink-muted tracking-wider">Style</span>
-                    <span className="text-xs font-bold text-ink uppercase">{audit.citation_style}</span>
+                    <span className="block text-[10px] uppercase font-bold text-[#707070] tracking-wider">Style</span>
+                    <span className="text-xs font-bold text-[#0e101a] uppercase">{audit.citation_style}</span>
                   </div>
                   <div>
-                    <span className="block text-[10px] uppercase font-bold text-ink-muted tracking-wider">Citations</span>
-                    <span className="text-xs font-bold text-ink">{audit.citation_count}</span>
+                    <span className="block text-[10px] uppercase font-bold text-[#707070] tracking-wider">Citations</span>
+                    <span className="text-xs font-bold text-[#0e101a]">{audit.citation_count}</span>
                   </div>
                   <div>
-                    <span className="block text-[10px] uppercase font-bold text-ink-muted tracking-wider">References</span>
-                    <span className="text-xs font-bold text-ink">{audit.reference_count}</span>
+                    <span className="block text-[10px] uppercase font-bold text-[#707070] tracking-wider">References</span>
+                    <span className="text-xs font-bold text-[#0e101a]">{audit.reference_count}</span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-[#EFECE4] text-xs">
-                <span className="text-ink-muted font-medium">
+              <div className="flex items-center justify-between pt-2 border-t border-[#ebebeb] text-xs">
+                <span className="text-[#707070] font-medium">
                   {audit.word_count > 0 ? `${audit.word_count.toLocaleString()} words` : `${audit.audit_mode} mode`}
                 </span>
-                <span className="inline-flex items-center gap-1 font-bold text-[#1E5E4B] group-hover:translate-x-0.5 transition-transform">
+                <span className="inline-flex items-center gap-1 font-bold text-[#027e6f] group-hover:translate-x-0.5 transition-transform">
                   Load Report <ArrowUpRight className="w-3.5 h-3.5" />
                 </span>
               </div>

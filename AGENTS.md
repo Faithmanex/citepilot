@@ -1,36 +1,38 @@
 # CitePilot — Agent Guide
 
-This is the CitePilot monorepo containing code for the web frontend (`citepilot-web/`), API gateway (`citepilot-gateway/`), and AI service (`citepilot-ai/`).
+This is the CitePilot monorepo containing code for the web frontend (`citepilot-web/`), AI service (`citepilot-ai/`), and Supabase migrations (`supabase/migrations/`), alongside the 7-folder documentation suite. The `citepilot-gateway` described in `04-engineering-standards/17-engineering-guidelines.md` has not been extracted as a separate repo in this checkout.
 
 **Read [`LEARNING.md`](LEARNING.md) for project-specific gotchas, past root causes, and deployment quirks.**
 
-## Repo structure vs README
+## Repo structure
 
-The **README's document index and directory tree are stale**. Trust the on-disk structure:
+The on-disk layout is the source of truth:
 
-| On disk | README claims |
+| Path | Contents |
 |---|---|
-| `01-discovery-strategy/` | `01-product/` |
-| `02-design/` | `02-architecture/` |
-| `03-technical-architecture/` | `03-frontend/` |
-| `04-engineering-standards/` | `04-backend/` |
-| `05-legal-compliance/` | `05-qa/` |
-| `06-operations/` | `06-operations/` |
-| `07-launch/` | `07-launch/` |
+| `01-discovery-strategy/` | Discovery & strategy docs |
+| `02-design/` | Design system + wireframes (also contains historical HTML mocks) |
+| `03-technical-architecture/` | System architecture, tech stack, API spec, DB schema |
+| `04-engineering-standards/` | Engineering guidelines, ADRs, testing strategy |
+| `05-legal-compliance/` | Legal & compliance docs |
+| `06-operations/` | Runbooks, incident response |
+| `07-launch/` | Launch checklist, support docs |
+| `citepilot-web/` | Next.js 16.2 frontend (vendored in this monorepo) |
+| `citepilot-ai/` | Python 3.12 FastAPI AI service (vendored in this monorepo) |
+| `supabase/migrations/` | 14 SQL migrations — DB source of truth |
 
-Document IDs on disk (`CP-DS-001`, `CP-ARCH-010`, `CITE-ENG-017`) also differ from the README's claimed `CP-PROD-0XX` scheme — use the actual file headers.
+Document IDs on disk use schemes `CP-DS-001`, `CP-ARCH-010`, `CITE-ENG-017` etc. — not the obsolete `CP-PROD-0XX` scheme.
 
-## Implementation repos (polyrepo)
+## Implementation repos (vendored)
 
-The actual code lives in three separate repositories per `04-engineering-standards/17-engineering-guidelines.md:
+The working code is vendored in this monorepo (not as git submodules):
 
 | Repo | Stack |
 |---|---|
-| `citepilot-web` | Next.js 16.2, TypeScript 7.0, Tailwind CSS 4, Vitest |
-| `citepilot-gateway` | Node.js 22 LTS, Express 5 / tRPC, Drizzle ORM, BullMQ, Vitest |
+| `citepilot-web` | Next.js 16.2, TypeScript 5.9, Tailwind CSS 4, Vitest |
 | `citepilot-ai` | Python 3.12, FastAPI 0.115, pytest |
 
-Shared types: `@citepilot/shared-types` (web ↔ gateway), `citepilot-contracts` (gateway ↔ AI).
+The `citepilot-gateway` (Node.js 22 LTS / Express 5 / Drizzle / BullMQ) referenced in `04-engineering-standards/17-engineering-guidelines.md` and `LEARNING.md` is not present as a separate checkout here; AI calls go directly via `next.config.ts` rewrites to `NEXT_PUBLIC_API_URL` / Railway.
 
 ## Key architecture docs
 
@@ -52,4 +54,6 @@ For system understanding, read in this order:
 
 - **Always set missing env vars** — when a deployment error points to a missing or incorrect environment variable, set it immediately via CLI (e.g., `vercel env add`, Railway dashboard). Do not leave it for later.
 - **Always redeploy after env changes** — after setting or updating environment variables, trigger a redeploy immediately. For Vercel: `npx vercel --prod` **from the monorepo root** (Vercel Root Directory is set to `citepilot-web/` — do NOT `cd` into it, per `LEARNING.md`). For Railway: trigger via dashboard or `railway up`.
-- **Verify CORS allowlist** — when changing API URLs or domains, ensure the gateway CORS config (`citepilot-gateway/src/server.ts`) includes the new origin.
+- **Verify CORS allowlist** — when changing API URLs or domains, ensure CORS is updated:
+  - Web → AI: `citepilot-ai` `CORS_ORIGINS` env var (Railway) and `citepilot-web/next.config.ts` rewrites.
+  - Legacy gateway reference `citepilot-gateway/src/server.ts` does not exist in this checkout.

@@ -61,23 +61,23 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`bg-[#14181F] border-r border-[#252B36] flex flex-col h-screen overflow-y-auto ${
+        className={`bg-[#0e101a] border-r border-[#1f243c] flex flex-col h-screen overflow-y-auto ${
           isOpen
-            ? "fixed inset-y-0 left-0 z-50 w-64 shadow-2xl"
+            ? "fixed inset-y-0 left-0 z-50 w-64 shadow-none"
             : "hidden md:flex md:sticky md:top-0 w-[240px]"
         }`}
         role="navigation"
         aria-label="Audit Navigation"
       >
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[#252B36]">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-[#1f243c]">
           <Link href="/" aria-label="CitePilot Home">
             <BrandLogo variant="dark" size="sm" subtitle="AUDIT" />
           </Link>
           {onClose && (
             <button
               type="button"
-              className="md:hidden text-slate-400 hover:text-white p-1 rounded"
+              className="md:hidden text-slate-400 hover:text-white p-1 rounded-lg"
               onClick={onClose}
               aria-label="Close navigation"
             >
@@ -88,7 +88,7 @@ export default function Sidebar({
 
         {/* Nav Items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-500 px-2 pb-2 font-mono">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-2 pb-2 font-mono">
             Audit Sections
           </p>
           {navItems.map((item) => {
@@ -101,8 +101,8 @@ export default function Sidebar({
                 key={item.panel}
                 className={`flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#1E5E4B] text-white shadow-sm"
-                    : "text-slate-300 hover:text-white hover:bg-white/8"
+                    ? "bg-[#027e6f] text-white shadow-none"
+                    : "text-[#b7b7b7] hover:text-white hover:bg-white/10"
                 }`}
                 onClick={() => {
                   onPanelChange(item.panel);
@@ -115,7 +115,7 @@ export default function Sidebar({
                   <span className="truncate">{item.label}</span>
                 </div>
                 {item.badgeKey && badgeCount > 0 && (
-                  <span className={`ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-full flex-none ${isActive ? "bg-white/20 text-white" : "bg-[#961E14] text-white"}`}>
+                  <span className={`ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-[4px] flex-none ${isActive ? "bg-white/20 text-white" : "bg-[#b91c1c] text-white"}`}>
                     {badgeCount}
                   </span>
                 )}
@@ -125,18 +125,18 @@ export default function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="px-3 pb-4 pt-2 border-t border-[#252B36] space-y-2">
+        <div className="px-3 pb-4 pt-2 border-t border-[#1f243c] space-y-2">
           <button
             onClick={onOpenSubscription}
-            className="w-full py-2.5 px-3 bg-[#1E5E4B] hover:bg-[#285235] text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+            className="w-full py-2.5 px-3 bg-[#027e6f] hover:bg-[#02665a] text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-none"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#C7BC9F]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#a7dcd4]" />
             Upgrade to Pro
           </button>
 
           <button
             onClick={() => router.push("/")}
-            className="w-full py-2 px-3 text-slate-400 hover:text-slate-200 hover:bg-white/5 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2 px-3 text-[#707070] hover:text-slate-200 hover:bg-white/5 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             aria-label="Back to home page"
           >
             <ArrowLeft className="w-3.5 h-3.5" />

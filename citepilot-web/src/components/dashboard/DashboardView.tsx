@@ -146,7 +146,7 @@ export default function DashboardView() {
   const badges = computeAuditStats(analysisData);
 
   return (
-    <div className="dash-body bg-[#F4F3EE] text-ink min-h-screen selection:bg-[#1E5E4B] selection:text-white font-dash">
+    <div className="dash-body bg-[#ffffff] text-[#0e101a] min-h-screen selection:bg-[#e6f4f2] selection:text-[#027e6f] font-sans">
       <div className="flex flex-col md:grid md:grid-cols-[240px_1fr] min-h-screen">
         <Sidebar
           activePanel={activePanel}
@@ -156,7 +156,7 @@ export default function DashboardView() {
           onClose={() => setMobileNavOpen(false)}
           onOpenSubscription={() => setSubscriptionModalOpen(true)}
         />
-        <main className="min-w-0 w-full bg-[#F4F3EE] flex flex-col" role="main">
+        <main className="min-w-0 w-full bg-[#ffffff] flex flex-col" role="main">
           <Topbar
             mode={currentMode}
             onModeChange={handleModeChange}
@@ -184,14 +184,14 @@ export default function DashboardView() {
             {/* Shimmer Skeleton Loader state when audit is running */}
             {progress.visible ? (
               <div className="space-y-4 animate-pulse">
-                <div className="h-32 bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl" />
+                <div className="h-32 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
-                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
-                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
-                  <div className="h-28 bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl" />
+                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
+                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
+                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
+                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
                 </div>
-                <div className="h-64 bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl" />
+                <div className="h-64 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
               </div>
             ) : (
               <>
@@ -231,7 +231,7 @@ export default function DashboardView() {
       {/* Toast Notification */}
       <div
         id="toast"
-        className={`fixed bottom-6 right-6 bg-[#FAF6EC] border border-[#C7BC9F] text-[#221D16] px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-2.5 shadow-lg z-50 transition-all duration-300 ${
+        className={`fixed bottom-6 right-6 bg-[#ffffff] border border-[#ebebeb] text-[#0e101a] px-4 py-3 rounded-lg text-xs font-bold flex items-center gap-2.5 shadow-none z-50 transition-all duration-300 ${
           toastVisible
             ? "translate-y-0 opacity-100"
             : "translate-y-6 opacity-0 pointer-events-none"
@@ -239,35 +239,35 @@ export default function DashboardView() {
         role="status"
         aria-live="polite"
       >
-        <CheckCircle2 className="w-4 h-4 text-[#1E5E4B]" />
+        <CheckCircle2 className="w-4 h-4 text-[#027e6f]" />
         <span id="toast-msg">{toastMsg}</span>
       </div>
 
       {/* Error Modal */}
       {errorModal.visible && (
         <div
-          className="fixed inset-0 bg-[#221D16]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-[#0e101a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="error-modal-title"
         >
-          <div className="bg-[#FAF6EC] border border-[#961E14]/40 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
+          <div className="bg-[#ffffff] border border-[#fca5a5] rounded-lg max-w-lg w-full p-6 shadow-none space-y-4">
             <h2
               id="error-modal-title"
-              className="text-[#961E14] font-extrabold text-base flex items-center gap-2"
+              className="text-[#b91c1c] font-extrabold text-base flex items-center gap-2"
             >
-              <AlertOctagon className="w-5 h-5 text-[#961E14]" />
+              <AlertOctagon className="w-5 h-5 text-[#b91c1c]" />
               {errorModal.title || "Audit Error"}
             </h2>
             <p
               tabIndex={0}
-              className="text-xs text-[#353027] font-mono bg-[#F1EBDC] p-3.5 rounded-xl border border-[#C7BC9F] leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap"
+              className="text-xs text-[#1f243c] font-mono bg-[#fee2e2]/40 p-3.5 rounded-lg border border-[#fca5a5] leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap"
             >
               {errorModal.message}
             </p>
             <div className="text-right pt-2">
               <button
-                className="px-4 py-2 bg-[#221D16] hover:bg-[#353027] text-[#F1EBDC] font-bold text-xs rounded-xl border border-[#221D16] transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[#0e101a] hover:bg-[#1f243c] text-white font-bold text-xs rounded-lg border border-[#0e101a] transition-colors cursor-pointer"
                 onClick={closeErrorModal}
               >
                 Dismiss

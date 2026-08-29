@@ -9,6 +9,11 @@ class Settings(BaseSettings):
     log_level: str = "info"
     cors_origins: str = "*"
     crossref_mailto: str = "support@citepilot.ai"
+    # Security / limits
+    api_key: str = ""  # if set, clients must send X-API-Key or Authorization: Bearer <key>
+    max_upload_mb: int = 10
+    max_text_chars: int = 200_000  # ~30k words
+    rate_limit_per_minute: int = 60
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 

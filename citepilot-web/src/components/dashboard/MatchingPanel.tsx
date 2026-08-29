@@ -20,10 +20,10 @@ export default function MatchingPanel({ data }: MatchingPanelProps) {
   ).length;
 
   const summaryCards = [
-    { label: "Missing References", value: missingRefs, sub: "Cited but no entry found", icon: SearchX, color: "#961E14", bg: "#F3DCD6" },
-    { label: "Uncited References", value: uncitedRefs, sub: "In bibliography, never cited", icon: Link2Off, color: "#825500", bg: "#F1E4C8" },
-    { label: "Author Name Discrepancies", value: spellingMismatches, sub: "Capitalisation or initials differ", icon: Shuffle, color: "#1E3A8A", bg: "#DBEAFE" },
-    { label: "Year Mismatches", value: yearMismatches, sub: "Year differs from the reference list entry", icon: CalendarX2, color: "#6D28D9", bg: "#EDE9FE" },
+    { label: "Missing References", value: missingRefs, sub: "Cited but no entry found", icon: SearchX, color: "#b91c1c", bg: "#fee2e2" },
+    { label: "Uncited References", value: uncitedRefs, sub: "In bibliography, never cited", icon: Link2Off, color: "#b45309", bg: "#fef3c7" },
+    { label: "Author Name Discrepancies", value: spellingMismatches, sub: "Capitalisation or initials differ", icon: Shuffle, color: "#2563eb", bg: "#eff6ff" },
+    { label: "Year Mismatches", value: yearMismatches, sub: "Year differs from reference entry", icon: CalendarX2, color: "#5b21b6", bg: "#ede9fe" },
   ];
 
   const allCitations = citations.filter(
@@ -35,50 +35,50 @@ export default function MatchingPanel({ data }: MatchingPanelProps) {
 
   return (
     <section className="space-y-5 animate-fade-in" id="panel-matching">
-      <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5">
-        <h1 className="text-base font-extrabold text-[#221D16] mb-1 font-dash">Citation & Reference Matching</h1>
-        <p className="text-xs text-[#696050]">
+      <div className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 shadow-none">
+        <h1 className="text-base font-extrabold text-[#0e101a] mb-1 font-display">Citation & Reference Matching</h1>
+        <p className="text-xs text-[#545454]">
           Bidirectional matching between in-text citations and reference list entries, with author name and year discrepancy detection.
         </p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {summaryCards.map(({ label, value, sub, icon: Icon, color, bg }) => (
-          <div key={label} className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-xl p-4 shadow-sm">
+          <div key={label} className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-4 shadow-none">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-[#353027]">{label}</span>
+              <span className="text-xs font-bold text-[#1f243c]">{label}</span>
               <span className="p-1 rounded-lg" style={{ backgroundColor: bg }}>
                 <Icon className="w-3.5 h-3.5" style={{ color }} />
               </span>
             </div>
-            <div className="font-mono text-2xl font-black" style={{ color }}>{value}</div>
-            <div className="text-[11px] text-[#696050] mt-0.5">{sub}</div>
+            <div className="font-mono text-2xl font-black text-[#0e101a]">{value}</div>
+            <div className="text-[11px] text-[#707070] mt-0.5">{sub}</div>
           </div>
         ))}
       </div>
 
-      <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5">
-        <h2 className="text-xs font-bold text-[#353027] uppercase tracking-wider font-mono flex items-center gap-2 mb-4">
-          <AlertTriangle className="w-4 h-4 text-[#825500]" /> Flagged Citations
+      <div className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 shadow-none">
+        <h2 className="text-xs font-bold text-[#1f243c] uppercase tracking-wider font-mono flex items-center gap-2 mb-4">
+          <AlertTriangle className="w-4 h-4 text-[#b45309]" /> Flagged Citations
         </h2>
 
         {!data ? (
-          <div className="flex items-center gap-2.5 p-3.5 bg-[#F1EBDC] border border-[#C7BC9F] rounded-xl text-xs text-[#696050]">
+          <div className="flex items-center gap-2.5 p-3.5 bg-[#f5f5f5] border border-[#ebebeb] rounded-lg text-xs text-[#545454]">
             Upload a manuscript and run an audit to see citation matching results.
           </div>
         ) : allCitations.length === 0 ? (
-          <div className="flex items-center gap-2.5 p-3.5 bg-[#DEE8DD]/60 border border-[#1E5E4B]/20 rounded-xl text-xs text-[#1E5E4B]">
+          <div className="flex items-center gap-2.5 p-3.5 bg-[#e6f4f2] border border-[#a7dcd4] rounded-lg text-xs text-[#027e6f]">
             <ShieldCheck className="w-4 h-4 flex-none" />
             All citations matched correctly — no discrepancies found.
           </div>
         ) : (
           <div className="space-y-2">
             {allCitations.map((c, idx) => (
-              <div key={idx} className="p-3.5 bg-[#F3DCD6] border border-[#961E14]/25 rounded-xl text-xs text-[#961E14] font-mono">
+              <div key={idx} className="p-3.5 bg-[#fee2e2] border border-[#fca5a5] rounded-lg text-xs text-[#b91c1c] font-mono">
                 <div className="font-bold mb-0.5">¶{(c.paragraph_index ?? 0) + 1} — {c.status === "no_match" ? "No Match" : "Discrepancy"}</div>
-                <div className="text-[#353027]">{c.raw_text}</div>
+                <div className="text-[#1f243c]">{c.raw_text}</div>
                 {(c.issues ?? []).map((issue, ii) => (
-                  <div key={ii} className="mt-1 text-[#825500]">{issue.message}</div>
+                  <div key={ii} className="mt-1 text-[#b45309]">{issue.message}</div>
                 ))}
               </div>
             ))}
@@ -88,15 +88,15 @@ export default function MatchingPanel({ data }: MatchingPanelProps) {
 
       {/* Orphaned references */}
       {data && uncitedRefs > 0 && (
-        <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5">
-          <h2 className="text-xs font-bold text-[#353027] uppercase tracking-wider font-mono flex items-center gap-2 mb-4">
-            <Link2Off className="w-4 h-4 text-[#825500]" /> Orphaned References
+        <div className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 shadow-none">
+          <h2 className="text-xs font-bold text-[#1f243c] uppercase tracking-wider font-mono flex items-center gap-2 mb-4">
+            <Link2Off className="w-4 h-4 text-[#b45309]" /> Orphaned References
           </h2>
           <div className="space-y-2">
             {refs
               .filter((r) => r.status === "orphaned")
               .map((r, idx) => (
-                <div key={idx} className="p-3.5 bg-[#F1E4C8] border border-[#825500]/25 rounded-xl text-xs text-[#825500] font-mono">
+                <div key={idx} className="p-3.5 bg-[#fef3c7] border border-[#fde68a] rounded-lg text-xs text-[#b45309] font-mono">
                   {r.raw_entry}
                 </div>
               ))}

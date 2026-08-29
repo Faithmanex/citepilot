@@ -61,15 +61,15 @@ export default function InputArea({
   }, [onClear]);
 
   return (
-    <div className="bg-[#FAF6EC] border border-[#C7BC9F] rounded-2xl p-5 mb-6 shadow-sm">
+    <div className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 mb-6 shadow-none">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xs font-bold text-[#353027] uppercase tracking-wider font-mono">
+        <h2 className="text-xs font-bold text-[#1f243c] uppercase tracking-wider font-mono">
           Document Input
         </h2>
         <button
           type="button"
           onClick={handleLoadSample}
-          className="text-xs font-bold text-[#1E5E4B] hover:text-[#285235] flex items-center gap-1.5 transition-colors cursor-pointer"
+          className="text-xs font-bold text-[#027e6f] hover:text-[#02665a] flex items-center gap-1.5 transition-colors cursor-pointer"
         >
           <Sparkles className="w-3.5 h-3.5" />
           Load Sample
@@ -79,12 +79,12 @@ export default function InputArea({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Upload / Drop Zone */}
         <div
-          className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[140px] ${
+          className={`border border-dashed rounded-lg p-6 text-center cursor-pointer transition-all flex flex-col items-center justify-center min-h-[140px] ${
             isDragging
-              ? "border-[#1E5E4B] bg-[#DEE8DD]/60"
+              ? "border-[#027e6f] bg-[#e6f4f2]"
               : hasFile
-              ? "border-[#1E5E4B]/50 bg-[#DEE8DD]/40"
-              : "border-[#C7BC9F] hover:border-[#1E5E4B]/60 bg-[#F1EBDC]"
+              ? "border-[#027e6f]/60 bg-[#e6f4f2]/40"
+              : "border-[#d9d9d9] hover:border-[#027e6f]/60 bg-[#f5f5f5]"
           }`}
           onClick={() => fileInputRef.current?.click()}
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -103,17 +103,17 @@ export default function InputArea({
 
           {hasFile ? (
             <>
-              <FileText className="w-6 h-6 text-[#1E5E4B] mb-2" />
-              <div className="text-xs font-bold text-[#221D16]">File ready</div>
-              <div className="text-[11px] text-[#696050] mt-0.5">Click to replace</div>
+              <FileText className="w-6 h-6 text-[#027e6f] mb-2" />
+              <div className="text-xs font-bold text-[#0e101a]">File ready</div>
+              <div className="text-[11px] text-[#707070] mt-0.5">Click to replace</div>
             </>
           ) : (
             <>
-              <UploadCloud className="w-6 h-6 text-[#696050] mb-2" />
-              <div className="text-xs font-bold text-[#221D16]">
+              <UploadCloud className="w-6 h-6 text-[#545454] mb-2" />
+              <div className="text-xs font-bold text-[#0e101a]">
                 Drop file or click to upload
               </div>
-              <div className="text-[11px] text-[#696050] mt-0.5">
+              <div className="text-[11px] text-[#707070] mt-0.5">
                 PDF, DOCX, BIB, TXT — max 50 MB
               </div>
             </>
@@ -122,7 +122,7 @@ export default function InputArea({
           {(hasFile || hasText) && (
             <button
               type="button"
-              className="mt-3 text-xs font-bold text-[#961E14] hover:text-[#7a1810] flex items-center gap-1 cursor-pointer"
+              className="mt-3 text-xs font-bold text-[#b91c1c] hover:text-[#991b1b] flex items-center gap-1 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation();
                 handleClearInternal();
@@ -136,7 +136,7 @@ export default function InputArea({
 
         {/* Paste textarea */}
         <textarea
-          className="w-full h-[140px] border border-[#C7BC9F] focus:border-[#1E5E4B] rounded-xl p-3 font-mono text-xs text-[#221D16] resize-none outline-none bg-[#F1EBDC] placeholder:text-[#C7BC9F] transition-colors"
+          className="w-full h-[140px] border border-[#d9d9d9] focus:border-[#027e6f] rounded-lg p-3 font-mono text-xs text-[#0e101a] resize-none outline-none bg-[#ffffff] placeholder:text-[#b7b7b7] transition-colors"
           value={pastedText}
           placeholder="Or paste manuscript text or reference list directly here…"
           onChange={(e) => {

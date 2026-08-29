@@ -34,38 +34,52 @@ A failing `/health` probe almost never means the health endpoint is wrong. It me
 
 - **Root Directory** must be set to `citepilot-web/` in Vercel project settings. Do NOT use `cd citepilot-web` in any script — it will break because the working directory is already `citepilot-web/`.
 - **Build command**: Leave blank (defaults to `next build`).
-- **Install command**: Leave blank (defaults to `pnpm install`).
+- **Install command**: Leave blank (defaults to `npm install` — `citepilot-web/package-lock.json` is npm; `pnpm` also works if you prefer, but do not mix lockfiles).
 - **Redeploy after env changes**: Run `npx vercel --prod` from the monorepo root (not from `citepilot-web/`) because Root Directory is already set in the project config.
 
-## Database: Vercel Postgres, not Supabase
+## Database: Supabase (with Vercel Postgres legacy note)
 
-Supabase was used in early iterations but replaced with Vercel Postgres for production. The `supabase/migrations/` directory still contains the SQL schema — run those migrations in Vercel's query editor to set up tables.
+Early iterations used Supabase; Vercel Postgres was briefly used in production before settling back on Supabase (auth + RLS) as the source of truth in `supabase/migrations/` (14 files). Run migrations in the Supabase SQL editor (or Vercel query editor if still on Vercel Postgres).
 
-- **Connection string**: `DATABASE_URL` in `citepilot-gateway/.env`
+- **Connection string**: `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` in `citepilot-web/.env.local`; `DATABASE_URL` if still on Vercel Postgres gateway setup.
 - **Local PostgreSQL**: Started manually from `%USERPROFILE%\pgdata`, not as a Windows service.
 
-## README is stale
+## README is stale (fixed 2026-08-26)
 
-The top-level `README.md` document index and directory tree do not match the on-disk layout. Trust the file system and `AGENTS.md` for navigation. On-disk document IDs use schemes like `CP-DS-001`, `CP-ARCH-010`, `CITE-ENG-017` — NOT the `CP-PROD-0XX` scheme claimed in the README.
+The top-level `README.md` document index and directory tree previously did not match the on-disk layout — fixed to reflect 14 migrations and vendored repos. Trust the file system and `AGENTS.md` for navigation. On-disk document IDs use schemes like `CP-DS-001`, `CP-ARCH-010`, `CITE-ENG-017` — NOT the `CP-PROD-0XX` scheme. `AGENTS.md` previously claimed a 3-repo polyrepo layout — corrected to vendored monorepo.
 
 ## Railway env vars required for deployment
 
-### Gateway (`citepilot-gateway`)
+### Web (`citepilot-web` on Vercel)
 | Variable | Notes |
 |---|---|
-| `DATABASE_URL` | Vercel Postgres connection string |
-| `JWT_SECRET` | Any secure string |
-| `AI_SERVICE_URL` | e.g. `https://citepilot-ai.up.railway.app` |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Required** — fail-loudly if missing (used by `src/lib/supabase/admin.ts` for webhooks/subscriptions) |
+| `NEXT_PUBLIC_API_URL` | e.g. `https://citepilot-ai.up.railway.app/api/v1` |
+| `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | PayPal app credentials (for webhook/activate verification) |
+| `PAYPAL_WEBHOOK_ID` | PayPal webhook ID (required in prod — webhooks without it are rejected) |
+| `PAYPAL_API_BASE` | Optional, defaults to `https://api-m.paypal.com` |
 | `NODE_ENV` | `production` |
 
-### AI service (`citepilot-ai`)
+### AI service (`citepilot-ai` on Railway)
 | Variable | Notes |
 |---|---|
 | `GOOGLE_API_KEY` | Required for analysis — not validated at startup, so healthcheck passes without it |
+| `CITE_API_KEY` / `API_KEY` | Optional — if set, clients must send `X-API-Key` or `Authorization: Bearer <key>` (recommended for production) |
+| `CORS_ORIGINS` | Comma-separated allowlist, e.g. `https://citepilot.ai,https://www.citepilot.ai` — do not use `*` in prod when API key is set |
+| `RATE_LIMIT_PER_MINUTE` | Optional, defaults to 20 |
+
+### Legacy Gateway (`citepilot-gateway` — not present in this checkout)
+| Variable | Notes |
+|---|---|
+| `DATABASE_URL` | Vercel Postgres connection string (legacy) |
+| `JWT_SECRET` | Any secure string (legacy) |
+| `AI_SERVICE_URL` | e.g. `https://citepilot-ai.up.railway.app` (legacy) |
 
 ## Environment quirks (Windows dev machine)
 
 - **Python**: `uv` is the package manager, not `pip`. Start the AI service with `uv run uvicorn citepilot_ai.main:app --host 0.0.0.0 --port 8000 --reload`.
-- **Node.js**: `pnpm` is the package manager. Start the gateway with `pnpm dev` from `citepilot-gateway/`.
-- **PostgreSQL**: Manually started from `%USERPROFILE%\pgdata`. Not a Windows service, not Docker.
-- **Gateway requires `DATABASE_URL`** in `citepilot-gateway/.env` before it will start.
+- **Node.js**: `npm` is the package manager for `citepilot-web` (`package-lock.json` present); `pnpm` also works but do not mix lockfiles. The legacy `citepilot-gateway` (not in this checkout) used `pnpm`.
+- **PostgreSQL / Supabase**: Migrations live in `supabase/migrations/` — apply via Supabase dashboard SQL editor.
+- **Security hardening (2026-08-26)**: See `supabase/migrations/014_fix_rls_and_hardening.sql` — RLS now covers all user-data tables, `users` UPDATE is locked against privilege escalation, and `handle_new_user()` has pinned `search_path`.
