@@ -88,8 +88,7 @@ export function useAudit({
           documentName,
           style,
           mode,
-          wordCount:
-            entitlement.wordCount || textVal.split(/\s+/).filter(Boolean).length,
+          wordCount: entitlement.wordCount,
           citationCount: data.citations?.length || 0,
           referenceCount: data.references?.length || 0,
           score: computeScore(data),

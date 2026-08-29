@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { calculateRigorScore } from "../scoreCalculator";
+import { calculateRigorScore } from "../rigorScoring";
 import { ACADEMIC_DRAFTS } from "../sampleDrafts";
 
-describe("Citation Rigor Scoring Engine (scoreCalculator)", () => {
+describe("Citation Rigor Scoring Engine (rigorScoring)", () => {
   it("calculates baseline score correctly with zero resolved suggestions", () => {
     const litReview = ACADEMIC_DRAFTS["lit-review"];
     const metrics = calculateRigorScore(

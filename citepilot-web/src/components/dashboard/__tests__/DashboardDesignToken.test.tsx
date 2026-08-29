@@ -22,31 +22,24 @@ const mockAuditData: AuditResponse = {
       raw_text: "(Smith, 2020)",
       paragraph_index: 0,
       status: "matched",
-      source_author: "Smith",
-      source_year: 2020,
     },
     {
       raw_text: "(Doe, 2019)",
       paragraph_index: 1,
       status: "no_match",
-      issues: [{ type: "no_match", message: "Citation not found in references", severity: "high" }],
+      issues: [{ type: "no_match", message: "Citation not found in references" }],
     },
   ],
   references: [
     {
       raw_entry: "Smith, J. (2020). Machine Learning Advances. Journal of AI, 12(3), 45-60.",
-      status: "matched",
-      parsed_author: "Smith",
-      parsed_year: 2020,
+      status: "cited",
       parsed_doi: "10.1000/182",
     },
     {
       raw_entry: "Johnson, K. (2018). Retracted Studies in Immunology. Nature Med, 5, 12-14.",
       status: "retracted",
-      parsed_author: "Johnson",
-      parsed_year: 2018,
       retraction_info: {
-        is_retracted: true,
         how_to_fix: "Remove citation or substitute with updated replicate.",
       },
     },
@@ -79,7 +72,7 @@ const mockAuditData: AuditResponse = {
     {
       title: "Heading Hierarchy",
       message: "Headings follow standard H1 -> H2 structure.",
-      status: "pass",
+      status: "ok",
     },
   ],
 };
@@ -235,7 +228,7 @@ describe("Dashboard Design Token & UI Synchronization Audit", () => {
   });
 
   it("renders ExportPanel with action buttons and flat surfaces", () => {
-    const { container } = render(<ExportPanel data={mockAuditData} />);
+    const { container } = render(<ExportPanel data={mockAuditData} manuscriptText="Sample text" />);
     expect(screen.getByRole("heading", { name: /Export Options/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download Diagnostic Report/i })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Download Redline DOCX/i })).toBeInTheDocument();

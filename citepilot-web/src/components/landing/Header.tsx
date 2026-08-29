@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import BrandLogo from "@/components/brand/BrandLogo";
 
 export interface NavDropdownItem {
   title: string;
@@ -198,19 +199,11 @@ export default function Header() {
         {/* Brand Logo */}
         <Link
           href="/"
-          className="inline-flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#027e6f] rounded-lg"
+          className="inline-flex items-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#027e6f] rounded-lg"
           aria-label="CitePilot Home"
           data-testid="header-logo"
         >
-          <span
-            className="w-7 h-7 rounded-full border border-[#a7dcd4] bg-[#e6f4f2] text-[#027e6f] flex items-center justify-center font-black text-xs shadow-none transition-transform duration-150 group-hover:scale-105"
-            aria-hidden="true"
-          >
-            ✓
-          </span>
-          <span className="font-display font-extrabold text-xl text-[#0e101a] tracking-tight">
-            CitePilot
-          </span>
+          <BrandLogo variant="light" size="md" />
         </Link>
 
         {/* Center Desktop Navigation */}

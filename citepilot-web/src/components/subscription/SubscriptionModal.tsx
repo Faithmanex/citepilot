@@ -16,11 +16,7 @@ export default function SubscriptionModal({ isOpen, onClose }: SubscriptionModal
 
   if (!isOpen) return null;
 
-  const handleSuccess = (subscriptionId: string) => {
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("citepilot_pro", "true");
-      sessionStorage.setItem("citepilot_sub_id", subscriptionId);
-    }
+  const handleSuccess = (_subscriptionId: string) => {
     refreshProfile();
     setSubscribed(true);
   };

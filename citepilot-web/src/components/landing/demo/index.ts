@@ -4,7 +4,6 @@
 
 export * from "./types";
 export * from "./sampleDrafts";
-export * from "./scoreCalculator";
 export * from "./rigorScoring";
 export * from "./spanMutation";
 export * from "./nlpRuleEngine";

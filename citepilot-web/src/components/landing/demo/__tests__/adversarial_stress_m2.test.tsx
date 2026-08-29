@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { runLiveHeuristicAudit } from "../nlpRuleEngine";
-import { calculateRigorScore } from "../scoreCalculator";
+import { calculateRigorScore } from "../rigorScoring";
 import {
   applySuggestionReplacement,
   splitTextIntoSegments,
