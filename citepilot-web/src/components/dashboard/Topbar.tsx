@@ -24,6 +24,7 @@ interface TopbarProps {
   onToggleMobileSidebar?: () => void;
   onOpenAuth: () => void;
   onOpenSubscription: () => void;
+  onOpenReplaceModal?: () => void;
 }
 
 const STYLE_LABELS: Record<CitationStyle, string> = {
@@ -51,6 +52,7 @@ export default function Topbar({
   onToggleMobileSidebar,
   onOpenAuth,
   onOpenSubscription,
+  onOpenReplaceModal,
 }: TopbarProps) {
   return (
     <header
@@ -72,27 +74,31 @@ export default function Topbar({
           )}
 
           {/* Document pill */}
-          <div
-            className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
-              hasDocument
-                ? "bg-[#e6f4f2] border-[#a7dcd4] text-[#027e6f]"
-                : "bg-[#f5f5f5] border-[#d9d9d9] text-[#545454]"
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5 flex-none" />
-            <span className="truncate max-w-[180px] font-mono text-[11px]">
-              {documentName}
-            </span>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onOpenReplaceModal}
+              title={hasDocument ? "Click to replace or edit document" : "Click to select document"}
+              className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                hasDocument
+                  ? "bg-[#e6f4f2] border-[#a7dcd4] text-[#027e6f] hover:bg-[#d8efe9]"
+                  : "bg-[#f5f5f5] border-[#d9d9d9] text-[#545454] hover:bg-[#ebebeb]"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5 flex-none" />
+              <span className="truncate max-w-[180px] font-mono text-[11px]">
+                {documentName}
+              </span>
+            </button>
             {hasDocument && (
               <button
-                className="ml-0.5 text-[#707070] hover:text-[#b91c1c] p-0.5 rounded transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClearDocument();
-                }}
+                type="button"
+                className="text-[#707070] hover:text-[#b91c1c] p-1.5 rounded-lg hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                onClick={onClearDocument}
                 aria-label="Clear document"
+                title="Clear document"
               >
-                <X className="w-3 h-3" />
+                <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import type { AuditResponse, CitationStyle, AuditMode } from "@/lib/types";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useAudit } from "@/lib/useAudit";
@@ -18,6 +18,7 @@ import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
 import HistoryPanel from "./HistoryPanel";
 import ManuscriptEditorWorkspace from "./editor/ManuscriptEditorWorkspace";
+import ReplaceDocumentModal from "./ReplaceDocumentModal";
 import { extractTextFromDocx } from "@/lib/editor/docxExtractor";
 import AuthModal from "../auth/AuthModal";
 import SubscriptionModal from "../subscription/SubscriptionModal";
@@ -27,7 +28,8 @@ export default function DashboardView() {
   const { user, isPro } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState("overview");
+  const [replaceModalOpen, setReplaceModalOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState("workspace");
   const [currentMode, setCurrentMode] = useState<AuditMode>("full");
   const [style, setStyle] = useState<CitationStyle>("apa7");
   const [analysisData, setAnalysisData] = useState<AuditResponse | null>(null);
@@ -156,11 +158,25 @@ export default function DashboardView() {
     if (audit.results.text || audit.results.manuscript_text) {
       setManuscriptText(audit.results.text || audit.results.manuscript_text || "");
     }
-    setActivePanel("overview");
+    setActivePanel("workspace");
     showToast(`Loaded audit: ${audit.document_name}`);
   }, [showToast]);
 
-  const badges = computeAuditStats(analysisData);
+  const totalIssues = useMemo(() => {
+    if (!analysisData) return 0;
+    const stats = computeAuditStats(analysisData);
+    return (
+      (stats.matching ?? 0) +
+      (stats.crossref ?? 0) +
+      (stats.style ?? 0) +
+      (stats.claims ?? 0)
+    );
+  }, [analysisData]);
+
+  const badges = useMemo(() => ({
+    ...computeAuditStats(analysisData),
+    totalIssues,
+  }), [analysisData, totalIssues]);
 
   return (
     <div className="dash-body bg-[#ffffff] text-[#0e101a] min-h-screen selection:bg-[#e6f4f2] selection:text-[#027e6f] font-sans">
@@ -187,10 +203,11 @@ export default function DashboardView() {
             onToggleMobileSidebar={() => setMobileNavOpen((prev) => !prev)}
             onOpenAuth={() => setAuthModalOpen(true)}
             onOpenSubscription={() => setSubscriptionModalOpen(true)}
+            onOpenReplaceModal={() => setReplaceModalOpen(true)}
           />
 
           <div className="flex-1 px-4 sm:px-8 py-6 pb-20 max-w-7xl w-full mx-auto space-y-6">
-            {!hasDocument ? (
+            {!hasDocument && (
               <InputArea
                 onFileSelect={handleFileSelect}
                 onTextChange={handleTextChange}
@@ -198,22 +215,6 @@ export default function DashboardView() {
                 hasFile={!!uploadedFile}
                 hasText={!!manuscriptText.trim()}
               />
-            ) : (
-              <details className="group bg-[#fcfdfd] border border-[#ebebeb] rounded-lg overflow-hidden transition-all">
-                <summary className="px-4 py-2.5 cursor-pointer text-xs font-mono font-bold uppercase tracking-wider text-[#545454] hover:text-[#0e101a] flex items-center justify-between select-none">
-                  <span>Replace Document or Edit Raw Input</span>
-                  <span className="text-[10px] text-[#707070] group-open:rotate-180 transition-transform">▼</span>
-                </summary>
-                <div className="p-4 pt-0 border-t border-[#ebebeb] bg-white">
-                  <InputArea
-                    onFileSelect={handleFileSelect}
-                    onTextChange={handleTextChange}
-                    onClear={handleClearDocument}
-                    hasFile={!!uploadedFile}
-                    hasText={!!manuscriptText.trim()}
-                  />
-                </div>
-              </details>
             )}
 
             {/* Shimmer Skeleton Loader state when audit is running */}
@@ -230,28 +231,16 @@ export default function DashboardView() {
               </div>
             ) : (
               <>
-                {activePanel === "overview" && (
+                {(activePanel === "workspace" || activePanel === "overview") && (
                   hasDocument ? (
-                    <div className="space-y-6">
-                      <ManuscriptEditorWorkspace
-                        initialText={manuscriptText}
-                        auditData={analysisData}
-                        documentName={documentName}
-                        onTextChange={handleTextChange}
-                        onRequestReAudit={() => runAudit()}
-                      />
-
-                      {/* Collapsible Macro Diagnostic Metrics */}
-                      <details className="group border border-[#ebebeb] bg-[#fafafa] rounded-lg overflow-hidden transition-all">
-                        <summary className="p-4 cursor-pointer font-bold text-xs uppercase tracking-wider text-[#545454] hover:text-[#0e101a] flex items-center justify-between select-none">
-                          <span>View Macro Diagnostics & Full Metric Breakdown</span>
-                          <span className="text-[11px] font-normal text-[#707070] group-open:rotate-180 transition-transform">▼</span>
-                        </summary>
-                        <div className="p-4 pt-0 bg-white border-t border-[#ebebeb]">
-                          <OverviewPanel data={analysisData} mode={currentMode} />
-                        </div>
-                      </details>
-                    </div>
+                    <ManuscriptEditorWorkspace
+                      initialText={manuscriptText}
+                      auditData={analysisData}
+                      documentName={documentName}
+                      mode={currentMode}
+                      onTextChange={handleTextChange}
+                      onRequestReAudit={() => runAudit()}
+                    />
                   ) : (
                     <OverviewPanel data={analysisData} mode={currentMode} />
                   )
@@ -334,6 +323,18 @@ export default function DashboardView() {
           </div>
         </div>
       )}
+
+      {/* Replace Document Modal */}
+      <ReplaceDocumentModal
+        isOpen={replaceModalOpen}
+        onClose={() => setReplaceModalOpen(false)}
+        onFileSelect={handleFileSelect}
+        onTextChange={handleTextChange}
+        onClear={handleClearDocument}
+        hasFile={!!uploadedFile}
+        hasText={!!manuscriptText.trim()}
+        documentName={documentName}
+      />
 
       {/* Auth Modal */}
       <AuthModal

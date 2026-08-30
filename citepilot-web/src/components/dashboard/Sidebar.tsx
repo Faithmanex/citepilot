@@ -5,12 +5,6 @@ import { useRouter } from "next/navigation";
 import BrandLogo from "../brand/BrandLogo";
 import {
   LayoutDashboard,
-  GitCompare,
-  CheckCircle2,
-  BookOpenCheck,
-  AlertTriangle,
-  Clock,
-  FileSpreadsheet,
   FileDown,
   History,
   Sparkles,
@@ -28,15 +22,9 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { panel: "overview",  icon: LayoutDashboard, label: "Live Editor",        badgeKey: null },
-  { panel: "matching",  icon: GitCompare,       label: "Citation Matching",  badgeKey: "matching" },
-  { panel: "crossref",  icon: CheckCircle2,     label: "Crossref Check",     badgeKey: "crossref" },
-  { panel: "style",     icon: BookOpenCheck,    label: "Style Rules",        badgeKey: "style" },
-  { panel: "claims",    icon: AlertTriangle,    label: "Uncited Claims",     badgeKey: "claims" },
-  { panel: "recency",   icon: Clock,            label: "Recency Analysis",   badgeKey: null },
-  { panel: "structure", icon: FileSpreadsheet,  label: "Document Structure", badgeKey: null },
-  { panel: "history",   icon: History,          label: "Audit History",      badgeKey: null },
-  { panel: "export",    icon: FileDown,         label: "Export Report",      badgeKey: null },
+  { panel: "workspace", icon: LayoutDashboard, label: "Editor Workspace", badgeKey: "totalIssues" },
+  { panel: "history",   icon: History,         label: "Audit History",   badgeKey: null },
+  { panel: "export",    icon: FileDown,        label: "Export Report",   badgeKey: null },
 ];
 
 export default function Sidebar({
@@ -89,11 +77,11 @@ export default function Sidebar({
         {/* Nav Items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
           <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-2 pb-2 font-mono">
-            Audit Sections
+            Navigation
           </p>
           {navItems.map((item) => {
             const badgeCount = item.badgeKey ? badges[item.badgeKey] ?? 0 : 0;
-            const isActive = activePanel === item.panel;
+            const isActive = activePanel === item.panel || (item.panel === "workspace" && activePanel === "overview");
             const Icon = item.icon;
 
             return (

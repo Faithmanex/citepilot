@@ -52,7 +52,92 @@ export async function extractTextFromDocx(file: File | Blob): Promise<string> {
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
 
-    // Scan ZIP Local File Headers: Signature 0x50, 0x4b, 0x03, 0x04 (PK\x03\x04)
+    async function decompressData(compressedData: Uint8Array, compressionMethod: number): Promise<string> {
+      if (compressionMethod === 0) {
+        return new TextDecoder().decode(compressedData);
+      } else if (compressionMethod === 8) {
+        if (typeof DecompressionStream !== "undefined") {
+          const ds = new DecompressionStream("deflate-raw");
+          const writer = ds.writable.getWriter();
+          writer.write(compressedData);
+          writer.close();
+          const response = new Response(ds.readable);
+          return await response.text();
+        }
+      }
+      return "";
+    }
+
+    // 1. Primary Strategy: Locate word/document.xml via ZIP Central Directory
+    // Handles streaming ZIP files (e.g. MS Word / LibreOffice with data descriptors where local compressedSize = 0)
+    let eocdOffset = -1;
+    for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+      if (
+        bytes[i] === 0x50 &&
+        bytes[i + 1] === 0x4b &&
+        bytes[i + 2] === 0x05 &&
+        bytes[i + 3] === 0x06
+      ) {
+        eocdOffset = i;
+        break;
+      }
+    }
+
+    if (eocdOffset !== -1) {
+      const cdOffset =
+        bytes[eocdOffset + 16] |
+        (bytes[eocdOffset + 17] << 8) |
+        (bytes[eocdOffset + 18] << 16) |
+        (bytes[eocdOffset + 19] << 24);
+
+      let offset = cdOffset;
+      while (offset < eocdOffset) {
+        if (
+          bytes[offset] === 0x50 &&
+          bytes[offset + 1] === 0x4b &&
+          bytes[offset + 2] === 0x01 &&
+          bytes[offset + 3] === 0x02
+        ) {
+          const compressionMethod = bytes[offset + 10] | (bytes[offset + 11] << 8);
+          const compressedSize =
+            bytes[offset + 20] |
+            (bytes[offset + 21] << 8) |
+            (bytes[offset + 22] << 16) |
+            (bytes[offset + 23] << 24);
+          const fileNameLen = bytes[offset + 28] | (bytes[offset + 29] << 8);
+          const extraLen = bytes[offset + 30] | (bytes[offset + 31] << 8);
+          const commentLen = bytes[offset + 32] | (bytes[offset + 33] << 8);
+          const localOffset =
+            bytes[offset + 42] |
+            (bytes[offset + 43] << 8) |
+            (bytes[offset + 44] << 16) |
+            (bytes[offset + 45] << 24);
+
+          const fileNameBytes = bytes.subarray(offset + 46, offset + 46 + fileNameLen);
+          const fileName = new TextDecoder().decode(fileNameBytes);
+
+          if (fileName === "word/document.xml") {
+            const localFileNameLen =
+              bytes[localOffset + 26] | (bytes[localOffset + 27] << 8);
+            const localExtraLen =
+              bytes[localOffset + 28] | (bytes[localOffset + 29] << 8);
+            const dataOffset = localOffset + 30 + localFileNameLen + localExtraLen;
+
+            const compressedData = bytes.subarray(dataOffset, dataOffset + compressedSize);
+            const xmlText = await decompressData(compressedData, compressionMethod);
+            if (xmlText) {
+              return parseWordXmlToText(xmlText);
+            }
+          }
+
+          offset += 46 + fileNameLen + extraLen + commentLen;
+        } else {
+          break;
+        }
+      }
+    }
+
+    // 2. Fallback Strategy: Local file header linear scan
     let offset = 0;
     while (offset < bytes.length - 30) {
       if (
@@ -75,25 +160,9 @@ export async function extractTextFromDocx(file: File | Blob): Promise<string> {
 
         const dataOffset = offset + 30 + fileNameLen + extraFieldLen;
 
-        if (fileName === "word/document.xml") {
+        if (fileName === "word/document.xml" && compressedSize > 0) {
           const compressedData = bytes.subarray(dataOffset, dataOffset + compressedSize);
-          let xmlText = "";
-
-          if (compressionMethod === 0) {
-            // Stored without compression
-            xmlText = new TextDecoder().decode(compressedData);
-          } else if (compressionMethod === 8) {
-            // Deflate compression
-            if (typeof DecompressionStream !== "undefined") {
-              const ds = new DecompressionStream("deflate-raw");
-              const writer = ds.writable.getWriter();
-              writer.write(compressedData);
-              writer.close();
-              const response = new Response(ds.readable);
-              xmlText = await response.text();
-            }
-          }
-
+          const xmlText = await decompressData(compressedData, compressionMethod);
           if (xmlText) {
             return parseWordXmlToText(xmlText);
           }
