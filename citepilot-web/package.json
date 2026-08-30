@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "node scripts/verify-editor-e2e.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
