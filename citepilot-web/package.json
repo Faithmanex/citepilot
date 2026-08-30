@@ -14,6 +14,8 @@
     "test:e2e": "node scripts/verify-editor-e2e.mjs"
   },
   "dependencies": {
+    "@lexical/html": "^0.49.0",
+    "@lexical/list": "^0.49.0",
     "@lexical/mark": "^0.49.0",
     "@lexical/react": "^0.49.0",
     "@lexical/selection": "^0.49.0",

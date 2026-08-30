@@ -8,6 +8,7 @@ import { Edit3, Eye, FileText, Sparkles, Hash } from "lucide-react";
 
 export interface DocumentEditorCanvasProps {
   currentText: string;
+  initialHtml?: string;
   textSegments: TextSegment[];
   sections?: DocumentSection[];
   isCustomTyping: boolean;
@@ -20,6 +21,7 @@ export interface DocumentEditorCanvasProps {
 
 export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
   currentText,
+  initialHtml,
   textSegments,
   sections = [],
   isCustomTyping,
@@ -102,6 +104,7 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
             <div className="flex-1 flex flex-col">
               <LexicalDocumentCanvas
                 initialText={currentText}
+                initialHtml={initialHtml}
                 onUpdateText={onUpdateText}
                 onInspectSelection={(selectedText) => {
                   const match = textSegments.find(

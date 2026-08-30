@@ -13,16 +13,46 @@ function decodeXmlEntities(str: string): string {
     .replace(/&apos;/g, "'");
 }
 
-export function parseWordXmlToText(xml: string): string {
-  if (!xml) return "";
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
-  // Split by paragraph tags <w:p>
+export interface DocxExtractionResult {
+  text: string;
+  html: string;
+}
+
+export function parseWordXmlToSemantic(xml: string): DocxExtractionResult {
+  if (!xml) return { text: "", html: "" };
+
   const paragraphRegex = /<w:p(?:\s[^>]*)?>([\s\S]*?)<\/w:p>/gi;
   const paragraphs: string[] = [];
+  const htmlBlocks: string[] = [];
   let pMatch: RegExpExecArray | null;
 
   while ((pMatch = paragraphRegex.exec(xml)) !== null) {
     const pContent = pMatch[1];
+
+    // Detect heading level or blockquote from <w:pStyle w:val="..." />
+    let tag = "p";
+    const styleMatch = /<w:pStyle[^>]*w:val="([^"]+)"/i.exec(pContent);
+    if (styleMatch) {
+      const val = styleMatch[1].toLowerCase();
+      if (val === "heading1" || val === "title") {
+        tag = "h1";
+      } else if (val === "heading2") {
+        tag = "h2";
+      } else if (val === "heading3") {
+        tag = "h3";
+      } else if (val.includes("quote")) {
+        tag = "blockquote";
+      }
+    }
 
     // Replace tabs and breaks before extracting text runs
     const normalizedRuns = pContent
@@ -30,22 +60,58 @@ export function parseWordXmlToText(xml: string): string {
       .replace(/<w:br(?:\s[^>]*)?\/>/gi, "\n")
       .replace(/<w:cr(?:\s[^>]*)?\/>/gi, "\n");
 
-    // Extract text runs <w:t>
-    const textRegex = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/gi;
-    let textMatch: RegExpExecArray | null;
-    let paraText = "";
+    // Extract character runs <w:r>
+    const runRegex = /<w:r(?:\s[^>]*)?>([\s\S]*?)<\/w:r>/gi;
+    let rMatch: RegExpExecArray | null;
+    let rawParaText = "";
+    let htmlParaBody = "";
 
-    while ((textMatch = textRegex.exec(normalizedRuns)) !== null) {
-      paraText += decodeXmlEntities(textMatch[1]);
+    while ((rMatch = runRegex.exec(normalizedRuns)) !== null) {
+      const rContent = rMatch[1];
+
+      // Formatting detection from run properties <w:rPr>
+      const isBold = /<w:b(?:\s[^>]*)?\/>/i.test(rContent) || /<w:b\s+w:val="(?:1|true)"/i.test(rContent);
+      const isItalic = /<w:i(?:\s[^>]*)?\/>/i.test(rContent) || /<w:i\s+w:val="(?:1|true)"/i.test(rContent);
+      const isUnderline = /<w:u(?:\s[^>]*)?\/>/i.test(rContent);
+      const isStrike = /<w:strike(?:\s[^>]*)?\/>/i.test(rContent);
+
+      // Extract text runs <w:t>
+      const textRegex = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/gi;
+      let textMatch: RegExpExecArray | null;
+      let runText = "";
+
+      while ((textMatch = textRegex.exec(rContent)) !== null) {
+        runText += decodeXmlEntities(textMatch[1]);
+      }
+
+      if (!runText) continue;
+
+      rawParaText += runText;
+
+      let runHtml = escapeHtml(runText);
+      if (isStrike) runHtml = `<s>${runHtml}</s>`;
+      if (isUnderline) runHtml = `<u>${runHtml}</u>`;
+      if (isItalic) runHtml = `<em>${runHtml}</em>`;
+      if (isBold) runHtml = `<strong>${runHtml}</strong>`;
+
+      htmlParaBody += runHtml;
     }
 
-    const trimmed = paraText.trim();
+    const trimmed = rawParaText.trim();
     if (trimmed) {
       paragraphs.push(trimmed);
+      htmlBlocks.push(`<${tag}>${htmlParaBody || escapeHtml(trimmed)}</${tag}>`);
     }
   }
 
-  return paragraphs.join("\n\n");
+  return {
+    text: paragraphs.join("\n\n"),
+    html: htmlBlocks.join("\n"),
+  };
+}
+
+export function parseWordXmlToText(xml: string): string {
+  return parseWordXmlToSemantic(xml).text;
 }
 
 async function decompressBytes(data: Uint8Array, method: number): Promise<string> {
@@ -116,12 +182,13 @@ function findCentralDirectory(bytes: Uint8Array): { cdOffset: number; cdEntries:
   return null;
 }
 
-export async function extractTextFromDocx(file: File | Blob): Promise<string> {
+export async function extractDocxSemantic(file: File | Blob): Promise<DocxExtractionResult> {
+  const empty: DocxExtractionResult = { text: "", html: "" };
   try {
     const arrayBuffer = await file.arrayBuffer();
     const bytes = new Uint8Array(arrayBuffer);
 
-    if (bytes.length < 30) return "";
+    if (bytes.length < 30) return empty;
 
     // 1. Primary Strategy: Central Directory (authoritative sizes even with streaming data descriptors)
     const cdInfo = findCentralDirectory(bytes);
@@ -175,7 +242,7 @@ export async function extractTextFromDocx(file: File | Blob): Promise<string> {
                 const compressedData = bytes.subarray(dataOffset, dataOffset + compressedSize);
                 const xmlText = await decompressBytes(compressedData, compressionMethod);
                 if (xmlText) {
-                  return parseWordXmlToText(xmlText);
+                  return parseWordXmlToSemantic(xmlText);
                 }
               }
             }
@@ -236,7 +303,7 @@ export async function extractTextFromDocx(file: File | Blob): Promise<string> {
           const xmlText = await decompressBytes(compressedData, compressionMethod);
 
           if (xmlText) {
-            return parseWordXmlToText(xmlText);
+            return parseWordXmlToSemantic(xmlText);
           }
         }
 
@@ -246,9 +313,14 @@ export async function extractTextFromDocx(file: File | Blob): Promise<string> {
       }
     }
 
-    return "";
+    return empty;
   } catch (err) {
     console.warn("Client-side OpenXML extraction note:", err instanceof Error ? err.message : String(err));
-    return "";
+    return empty;
   }
+}
+
+export async function extractTextFromDocx(file: File | Blob): Promise<string> {
+  const result = await extractDocxSemantic(file);
+  return result.text;
 }
