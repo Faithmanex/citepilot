@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseWordXmlToText } from "../docxExtractor";
+import { parseWordXmlToText, extractTextFromDocx } from "../docxExtractor";
 
 describe("Realtime OpenXML DOCX Extractor", () => {
   it("extracts paragraphs and runs from Word OpenXML accurately", () => {
@@ -51,5 +51,17 @@ describe("Realtime OpenXML DOCX Extractor", () => {
   it("handles empty or whitespace-only input safely", () => {
     expect(parseWordXmlToText("")).toBe("");
     expect(parseWordXmlToText("<w:document><w:body></w:body></w:document>")).toBe("");
+  });
+
+  it("handles truncated or invalid files gracefully without unhandled exceptions", async () => {
+    const invalidBlob = new Blob([new Uint8Array([0x50, 0x4b, 0x03, 0x04, 0x00, 0x00])]);
+    const result = await extractTextFromDocx(invalidBlob);
+    expect(result).toBe("");
+  });
+
+  it("handles empty blob safely", async () => {
+    const emptyBlob = new Blob([]);
+    const result = await extractTextFromDocx(emptyBlob);
+    expect(result).toBe("");
   });
 });
