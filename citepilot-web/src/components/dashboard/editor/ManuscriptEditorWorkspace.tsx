@@ -12,6 +12,7 @@ import { RotateCcw, Edit3, Eye } from "lucide-react";
 
 export interface ManuscriptEditorWorkspaceProps {
   initialText: string;
+  initialHtml?: string;
   auditData: AuditResponse | null;
   documentName?: string;
   mode?: AuditMode;
@@ -22,6 +23,7 @@ export interface ManuscriptEditorWorkspaceProps {
 
 export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps> = ({
   initialText,
+  initialHtml,
   auditData,
   documentName = "manuscript.docx",
   mode = "full",
@@ -177,6 +179,7 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
           <div className="lg:col-span-7 w-full">
             <DocumentEditorCanvas
               currentText={manuscriptText}
+              initialHtml={initialHtml}
               textSegments={textSegments}
               sections={academicSections}
               isCustomTyping={isCustomTyping}

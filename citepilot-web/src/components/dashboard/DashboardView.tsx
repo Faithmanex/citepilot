@@ -18,7 +18,7 @@ import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
 import HistoryPanel from "./HistoryPanel";
 import ManuscriptEditorWorkspace from "./editor/ManuscriptEditorWorkspace";
-import { extractTextFromDocx } from "@/lib/editor/docxExtractor";
+import { extractTextFromDocx, extractDocxSemantic } from "@/lib/editor/docxExtractor";
 import AuthModal from "../auth/AuthModal";
 import SubscriptionModal from "../subscription/SubscriptionModal";
 import { AlertOctagon, CheckCircle2 } from "lucide-react";
@@ -32,6 +32,7 @@ export default function DashboardView() {
   const [style, setStyle] = useState<CitationStyle>("apa7");
   const [analysisData, setAnalysisData] = useState<AuditResponse | null>(null);
   const [manuscriptText, setManuscriptText] = useState("");
+  const [manuscriptHtml, setManuscriptHtml] = useState<string | undefined>(undefined);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState("");
@@ -104,10 +105,11 @@ export default function DashboardView() {
 
       if (fileName.endsWith(".docx")) {
         try {
-          const extracted = await extractTextFromDocx(file);
-          if (extracted && extracted.trim()) {
-            setManuscriptText(extracted);
-            showToast(`Loaded ${file.name} in realtime editor`);
+          const extracted = await extractDocxSemantic(file);
+          if (extracted && extracted.text.trim()) {
+            setManuscriptText(extracted.text);
+            setManuscriptHtml(extracted.html);
+            showToast(`Loaded ${file.name} with original formatting in editor`);
           }
         } catch (err) {
           console.warn("Realtime docx extraction warning:", err);
@@ -119,14 +121,16 @@ export default function DashboardView() {
       ) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          if (e.target?.result) setManuscriptText(e.target.result as string);
+          if (e.target?.result) {
+            setManuscriptText(e.target.result as string);
+            setManuscriptHtml(undefined);
+          }
         };
         reader.readAsText(file);
       }
     },
     [showToast]
   );
-
 
   const handleTextChange = useCallback((text: string) => {
     setManuscriptText(text);
@@ -135,6 +139,7 @@ export default function DashboardView() {
   const handleClearDocument = useCallback(() => {
     setUploadedFile(null);
     setManuscriptText("");
+    setManuscriptHtml(undefined);
   }, []);
 
   // Keyboard shortcut (Cmd/Ctrl + Enter to trigger audit)
@@ -235,6 +240,7 @@ export default function DashboardView() {
                     <div className="space-y-6">
                       <ManuscriptEditorWorkspace
                         initialText={manuscriptText}
+                        initialHtml={manuscriptHtml}
                         auditData={analysisData}
                         documentName={documentName}
                         onTextChange={handleTextChange}

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useRef, useMemo } from "react";
 import { LexicalComposer } from "@lexical/react/LexicalComposer";
@@ -8,48 +8,80 @@ import { HistoryPlugin } from "@lexical/react/LexicalHistoryPlugin";
 import { OnChangePlugin } from "@lexical/react/LexicalOnChangePlugin";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
+import { ListNode, ListItemNode } from "@lexical/list";
+import { ListPlugin } from "@lexical/react/LexicalListPlugin";
+import { $generateNodesFromDOM } from "@lexical/html";
 import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext";
-import { $getRoot, $createParagraphNode, $createTextNode } from "lexical";
+import { $getRoot, $createParagraphNode, $createTextNode, type LexicalEditor } from "lexical";
 import { lexicalEditorTheme } from "./theme";
 import { FloatingBubbleToolbar } from "./FloatingBubbleToolbar";
 
 interface LexicalDocumentCanvasProps {
   initialText: string;
+  initialHtml?: string;
   onUpdateText: (newText: string) => void;
   onInspectSelection?: (text: string) => void;
   className?: string;
 }
 
+function loadHtmlOrTextIntoEditor(editor: LexicalEditor, html?: string, text?: string) {
+  editor.update(() => {
+    const root = $getRoot();
+    root.clear();
+
+    if (typeof window !== "undefined" && html && html.trim()) {
+      try {
+        const parser = new DOMParser();
+        const dom = parser.parseFromString(html, "text/html");
+        const nodes = $generateNodesFromDOM(editor, dom);
+        if (nodes.length > 0) {
+          root.append(...nodes);
+          return;
+        }
+      } catch (err) {
+        console.warn("Error importing semantic HTML into Lexical:", err);
+      }
+    }
+
+    const paragraphs = (text || "").split("\n\n");
+    for (const para of paragraphs) {
+      const pNode = $createParagraphNode();
+      if (para) {
+        pNode.append($createTextNode(para));
+      }
+      root.append(pNode);
+    }
+  });
+}
+
 function TextSyncPlugin({
   text,
+  html,
   onUpdateText,
 }: {
   text: string;
+  html?: string;
   onUpdateText: (newText: string) => void;
 }) {
   const [editor] = useLexicalComposerContext();
   const isInternalUpdate = useRef(false);
+  const lastHtmlRef = useRef(html);
 
-  // Synchronize incoming text from outside (e.g. 1-click fix, docx upload, reset draft)
+  // Synchronize incoming HTML or text from outside (e.g. docx upload, 1-click fix, reset draft)
   useEffect(() => {
+    if (html && html !== lastHtmlRef.current && !isInternalUpdate.current) {
+      lastHtmlRef.current = html;
+      loadHtmlOrTextIntoEditor(editor, html, text);
+      return;
+    }
+
     editor.getEditorState().read(() => {
       const currentContent = $getRoot().getTextContent();
       if (currentContent !== text && !isInternalUpdate.current) {
-        editor.update(() => {
-          const root = $getRoot();
-          root.clear();
-          const paragraphs = (text || "").split("\n\n");
-          for (const para of paragraphs) {
-            const pNode = $createParagraphNode();
-            if (para) {
-              pNode.append($createTextNode(para));
-            }
-            root.append(pNode);
-          }
-        });
+        loadHtmlOrTextIntoEditor(editor, html, text);
       }
     });
-  }, [editor, text]);
+  }, [editor, text, html]);
 
   return (
     <OnChangePlugin
@@ -70,6 +102,7 @@ function TextSyncPlugin({
 
 export function LexicalDocumentCanvas({
   initialText,
+  initialHtml,
   onUpdateText,
   onInspectSelection,
   className = "",
@@ -81,19 +114,9 @@ export function LexicalDocumentCanvas({
       onError: (error: Error) => {
         console.warn("Lexical editor warning:", error);
       },
-      nodes: [HeadingNode, QuoteNode],
-      editorState: () => {
-        const root = $getRoot();
-        if (root.getFirstChild() === null) {
-          const paragraphs = (initialText || "").split("\n\n");
-          for (const para of paragraphs) {
-            const pNode = $createParagraphNode();
-            if (para) {
-              pNode.append($createTextNode(para));
-            }
-            root.append(pNode);
-          }
-        }
+      nodes: [HeadingNode, QuoteNode, ListNode, ListItemNode],
+      editorState: (editor: LexicalEditor) => {
+        loadHtmlOrTextIntoEditor(editor, initialHtml, initialText);
       },
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -123,7 +146,8 @@ export function LexicalDocumentCanvas({
             ErrorBoundary={LexicalErrorBoundary}
           />
           <HistoryPlugin />
-          <TextSyncPlugin text={initialText} onUpdateText={onUpdateText} />
+          <ListPlugin />
+          <TextSyncPlugin text={initialText} html={initialHtml} onUpdateText={onUpdateText} />
           <FloatingBubbleToolbar onInspectSelection={onInspectSelection} />
         </div>
       </LexicalComposer>
