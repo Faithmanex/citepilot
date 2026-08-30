@@ -4,6 +4,15 @@
  * Extracts paragraphs, headings (H1-H3), and runs from word/document.xml with zero external dependencies.
  */
 
+function decodeXmlEntities(str: string): string {
+  return str
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'");
+}
+
 export function parseWordXmlToText(xml: string): string {
   if (!xml) return "";
 
@@ -29,13 +38,19 @@ export function parseWordXmlToText(xml: string): string {
       }
     }
 
+    // Replace tabs and breaks before extracting text runs
+    const normalizedRuns = pContent
+      .replace(/<w:tab(?:\s[^>]*)?\/>/gi, " ")
+      .replace(/<w:br(?:\s[^>]*)?\/>/gi, "\n")
+      .replace(/<w:cr(?:\s[^>]*)?\/>/gi, "\n");
+
     // Extract text runs <w:t>
     const textRegex = /<w:t(?:\s[^>]*)?>([^<]*)<\/w:t>/gi;
     let textMatch: RegExpExecArray | null;
     let paraText = "";
 
-    while ((textMatch = textRegex.exec(pContent)) !== null) {
-      paraText += textMatch[1];
+    while ((textMatch = textRegex.exec(normalizedRuns)) !== null) {
+      paraText += decodeXmlEntities(textMatch[1]);
     }
 
     const trimmed = paraText.trim();
