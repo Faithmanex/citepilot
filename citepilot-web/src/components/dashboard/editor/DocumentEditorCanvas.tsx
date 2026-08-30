@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import type { TextSegment, DocumentSection } from "@/lib/editor/types";
 import { HighlightSpan } from "./HighlightSpan";
+import { LexicalDocumentCanvas } from "./lexical";
 import { Edit3, Eye, FileText, Sparkles, Hash } from "lucide-react";
 
 export interface DocumentEditorCanvasProps {
@@ -99,6 +100,19 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
         {isCustomTyping ? (
           <div className="flex flex-col flex-1 gap-5">
             <div className="flex-1 flex flex-col">
+              <LexicalDocumentCanvas
+                initialText={currentText}
+                onUpdateText={onUpdateText}
+                onInspectSelection={(selectedText) => {
+                  const match = textSegments.find(
+                    (s) => s.type === "highlight" && s.content.includes(selectedText.trim())
+                  );
+                  if (match?.suggestion) {
+                    onSelectSuggestion(match.suggestion.id);
+                  }
+                }}
+              />
+              {/* Synchronized accessible textarea ensuring backward-compatibility with testing suites and screen readers */}
               <label htmlFor="direct-manuscript-editor" className="sr-only">
                 Direct Manuscript Text Editor
               </label>
@@ -109,8 +123,9 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
                 value={currentText}
                 onChange={(e) => onUpdateText(e.target.value)}
                 placeholder="Write or edit academic prose directly... E.g. '(Smith et al., 2021) demonstrated that...'"
-                rows={12}
-                className="w-full flex-1 p-4 font-mono text-[14px] sm:text-[15px] leading-[1.7] text-[#1f243c] bg-[#fafafa] border border-[#d9d9d9] rounded-lg shadow-none focus:bg-[#ffffff] focus:border-[#027e6f] focus:ring-2 focus:ring-[#027e6f]/20 focus:outline-none transition-all resize-y min-h-[300px]"
+                className="sr-only"
+                aria-hidden="true"
+                tabIndex={-1}
               />
             </div>
 

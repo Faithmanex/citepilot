@@ -25,7 +25,15 @@ export interface EditorSuggestion {
   impactScore: number;
   status: "active" | "accepted" | "dismissed";
   paragraphIndex?: number;
-  metadata?: Record<string, unknown>;
+  metadata?: {
+    doi?: string;
+    authors?: string;
+    crossrefVerified?: boolean;
+    guidelineRef?: string;
+    ruleCode?: string;
+    citationStyle?: string;
+    [key: string]: unknown;
+  };
 }
 
 export interface RigorMetrics {

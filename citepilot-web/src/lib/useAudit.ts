@@ -66,8 +66,11 @@ export function useAudit({
     setProgress({ visible: true, message: "Parsing document structure…", pct: 25 });
 
     const formData = new FormData();
-    if (file) formData.append("file", file);
-    if (textVal) formData.append("text", textVal);
+    if (textVal) {
+      formData.append("text", textVal);
+    } else if (file) {
+      formData.append("file", file);
+    }
     formData.append("citation_style", style);
     formData.append("mode", mode);
 

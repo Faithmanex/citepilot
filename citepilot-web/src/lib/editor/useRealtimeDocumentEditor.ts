@@ -39,19 +39,25 @@ export function useRealtimeDocumentEditor({
 
   // Debounced re-audit timer ref (2.5s idle)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const prevAuditRef = useRef<AuditResponse | null>(initialAudit);
+  const pristineTextRef = useRef<string>(initialText);
 
-  // Sync internal text when parent initialText changes and editor isn't dirty
+  // Sync internal text when parent initialText changes (e.g., loaded a new document)
   useEffect(() => {
-    if (!isDirty && initialText !== manuscriptText) {
+    pristineTextRef.current = initialText;
+    if (!isDirty) {
       setManuscriptText(initialText);
       setSuggestions(adaptAuditResponseToSuggestions(initialAudit, initialText));
+      setSelectedSuggestionId(null);
     }
-  }, [initialText, initialAudit, isDirty, manuscriptText]);
+  }, [initialText, initialAudit, isDirty]);
 
-  // When audit response arrives from backend
+  // When new audit response arrives from backend
   useEffect(() => {
-    if (initialAudit) {
+    if (initialAudit && initialAudit !== prevAuditRef.current) {
+      prevAuditRef.current = initialAudit;
       setSuggestions(adaptAuditResponseToSuggestions(initialAudit, manuscriptText));
+      setIsDirty(false);
     }
   }, [initialAudit, manuscriptText]);
 
@@ -196,6 +202,13 @@ export function useRealtimeDocumentEditor({
     acceptSuggestion,
     dismissSuggestion,
     updateText,
+    resetDraft: () => {
+      setManuscriptText(pristineTextRef.current);
+      setSuggestions(adaptAuditResponseToSuggestions(initialAudit, pristineTextRef.current));
+      setIsDirty(false);
+      setSelectedSuggestionId(null);
+      onTextChange?.(pristineTextRef.current);
+    },
     acceptAllInCategory,
   };
 }

@@ -66,7 +66,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     cleanup();
   });
 
-  it("renders the 60/40 split workspace with landing demo UI components", () => {
+  it("renders the 60/40 split workspace with production UI components", () => {
     render(
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
@@ -75,13 +75,13 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       />
     );
 
-    // Left canvas (DemoEditorSurface)
-    expect(screen.getByTestId("demo-editor-canvas")).toBeInTheDocument();
+    // Left canvas (DocumentEditorCanvas)
+    expect(screen.getByTestId("document-editor-canvas")).toBeInTheDocument();
     expect(screen.getByText(/Academic Manuscript Canvas/i)).toBeInTheDocument();
 
-    // Right rigor score & empty suggestion card (DemoScoreCounter & DemoSuggestionCard)
-    expect(screen.getByTestId("demo-score-counter")).toBeInTheDocument();
-    expect(screen.getByTestId("suggestion-card-empty")).toBeInTheDocument();
+    // Right rigor score & live suggestion feed (RigorScoreWidget & LiveSuggestionFeed)
+    expect(screen.getByTestId("rigor-score-widget")).toBeInTheDocument();
+    expect(screen.getByTestId("live-suggestion-feed")).toBeInTheDocument();
 
     // Export suite
     expect(screen.getByTestId("document-export-suite")).toBeInTheDocument();
@@ -98,15 +98,14 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       />
     );
 
-    expect(screen.getByTestId("demo-editor-canvas")).toBeInTheDocument();
+    expect(screen.getByTestId("document-editor-canvas")).toBeInTheDocument();
     expect(screen.getByText(/Chapter 1: Introduction/i)).toBeInTheDocument();
     expect(screen.getByText(/Word document paragraphs extracted in realtime/i)).toBeInTheDocument();
-    expect(screen.getByTestId("demo-score-counter")).toBeInTheDocument();
-    expect(screen.getByTestId("suggestion-card-empty")).toBeInTheDocument();
+    expect(screen.getByTestId("rigor-score-widget")).toBeInTheDocument();
+    expect(screen.getByTestId("live-suggestion-feed")).toBeInTheDocument();
   });
 
-
-  it("selects suggestion when clicking on highlight span in canvas and displays visual diff card", () => {
+  it("selects suggestion when clicking on highlight span in canvas and displays inspection card", () => {
     render(
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
@@ -116,7 +115,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
 
     // Find highlight span in canvas
     const highlightSpan = screen.getAllByRole("button").find((btn) =>
-      btn.getAttribute("data-testid")?.startsWith("highlight-")
+      btn.getAttribute("data-testid")?.startsWith("highlight-span-")
     );
 
     expect(highlightSpan).toBeDefined();
@@ -124,8 +123,8 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       fireEvent.click(highlightSpan);
 
       // Verify the active suggestion card renders with diff
-      expect(screen.getByTestId("demo-suggestion-card")).toBeInTheDocument();
-      expect(screen.getByText(/Accept Fix/i)).toBeInTheDocument();
+      expect(screen.getByTestId("selected-suggestion-card")).toBeInTheDocument();
+      expect(screen.getByTestId("accept-suggestion-button")).toBeInTheDocument();
     }
   });
 
@@ -142,7 +141,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
 
     // Click the first highlight span to open suggestion card
     const highlightSpan = screen.getAllByRole("button").find((btn) =>
-      btn.getAttribute("data-testid")?.startsWith("highlight-")
+      btn.getAttribute("data-testid")?.startsWith("highlight-span-")
     );
 
     expect(highlightSpan).toBeDefined();
@@ -150,7 +149,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       fireEvent.click(highlightSpan);
 
       // Click Accept Fix button
-      const acceptBtn = screen.getByRole("button", { name: /Accept Fix/i });
+      const acceptBtn = screen.getByTestId("accept-suggestion-button");
       fireEvent.click(acceptBtn);
 
       // Verify text update was called with the corrected string
@@ -171,11 +170,11 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       />
     );
 
-    const toggleBtn = screen.getByTestId("toggle-edit-mode-btn");
+    const toggleBtn = screen.getByTestId("workspace-toggle-edit-mode-btn");
     fireEvent.click(toggleBtn);
 
-    // Textarea from DemoEditorSurface is rendered
-    const textarea = screen.getByTestId("custom-manuscript-textarea");
+    // Textarea from DocumentEditorCanvas is rendered
+    const textarea = screen.getByTestId("direct-manuscript-textarea");
     expect(textarea).toBeInTheDocument();
 
     fireEvent.change(textarea, { target: { value: "New manual paragraph typed by researcher." } });
