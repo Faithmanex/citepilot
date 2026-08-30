@@ -3,6 +3,7 @@ import pytest
 from citepilot_ai.services.export_service import (
     generate_pdf_report,
     generate_redline_docx,
+    generate_clean_docx,
     _generate_minimal_pdf_bytes,
 )
 
@@ -45,5 +46,12 @@ def test_generate_redline_docx():
     }
 
     docx_bytes = generate_redline_docx(text, analysis_data)
+    assert isinstance(docx_bytes, bytes)
+    assert len(docx_bytes) > 500
+
+
+def test_generate_clean_docx():
+    text = "# Introduction\n\nThis is the revised manuscript text with accepted fixes.\n\n## Methods\n\nWe evaluated the performance empirically.\n\nReferences\n\nSmith, J. (2020). Example Study."
+    docx_bytes = generate_clean_docx(text)
     assert isinstance(docx_bytes, bytes)
     assert len(docx_bytes) > 500

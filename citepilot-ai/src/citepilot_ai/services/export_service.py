@@ -207,3 +207,45 @@ def generate_redline_docx(text: str, analysis_data: Dict) -> bytes:
     docx_bytes = buffer.getvalue()
     buffer.close()
     return docx_bytes
+
+
+def generate_clean_docx(text: str) -> bytes:
+    """
+    Generates a pristine, professionally formatted DOCX manuscript containing all accepted user revisions.
+    Recognizes markdown headings or standard academic section names, preserving clean academic structure.
+    """
+    doc = Document()
+    paragraphs = text.split("\n\n") if text else []
+    
+    academic_headings = {
+        "abstract", "introduction", "background", "literature review",
+        "methods", "methodology", "data and methods", "results",
+        "discussion", "limitations", "conclusion", "conclusions",
+        "references", "bibliography", "works cited", "acknowledgments",
+        "appendix", "appendices"
+    }
+
+    for para in paragraphs:
+        p_str = para.strip()
+        if not p_str:
+            continue
+
+        # Check for markdown headings
+        if p_str.startswith("# "):
+            doc.add_heading(p_str[2:].strip(), level=1)
+        elif p_str.startswith("## "):
+            doc.add_heading(p_str[3:].strip(), level=2)
+        elif p_str.startswith("### "):
+            doc.add_heading(p_str[4:].strip(), level=3)
+        elif p_str.lower() in academic_headings and len(p_str) < 60:
+            doc.add_heading(p_str, level=1)
+        else:
+            # Standard academic paragraph
+            doc.add_paragraph(p_str)
+
+    buffer = io.BytesIO()
+    doc.save(buffer)
+    docx_bytes = buffer.getvalue()
+    buffer.close()
+    return docx_bytes
+

@@ -133,6 +133,18 @@ def test_export_docx_endpoint():
     assert len(response.content) > 100
 
 
+def test_export_clean_docx_endpoint():
+    sample_payload = {
+        "text": "# Introduction\n\nSample clean revised manuscript text.",
+        "mode": "clean"
+    }
+    response = client.post("/api/v1/export/docx", json=sample_payload)
+    assert response.status_code == 200
+    assert "wordprocessingml" in response.headers["content-type"]
+    assert len(response.content) > 100
+
+
+
 def test_unhandled_api_route_404():
     response = client.post("/api/v1/nonexistent_route")
     assert response.status_code == 404

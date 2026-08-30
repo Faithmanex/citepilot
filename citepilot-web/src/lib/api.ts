@@ -56,16 +56,18 @@ export async function exportPdf(data: AuditResponse): Promise<Blob> {
 
 export async function exportDocx(
   text: string,
-  analysisData: AuditResponse
+  analysisData?: AuditResponse | null,
+  mode: "clean" | "redline" = "redline"
 ): Promise<Blob> {
   const resp = await request(
     `${getApiBase()}/export/docx`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, analysis_data: analysisData }),
+      body: JSON.stringify({ text, analysis_data: analysisData || {}, mode }),
     },
     "Export DOCX failed"
   );
   return resp.blob();
 }
+

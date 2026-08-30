@@ -18,7 +18,7 @@ from ...services.document_parser import (
     parse_txt_structured,
     split_body_and_references,
 )
-from ...services.export_service import generate_pdf_report, generate_redline_docx
+from ...services.export_service import generate_pdf_report, generate_redline_docx, generate_clean_docx
 from ...services.llm import AIServiceError
 
 logger = logging.getLogger(__name__)
@@ -245,7 +245,10 @@ async def export_docx_endpoint(payload: DocxExportRequest):
             extra = getattr(payload, "model_extra", None) or {}
             if extra and any(k in extra for k in ("citations", "references", "style_warnings")):
                 analysis_data = dict(extra)
-        docx_bytes = generate_redline_docx(payload.text, analysis_data)
+        if payload.mode == "clean":
+            docx_bytes = generate_clean_docx(payload.text)
+        else:
+            docx_bytes = generate_redline_docx(payload.text, analysis_data)
         return Response(
             content=docx_bytes,
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",

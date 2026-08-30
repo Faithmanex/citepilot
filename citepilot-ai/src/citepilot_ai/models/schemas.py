@@ -85,6 +85,7 @@ class PdfExportRequest(BaseModel):
 class DocxExportRequest(BaseModel):
     text: str = Field(default="", description="Original manuscript text")
     analysis_data: Dict[str, Any] = Field(default_factory=dict, description="Analysis data")
+    mode: str = Field(default="redline", description="'redline' or 'clean'")
 
     model_config = {"extra": "allow"}
 

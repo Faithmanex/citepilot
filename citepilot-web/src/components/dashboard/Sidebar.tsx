@@ -28,7 +28,7 @@ interface SidebarProps {
 }
 
 const navItems = [
-  { panel: "overview",  icon: LayoutDashboard, label: "Overview",           badgeKey: null },
+  { panel: "overview",  icon: LayoutDashboard, label: "Live Editor",        badgeKey: null },
   { panel: "matching",  icon: GitCompare,       label: "Citation Matching",  badgeKey: "matching" },
   { panel: "crossref",  icon: CheckCircle2,     label: "Crossref Check",     badgeKey: "crossref" },
   { panel: "style",     icon: BookOpenCheck,    label: "Style Rules",        badgeKey: "style" },

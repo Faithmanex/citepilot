@@ -17,6 +17,7 @@ import RecencyPanel from "./RecencyPanel";
 import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
 import HistoryPanel from "./HistoryPanel";
+import ManuscriptEditorWorkspace from "./editor/ManuscriptEditorWorkspace";
 import AuthModal from "../auth/AuthModal";
 import SubscriptionModal from "../subscription/SubscriptionModal";
 import { AlertOctagon, CheckCircle2 } from "lucide-react";
@@ -173,13 +174,31 @@ export default function DashboardView() {
           />
 
           <div className="flex-1 px-4 sm:px-8 py-6 pb-20 max-w-7xl w-full mx-auto space-y-6">
-            <InputArea
-              onFileSelect={handleFileSelect}
-              onTextChange={handleTextChange}
-              onClear={handleClearDocument}
-              hasFile={!!uploadedFile}
-              hasText={!!manuscriptText.trim()}
-            />
+            {!hasDocument ? (
+              <InputArea
+                onFileSelect={handleFileSelect}
+                onTextChange={handleTextChange}
+                onClear={handleClearDocument}
+                hasFile={!!uploadedFile}
+                hasText={!!manuscriptText.trim()}
+              />
+            ) : (
+              <details className="group bg-[#fcfdfd] border border-[#ebebeb] rounded-lg overflow-hidden transition-all">
+                <summary className="px-4 py-2.5 cursor-pointer text-xs font-mono font-bold uppercase tracking-wider text-[#545454] hover:text-[#0e101a] flex items-center justify-between select-none">
+                  <span>Replace Document or Edit Raw Input</span>
+                  <span className="text-[10px] text-[#707070] group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div className="p-4 pt-0 border-t border-[#ebebeb] bg-white">
+                  <InputArea
+                    onFileSelect={handleFileSelect}
+                    onTextChange={handleTextChange}
+                    onClear={handleClearDocument}
+                    hasFile={!!uploadedFile}
+                    hasText={!!manuscriptText.trim()}
+                  />
+                </div>
+              </details>
+            )}
 
             {/* Shimmer Skeleton Loader state when audit is running */}
             {progress.visible ? (
@@ -196,7 +215,30 @@ export default function DashboardView() {
             ) : (
               <>
                 {activePanel === "overview" && (
-                  <OverviewPanel data={analysisData} mode={currentMode} />
+                  hasDocument ? (
+                    <div className="space-y-6">
+                      <ManuscriptEditorWorkspace
+                        initialText={manuscriptText}
+                        auditData={analysisData}
+                        documentName={documentName}
+                        onTextChange={handleTextChange}
+                        onRequestReAudit={() => runAudit()}
+                      />
+
+                      {/* Collapsible Macro Diagnostic Metrics */}
+                      <details className="group border border-[#ebebeb] bg-[#fafafa] rounded-lg overflow-hidden transition-all">
+                        <summary className="p-4 cursor-pointer font-bold text-xs uppercase tracking-wider text-[#545454] hover:text-[#0e101a] flex items-center justify-between select-none">
+                          <span>View Macro Diagnostics & Full Metric Breakdown</span>
+                          <span className="text-[11px] font-normal text-[#707070] group-open:rotate-180 transition-transform">▼</span>
+                        </summary>
+                        <div className="p-4 pt-0 bg-white border-t border-[#ebebeb]">
+                          <OverviewPanel data={analysisData} mode={currentMode} />
+                        </div>
+                      </details>
+                    </div>
+                  ) : (
+                    <OverviewPanel data={analysisData} mode={currentMode} />
+                  )
                 )}
                 {activePanel === "matching" && (
                   <MatchingPanel data={analysisData} />
