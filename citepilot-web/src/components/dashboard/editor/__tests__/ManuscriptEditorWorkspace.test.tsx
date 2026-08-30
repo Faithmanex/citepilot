@@ -159,7 +159,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     }
   });
 
-  it("toggles to direct prose editing mode and accepts typing", () => {
+  it("toggles to direct prose editing mode with pure Lexical canvas", () => {
     const handleTextChange = vi.fn();
 
     render(
@@ -173,12 +173,12 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     const toggleBtn = screen.getByTestId("workspace-toggle-edit-mode-btn");
     fireEvent.click(toggleBtn);
 
-    // Textarea from DocumentEditorCanvas is rendered
-    const textarea = screen.getByTestId("direct-manuscript-textarea");
-    expect(textarea).toBeInTheDocument();
-
-    fireEvent.change(textarea, { target: { value: "New manual paragraph typed by researcher." } });
-    expect(handleTextChange).toHaveBeenCalledWith("New manual paragraph typed by researcher.");
+    // Lexical document canvas and contenteditable surface are rendered (pure Lexical, no textarea fallback)
+    expect(screen.getByTestId("lexical-document-canvas")).toBeInTheDocument();
+    const contentEditable = screen.getByTestId("lexical-content-editable");
+    expect(contentEditable).toBeInTheDocument();
+    expect(screen.queryByTestId("direct-manuscript-textarea")).not.toBeInTheDocument();
+    expect(contentEditable).toHaveTextContent(/Large language models require rigorous citation verification/i);
   });
 
   it("triggers clean docx, redline docx, and copy manuscript exports", async () => {

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useRef } from "react";
+import React from "react";
 import type { TextSegment, DocumentSection } from "@/lib/editor/types";
 import { HighlightSpan } from "./HighlightSpan";
 import { LexicalDocumentCanvas } from "./lexical";
-import { Edit3, Eye, FileText, Sparkles, Hash } from "lucide-react";
+import { Edit3, Eye, Sparkles, Hash } from "lucide-react";
 
 export interface DocumentEditorCanvasProps {
   currentText: string;
@@ -31,7 +31,6 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
   onHoverSuggestion,
   className = "",
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const words = currentText.trim().split(/\s+/).filter(Boolean).length;
   const chars = currentText.length;
   const readingTimeMinutes = Math.max(1, Math.ceil(words / 225));
@@ -115,24 +114,9 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
                   }
                 }}
               />
-              {/* Synchronized accessible textarea ensuring backward-compatibility with testing suites and screen readers */}
-              <label htmlFor="direct-manuscript-editor" className="sr-only">
-                Direct Manuscript Text Editor
-              </label>
-              <textarea
-                id="direct-manuscript-editor"
-                ref={textareaRef}
-                data-testid="direct-manuscript-textarea"
-                value={currentText}
-                onChange={(e) => onUpdateText(e.target.value)}
-                placeholder="Write or edit academic prose directly... E.g. '(Smith et al., 2021) demonstrated that...'"
-                className="sr-only"
-                aria-hidden="true"
-                tabIndex={-1}
-              />
             </div>
 
-            {/* Live Highlight Preview Underneath Textarea */}
+            {/* Live Highlight Preview Underneath Lexical Canvas */}
             <div className="p-4 bg-[#fcfdfd] border border-[#ebebeb] rounded-lg space-y-2">
               <div className="flex items-center justify-between text-[11px] font-mono font-bold uppercase tracking-wider text-[#707070]">
                 <span>Live Audit Preview (Click any highlight):</span>
