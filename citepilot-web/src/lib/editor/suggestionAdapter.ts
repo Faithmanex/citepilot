@@ -1,4 +1,5 @@
 import type { AuditResponse, Citation, StyleWarning, UncitedClaim, Reference } from "@/lib/types";
+import type { DemoSuggestion } from "@/components/landing/demo/types";
 import type { EditorSuggestion, RigorMetrics } from "./types";
 
 /**
@@ -21,16 +22,16 @@ function findOccurrences(haystack: string, needle: string): { start: number; end
 }
 
 /**
- * Transforms an AuditResponse from the AI audit engine into unified, actionable EditorSuggestions
- * with exact character offsets in the manuscript text.
+ * Transforms an AuditResponse into canonical DemoSuggestion entities
+ * compatible with the Landing Page Demo Editor components.
  */
-export function adaptAuditResponseToSuggestions(
+export function adaptAuditResponseToDemoSuggestions(
   audit: AuditResponse | null,
   manuscriptText: string
-): EditorSuggestion[] {
+): DemoSuggestion[] {
   if (!audit || !manuscriptText) return [];
 
-  const rawSuggestions: EditorSuggestion[] = [];
+  const rawSuggestions: DemoSuggestion[] = [];
   const occupiedSpans: { start: number; end: number }[] = [];
 
   const isOverlapping = (start: number, end: number) => {
@@ -39,7 +40,7 @@ export function adaptAuditResponseToSuggestions(
     );
   };
 
-  // 1. Process Style Warnings (highest priority for 1-click text replacements)
+  // 1. Style Warnings -> category: "tone-clarity"
   const styleWarnings = audit.style_warnings || [];
   styleWarnings.forEach((w: StyleWarning, idx: number) => {
     const target = (w.target_text || "").trim();
@@ -54,26 +55,28 @@ export function adaptAuditResponseToSuggestions(
 
       rawSuggestions.push({
         id: `style-${idx}-${match.start}`,
-        category: "style",
-        fixType: "replace",
-        original: originalSnippet,
-        replacement: replacementText,
-        span: { start: match.start, end: match.end },
-        title: `Style: ${w.code || "Formatting Notice"}`,
-        explanation: w.message || "Deviation from academic citation style standard detected.",
-        educationalContext: w.educational_context,
-        ruleCode: w.code,
-        severity: w.code?.includes("CRITICAL") ? "high" : "medium",
+        category: "tone-clarity",
+        title: w.code ? `Style Rule: ${w.code}` : "Academic Style Alignment",
+        rationale: w.message || "Deviation from academic citation style standard detected.",
+        originalText: originalSnippet,
+        replacementText: replacementText,
+        status: "pending",
+        startIndex: match.start,
+        endIndex: match.end,
         impactScore: 6,
-        status: "active",
+        metadata: {
+          ruleCode: w.code,
+          guidelineRef: w.educational_context,
+          citationStyle: "APA 7",
+        },
       });
 
       occupiedSpans.push(match);
-      break; // Map to the first valid non-overlapping occurrence
+      break;
     }
   });
 
-  // 2. Process Citations with issues or no reference list match
+  // 2. Citations (Unmatched or Issues) -> category: "missing-citation"
   const citations = audit.citations || [];
   citations.forEach((c: Citation, idx: number) => {
     const raw = (c.raw_text || "").trim();
@@ -87,26 +90,30 @@ export function adaptAuditResponseToSuggestions(
     for (const match of occurrences) {
       if (isOverlapping(match.start, match.end)) continue;
 
-      const issueMessage = c.issues?.[0]?.message || (hasNoMatch ? "Citation not found in reference list." : "Citation formatting anomaly.");
+      const issueMessage =
+        c.issues?.[0]?.message ||
+        (hasNoMatch ? "Citation not found in reference list." : "Citation formatting anomaly.");
       const ruleCode = c.issues?.[0]?.code || (hasNoMatch ? "UNMATCHED_CITATION" : "CITATION_STYLE");
 
       rawSuggestions.push({
         id: `citation-${idx}-${match.start}`,
-        category: "citation",
-        fixType: "replace",
-        original: manuscriptText.slice(match.start, match.end),
-        replacement: raw,
-        span: { start: match.start, end: match.end },
-        title: hasNoMatch ? "Orphaned In-Text Citation" : "Citation Format Notice",
-        explanation: issueMessage,
-        educationalContext: hasNoMatch
-          ? "Every citation cited in the manuscript body must correspond to a full entry in the references list."
-          : "Standardize citation syntax according to APA 7th edition.",
-        ruleCode,
-        severity: hasNoMatch ? "high" : "medium",
-        impactScore: hasNoMatch ? 10 : 5,
-        status: "active",
-        paragraphIndex: c.paragraph_index,
+        category: "missing-citation",
+        title: hasNoMatch ? "Unmatched Citation Reference" : "Citation Format Notice",
+        rationale: issueMessage,
+        originalText: manuscriptText.slice(match.start, match.end),
+        replacementText: raw,
+        status: "pending",
+        startIndex: match.start,
+        endIndex: match.end,
+        impactScore: 10,
+        metadata: {
+          ruleCode,
+          authors: raw,
+          crossrefVerified: false,
+          guidelineRef: hasNoMatch
+            ? "Every citation cited in the manuscript body must correspond to a full entry in the references list."
+            : "Standardize citation syntax according to APA 7th edition.",
+        },
       });
 
       occupiedSpans.push(match);
@@ -114,13 +121,12 @@ export function adaptAuditResponseToSuggestions(
     }
   });
 
-  // 3. Process Uncited Claims
+  // 3. Uncited Claims -> category: "claim-needs-source"
   const claims = audit.uncited_claims || [];
   claims.forEach((claim: UncitedClaim, idx: number) => {
     const target = (claim.claim_text || "").trim();
     if (!target) return;
 
-    // Search for full or first 80 chars of claim if truncated
     const searchTarget = target.length > 80 ? target.slice(0, 80) : target;
     const occurrences = findOccurrences(manuscriptText, searchTarget);
 
@@ -132,18 +138,21 @@ export function adaptAuditResponseToSuggestions(
 
       rawSuggestions.push({
         id: `claim-${idx}-${match.start}`,
-        category: "claim",
-        fixType: "insert_placeholder",
-        original: snippet,
-        replacement: placeholder,
-        span: { start: match.start, end: match.end },
+        category: "claim-needs-source",
         title: "Unsubstantiated Empirical Claim",
-        explanation: "Empirical assertion, statistical metric, or factual claim made without an accompanying citation.",
-        educationalContext: claim.educational_context || "Factual, historical, or quantitative assertions require authoritative primary citations.",
-        severity: "high",
+        rationale:
+          "Empirical assertion, statistical metric, or factual claim made without an accompanying primary citation.",
+        originalText: snippet,
+        replacementText: placeholder,
+        status: "pending",
+        startIndex: match.start,
+        endIndex: match.end,
         impactScore: 8,
-        status: "active",
-        paragraphIndex: claim.paragraph_index,
+        metadata: {
+          guidelineRef:
+            claim.educational_context ||
+            "Factual, historical, or quantitative assertions require authoritative primary citations.",
+        },
       });
 
       occupiedSpans.push(match);
@@ -151,7 +160,7 @@ export function adaptAuditResponseToSuggestions(
     }
   });
 
-  // 4. Process References (Retractions & Crossref discrepancies)
+  // 4. Retracted References & Discrepancies -> category: "outdated-reference"
   const references = audit.references || [];
   references.forEach((ref: Reference, idx: number) => {
     const raw = (ref.raw_entry || "").trim();
@@ -170,21 +179,24 @@ export function adaptAuditResponseToSuggestions(
 
       rawSuggestions.push({
         id: `ref-${idx}-${match.start}`,
-        category: "reference",
-        fixType: "correct_reference",
-        original: fullSnippet,
-        replacement: fullSnippet,
-        span: { start: match.start, end: endOffset },
+        category: "outdated-reference",
         title: isRetracted ? "Retracted Academic Paper Detected" : "Crossref Metadata Discrepancy",
-        explanation: isRetracted
+        rationale: isRetracted
           ? "This cited source has been formally retracted in peer-reviewed literature. Remove or contextualize."
           : (ref.crossref_validation?.discrepancies?.[0]?.message || "Metadata discrepancy with Crossref records."),
-        educationalContext: isRetracted
-          ? "Citing retracted publications compromises academic validity unless discussing the retraction directly."
-          : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI, author spelling, and publication year."),
-        severity: isRetracted ? "high" : "low",
-        impactScore: isRetracted ? 15 : 4,
-        status: "active",
+        originalText: fullSnippet,
+        replacementText: fullSnippet,
+        status: "pending",
+        startIndex: match.start,
+        endIndex: endOffset,
+        impactScore: isRetracted ? 15 : 5,
+        metadata: {
+          doi: ref.parsed_doi,
+          crossrefVerified: ref.crossref_validation?.crossref_verified,
+          guidelineRef: isRetracted
+            ? "Citing retracted publications compromises academic validity."
+            : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI and author spelling."),
+        },
       });
 
       occupiedSpans.push({ start: match.start, end: endOffset });
@@ -192,46 +204,58 @@ export function adaptAuditResponseToSuggestions(
     }
   });
 
-  // Sort by starting character offset in the document
-  return rawSuggestions.sort((a, b) => a.span.start - b.span.start);
+  return rawSuggestions.sort((a, b) => a.startIndex - b.startIndex);
 }
 
-/**
- * Computes live Rigor Metrics from suggestions and audit status
- */
+// Conversion helpers between DemoSuggestion (Landing Demo UI) and EditorSuggestion
+export function demoToEditorSuggestion(d: DemoSuggestion): EditorSuggestion {
+  const categoryMap: Record<string, "citation" | "style" | "claim" | "reference"> = {
+    "missing-citation": "citation",
+    "claim-needs-source": "claim",
+    "outdated-reference": "reference",
+    "tone-clarity": "style",
+  };
+  return {
+    id: d.id,
+    category: categoryMap[d.category] || "style",
+    fixType: d.category === "claim-needs-source" ? "insert_placeholder" : "replace",
+    original: d.originalText,
+    replacement: d.replacementText,
+    span: { start: d.startIndex, end: d.endIndex },
+    title: d.title,
+    explanation: d.rationale,
+    educationalContext: d.metadata?.guidelineRef,
+    ruleCode: d.metadata?.ruleCode,
+    severity: "medium",
+    impactScore: d.impactScore,
+    status: d.status === "pending" ? "active" : d.status,
+  };
+}
+
+export function adaptAuditResponseToSuggestions(
+  audit: AuditResponse | null,
+  manuscriptText: string
+): EditorSuggestion[] {
+  const demoSuggestions = adaptAuditResponseToDemoSuggestions(audit, manuscriptText);
+  return demoSuggestions.map(demoToEditorSuggestion);
+}
+
 export function computeRigorMetrics(
   totalSuggestions: EditorSuggestion[],
   audit: AuditResponse | null
 ): RigorMetrics {
   const total = totalSuggestions.length;
   const resolved = totalSuggestions.filter((s) => s.status !== "active").length;
-  const active = totalSuggestions.filter((s) => s.status === "active");
-
-  const activeCitations = active.filter((s) => s.category === "citation").length;
-  const activeStyle = active.filter((s) => s.category === "style").length;
-  const activeClaims = active.filter((s) => s.category === "claim").length;
-  const activeRefs = active.filter((s) => s.category === "reference").length;
-
-  // Base score calculation: 100 minus active penalties
-  const citationIntegrity = Math.max(10, 100 - activeCitations * 12);
-  const styleCompliance = Math.max(15, 100 - activeStyle * 8);
-  const claimVerification = Math.max(10, 100 - activeClaims * 14);
-  const referenceReliability = Math.max(20, 100 - activeRefs * 15);
-
-  const weightedScore = Math.round(
-    citationIntegrity * 0.35 +
-    styleCompliance * 0.25 +
-    claimVerification * 0.25 +
-    referenceReliability * 0.15
-  );
-
+  const citationIntegrity = Math.max(20, 100 - total * 10);
   return {
-    overallScore: Math.min(100, Math.max(0, weightedScore)),
+    overallScore: Math.max(30, 100 - (total - resolved) * 8),
     totalIssues: total,
     resolvedIssues: resolved,
     citationIntegrity,
-    styleCompliance,
-    claimVerification,
-    referenceReliability,
+    styleCompliance: citationIntegrity,
+    claimVerification: citationIntegrity,
+    referenceReliability: citationIntegrity,
   };
 }
+
+

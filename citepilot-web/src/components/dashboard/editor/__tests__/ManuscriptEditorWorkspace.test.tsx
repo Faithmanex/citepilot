@@ -66,8 +66,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     cleanup();
   });
 
-
-  it("renders the 60/40 split workspace with document canvas and suggestion feed", () => {
+  it("renders the 60/40 split workspace with landing demo UI components", () => {
     render(
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
@@ -76,19 +75,38 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       />
     );
 
-    // Left canvas
-    expect(screen.getByTestId("document-editor-canvas")).toBeInTheDocument();
+    // Left canvas (DemoEditorSurface)
+    expect(screen.getByTestId("demo-editor-canvas")).toBeInTheDocument();
     expect(screen.getByText(/Academic Manuscript Canvas/i)).toBeInTheDocument();
 
-    // Right rigor score & suggestions
-    expect(screen.getByTestId("rigor-score-widget")).toBeInTheDocument();
-    expect(screen.getByTestId("live-suggestion-feed")).toBeInTheDocument();
+    // Right rigor score & empty suggestion card (DemoScoreCounter & DemoSuggestionCard)
+    expect(screen.getByTestId("demo-score-counter")).toBeInTheDocument();
+    expect(screen.getByTestId("suggestion-card-empty")).toBeInTheDocument();
 
     // Export suite
     expect(screen.getByTestId("document-export-suite")).toBeInTheDocument();
   });
 
-  it("selects suggestion when clicking on highlight span in canvas and displays visual diff", () => {
+  it("renders freshly uploaded Word document in realtime before audit data arrives", () => {
+    const docxText = "# Chapter 1: Introduction\n\nWord document paragraphs extracted in realtime.";
+
+    render(
+      <ManuscriptEditorWorkspace
+        initialText={docxText}
+        auditData={null}
+        documentName="freshly_uploaded_manuscript.docx"
+      />
+    );
+
+    expect(screen.getByTestId("demo-editor-canvas")).toBeInTheDocument();
+    expect(screen.getByText(/Chapter 1: Introduction/i)).toBeInTheDocument();
+    expect(screen.getByText(/Word document paragraphs extracted in realtime/i)).toBeInTheDocument();
+    expect(screen.getByTestId("demo-score-counter")).toBeInTheDocument();
+    expect(screen.getByTestId("suggestion-card-empty")).toBeInTheDocument();
+  });
+
+
+  it("selects suggestion when clicking on highlight span in canvas and displays visual diff card", () => {
     render(
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
@@ -96,18 +114,18 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       />
     );
 
-    // Find highlight spans
+    // Find highlight span in canvas
     const highlightSpan = screen.getAllByRole("button").find((btn) =>
-      btn.getAttribute("data-testid")?.startsWith("highlight-span-")
+      btn.getAttribute("data-testid")?.startsWith("highlight-")
     );
 
     expect(highlightSpan).toBeDefined();
     if (highlightSpan) {
       fireEvent.click(highlightSpan);
 
-      // Verify the active suggestion card renders diff
-      expect(screen.getByTestId("selected-suggestion-card")).toBeInTheDocument();
-      expect(screen.getByText("Accept Fix")).toBeInTheDocument();
+      // Verify the active suggestion card renders with diff
+      expect(screen.getByTestId("demo-suggestion-card")).toBeInTheDocument();
+      expect(screen.getByText(/Accept Fix/i)).toBeInTheDocument();
     }
   });
 
@@ -122,18 +140,24 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       />
     );
 
-    // Select the first suggestion item from the feed list
-    const firstItem = screen.getAllByTestId(/suggestion-item-/)[0];
-    fireEvent.click(firstItem);
+    // Click the first highlight span to open suggestion card
+    const highlightSpan = screen.getAllByRole("button").find((btn) =>
+      btn.getAttribute("data-testid")?.startsWith("highlight-")
+    );
 
-    // Click Accept Fix button
-    const acceptBtn = screen.getByTestId("accept-suggestion-button");
-    fireEvent.click(acceptBtn);
+    expect(highlightSpan).toBeDefined();
+    if (highlightSpan) {
+      fireEvent.click(highlightSpan);
 
-    // Verify text update was called with the corrected string
-    expect(handleTextChange).toHaveBeenCalled();
-    const updatedTextArg = handleTextChange.mock.calls[0][0];
-    expect(updatedTextArg).toContain("(Vaswani et al., 2017)");
+      // Click Accept Fix button
+      const acceptBtn = screen.getByRole("button", { name: /Accept Fix/i });
+      fireEvent.click(acceptBtn);
+
+      // Verify text update was called with the corrected string
+      expect(handleTextChange).toHaveBeenCalled();
+      const updatedTextArg = handleTextChange.mock.calls[0][0];
+      expect(updatedTextArg).toContain("(Vaswani et al., 2017)");
+    }
   });
 
   it("toggles to direct prose editing mode and accepts typing", () => {
@@ -150,8 +174,8 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     const toggleBtn = screen.getByTestId("toggle-edit-mode-btn");
     fireEvent.click(toggleBtn);
 
-    // Textarea is rendered
-    const textarea = screen.getByTestId("direct-manuscript-textarea");
+    // Textarea from DemoEditorSurface is rendered
+    const textarea = screen.getByTestId("custom-manuscript-textarea");
     expect(textarea).toBeInTheDocument();
 
     fireEvent.change(textarea, { target: { value: "New manual paragraph typed by researcher." } });

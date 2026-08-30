@@ -5,8 +5,7 @@ import {
   detectAcademicSections,
 } from "../documentMutation";
 import {
-  adaptAuditResponseToSuggestions,
-  computeRigorMetrics,
+  adaptAuditResponseToDemoSuggestions,
 } from "../suggestionAdapter";
 import type { EditorSuggestion } from "../types";
 import type { AuditResponse } from "@/lib/types";
@@ -208,37 +207,21 @@ Urnov, F. et al. (2010). Genome editing. Nature.`;
     ],
   };
 
-  it("adapts AuditResponse to EditorSuggestions with accurate offsets and categories", () => {
-    const suggestions = adaptAuditResponseToSuggestions(mockAudit, manuscript);
+  it("adapts AuditResponse to DemoSuggestions with accurate offsets and categories", () => {
+    const suggestions = adaptAuditResponseToDemoSuggestions(mockAudit, manuscript);
 
     expect(suggestions.length).toBeGreaterThan(0);
 
-    const styleSuggestion = suggestions.find((s) => s.category === "style");
+    const styleSuggestion = suggestions.find((s) => s.category === "tone-clarity");
     expect(styleSuggestion).toBeDefined();
-    expect(styleSuggestion?.replacement).toBe("(Urnov et al., 2010)");
+    expect(styleSuggestion?.replacementText).toBe("(Urnov et al., 2010)");
 
-    const claimSuggestion = suggestions.find((s) => s.category === "claim");
+    const claimSuggestion = suggestions.find((s) => s.category === "claim-needs-source");
     expect(claimSuggestion).toBeDefined();
-    expect(claimSuggestion?.fixType).toBe("insert_placeholder");
+    expect(claimSuggestion?.replacementText).toContain("[citation needed]");
 
-    const refSuggestion = suggestions.find((s) => s.category === "reference");
+    const refSuggestion = suggestions.find((s) => s.category === "outdated-reference");
     expect(refSuggestion).toBeDefined();
   });
 
-  it("computes rigorous metrics reflecting resolved suggestions", () => {
-    const suggestions = adaptAuditResponseToSuggestions(mockAudit, manuscript);
-    const initialMetrics = computeRigorMetrics(suggestions, mockAudit);
-
-    expect(initialMetrics.totalIssues).toBe(suggestions.length);
-    expect(initialMetrics.resolvedIssues).toBe(0);
-
-    // Resolve one suggestion
-    const resolvedSuggestions = suggestions.map((s, idx) =>
-      idx === 0 ? { ...s, status: "accepted" as const } : s
-    );
-
-    const updatedMetrics = computeRigorMetrics(resolvedSuggestions, mockAudit);
-    expect(updatedMetrics.resolvedIssues).toBe(1);
-    expect(updatedMetrics.overallScore).toBeGreaterThanOrEqual(initialMetrics.overallScore);
-  });
 });

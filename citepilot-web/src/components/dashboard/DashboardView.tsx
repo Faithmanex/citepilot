@@ -18,6 +18,7 @@ import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
 import HistoryPanel from "./HistoryPanel";
 import ManuscriptEditorWorkspace from "./editor/ManuscriptEditorWorkspace";
+import { extractTextFromDocx } from "@/lib/editor/docxExtractor";
 import AuthModal from "../auth/AuthModal";
 import SubscriptionModal from "../subscription/SubscriptionModal";
 import { AlertOctagon, CheckCircle2 } from "lucide-react";
@@ -96,21 +97,36 @@ export default function DashboardView() {
     setStyle(newStyle);
   }, []);
 
-  const handleFileSelect = useCallback((file: File) => {
-    setUploadedFile(file);
-    setManuscriptText("");
-    if (
-      file.name.toLowerCase().endsWith(".txt") ||
-      file.name.toLowerCase().endsWith(".rtf") ||
-      file.name.toLowerCase().endsWith(".bib")
-    ) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e.target?.result) setManuscriptText(e.target.result as string);
-      };
-      reader.readAsText(file);
-    }
-  }, []);
+  const handleFileSelect = useCallback(
+    async (file: File) => {
+      setUploadedFile(file);
+      const fileName = file.name.toLowerCase();
+
+      if (fileName.endsWith(".docx")) {
+        try {
+          const extracted = await extractTextFromDocx(file);
+          if (extracted && extracted.trim()) {
+            setManuscriptText(extracted);
+            showToast(`Loaded ${file.name} in realtime editor`);
+          }
+        } catch (err) {
+          console.warn("Realtime docx extraction warning:", err);
+        }
+      } else if (
+        fileName.endsWith(".txt") ||
+        fileName.endsWith(".rtf") ||
+        fileName.endsWith(".bib")
+      ) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) setManuscriptText(e.target.result as string);
+        };
+        reader.readAsText(file);
+      }
+    },
+    [showToast]
+  );
+
 
   const handleTextChange = useCallback((text: string) => {
     setManuscriptText(text);
