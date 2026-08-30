@@ -24,20 +24,6 @@ export function parseWordXmlToText(xml: string): string {
   while ((pMatch = paragraphRegex.exec(xml)) !== null) {
     const pContent = pMatch[1];
 
-    // Detect heading level from <w:pStyle w:val="Heading1" .../>
-    let headingPrefix = "";
-    const styleMatch = /<w:pStyle[^>]*w:val="([^"]+)"/i.exec(pContent);
-    if (styleMatch) {
-      const val = styleMatch[1].toLowerCase();
-      if (val === "heading1" || val === "title") {
-        headingPrefix = "# ";
-      } else if (val === "heading2") {
-        headingPrefix = "## ";
-      } else if (val === "heading3") {
-        headingPrefix = "### ";
-      }
-    }
-
     // Replace tabs and breaks before extracting text runs
     const normalizedRuns = pContent
       .replace(/<w:tab(?:\s[^>]*)?\/>/gi, " ")
@@ -55,7 +41,7 @@ export function parseWordXmlToText(xml: string): string {
 
     const trimmed = paraText.trim();
     if (trimmed) {
-      paragraphs.push(headingPrefix + trimmed);
+      paragraphs.push(trimmed);
     }
   }
 

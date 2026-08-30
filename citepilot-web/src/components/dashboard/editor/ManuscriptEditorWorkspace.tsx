@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { AuditResponse } from "@/lib/types";
+import type { AuditResponse, AuditMode } from "@/lib/types";
 import type { EditorSuggestionCategory } from "@/lib/editor/types";
 import { DocumentEditorCanvas } from "./DocumentEditorCanvas";
 import { RigorScoreWidget } from "./RigorScoreWidget";
@@ -14,6 +14,7 @@ export interface ManuscriptEditorWorkspaceProps {
   initialText: string;
   auditData: AuditResponse | null;
   documentName?: string;
+  mode?: AuditMode;
   onTextChange?: (newText: string) => void;
   onRequestReAudit?: (newText: string) => void;
   className?: string;
@@ -23,6 +24,7 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
   initialText,
   auditData,
   documentName = "manuscript.docx",
+  mode = "full",
   onTextChange,
   onRequestReAudit,
   className = "",

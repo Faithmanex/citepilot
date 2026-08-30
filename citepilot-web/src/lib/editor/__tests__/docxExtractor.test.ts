@@ -42,9 +42,11 @@ describe("Realtime OpenXML DOCX Extractor", () => {
 
     const extracted = parseWordXmlToText(mockWordXml);
 
-    expect(extracted).toContain("# Introduction to Gene Editing");
+    expect(extracted).toContain("Introduction to Gene Editing");
+    expect(extracted).not.toContain("# Introduction");
     expect(extracted).toContain("Recent advances in CRISPR technology have accelerated precision medicine (Urnov et al. 2010).");
-    expect(extracted).toContain("## Methodological Rigor");
+    expect(extracted).toContain("Methodological Rigor");
+    expect(extracted).not.toContain("## Methodological");
     expect(extracted).toContain("We audited 450 clinical citations across peer-reviewed publications.");
   });
 
