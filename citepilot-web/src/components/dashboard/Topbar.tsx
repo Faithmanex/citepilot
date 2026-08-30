@@ -140,6 +140,7 @@ export default function Topbar({
 
 
           <button
+            data-testid="run-audit-btn"
             className="flex items-center gap-2 h-9 px-4 bg-[#027e6f] hover:bg-[#02665a] text-white font-bold text-xs rounded-lg shadow-none transition-all cursor-pointer disabled:opacity-60"
             onClick={onRunAudit}
             disabled={progress.visible}

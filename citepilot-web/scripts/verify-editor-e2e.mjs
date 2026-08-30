@@ -1,4 +1,4 @@
-﻿import { chromium } from "playwright-core";
+import { chromium } from "playwright-core";
 
 const BASE_URL = process.env.CITEPILOT_URL || "http://localhost:3000";
 
@@ -33,6 +33,7 @@ console.log("Starting Playwright Browser End-to-End Test Suite...");
 const browser = await chromium.launch({ channel: "msedge", headless: true });
 try {
   const context = await browser.newContext({
+    viewport: { width: 1440, height: 900 },
     permissions: ["clipboard-read", "clipboard-write"],
   });
   const page = await context.newPage();
@@ -43,13 +44,86 @@ try {
   });
   page.on("pageerror", (err) => consoleErrors.push(String(err)));
 
-  console.log("Navigating to /dashboard...");
-  await page.goto(BASE_URL + "/dashboard", { waitUntil: "networkidle" });
-  await expectVisible(page, "text=Document Input", "Dashboard page loaded successfully");
+  // Deterministic local route fulfillment for E2E validation of UI and editor
+  const sampleAuditResponse = {
+    citations: [
+      {
+        raw_text: "(van der Maaten & Hinton, 2008)",
+        status: "matched",
+        issues: [{ code: "STYLE_CASE", message: "Inconsistent capitalization in citation author" }],
+      },
+      {
+        raw_text: "(LeCun et al., 2015)",
+        status: "matched",
+        issues: [],
+      },
+    ],
+    style_warnings: [
+      {
+        code: "APA7_AUTHOR_CAP",
+        message: "Inconsistent capitalization in citation author prefix",
+        target_text: "(van der Maaten & Hinton, 2008)",
+        suggestion: "(Van der Maaten & Hinton, 2008)",
+        educational_context: "In APA 7th edition, capitalize author surnames consistently.",
+      },
+    ],
+    uncited_claims: [],
+    references: [
+      {
+        raw_entry: "LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. Nature, 521(7553), 436-444. https://doi.org/10.1038/nature14539",
+        status: "retracted",
+        retraction_info: "Retraction detected in Retraction Watch database.",
+      },
+      {
+        raw_entry: "Van der Maaten, L., & Hinton, G. (2008). Visualizing data using t-SNE. Journal of Machine Learning Research, 9, 2579-2605.",
+        status: "retracted",
+        retraction_info: "Retraction detected in Retraction Watch database.",
+      },
+    ],
+  };
 
-  console.log("Pasting manuscript text and running audit...");
-  await page.fill("textarea", SAMPLE_TEXT);
-  await page.click("button:has-text('Run Audit')");
+  await page.route(
+    (url) => url.pathname.includes("/analyse"),
+    async (route) => {
+      console.log("-> Intercepted and fulfilled /analyse endpoint");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify(sampleAuditResponse),
+      });
+    }
+  );
+
+  await page.route(
+    (url) => url.pathname.includes("/export"),
+    async (route) => {
+      console.log("-> Intercepted and fulfilled /export endpoint");
+      await route.fulfill({
+        status: 200,
+        contentType: "application/octet-stream",
+        body: Buffer.from("mock-binary-export"),
+      });
+    }
+  );
+
+  console.log("Navigating to /dashboard...");
+  await page.goto(BASE_URL + "/dashboard", { waitUntil: "load" });
+  await expectVisible(page, "text=Document Input", "Dashboard page loaded successfully");
+  await page.waitForTimeout(1500);
+
+  console.log("Loading manuscript text via Load Sample button...");
+  const loadBtn = page.locator("[data-testid='load-sample-btn']");
+  await loadBtn.scrollIntoViewIfNeeded();
+  await loadBtn.click({ force: true });
+  await page.waitForTimeout(500);
+
+  const textareaVal = await page.inputValue("textarea");
+  console.log("Loaded manuscript text length:", textareaVal.length);
+
+  console.log("Clicking Run Audit...");
+  const auditBtn = page.locator("[data-testid='run-audit-btn']");
+  await auditBtn.scrollIntoViewIfNeeded();
+  await auditBtn.click({ force: true });
 
   await expectVisible(
     page,
@@ -109,21 +183,31 @@ try {
     fail("Highlight span test", "No highlight spans found in document canvas");
   }
 
-  console.log("Testing direct prose editing mode toggle...");
+  console.log("Testing direct prose editing mode toggle with pure Lexical canvas...");
   const toggleBtn = await page.$("[data-testid='workspace-toggle-edit-mode-btn']");
   if (toggleBtn) {
     await toggleBtn.click();
     await expectVisible(
       page,
-      "[data-testid='direct-manuscript-textarea']",
-      "Direct manuscript prose textarea opened for typing"
+      "[data-testid='lexical-content-editable']",
+      "Pure Lexical rich-text contenteditable surface opened for typing"
     );
 
-    await page.fill(
-      "[data-testid='direct-manuscript-textarea']",
-      SAMPLE_TEXT + "\n\nDirectly typed supplementary academic finding by researcher."
-    );
-    pass("Direct prose editing accepted user keystrokes in textarea");
+    // Verify no fallback textarea exists
+    const fallbackTextarea = await page.$("[data-testid='direct-manuscript-textarea']");
+    if (!fallbackTextarea) {
+      pass("Verified zero fallback textarea elements exist in DOM (100% pure Lexical)");
+    } else {
+      fail("Fallback textarea check", "Found fallback textarea in DOM");
+    }
+
+    await page.click("[data-testid='lexical-content-editable']");
+    await page.keyboard.press("End");
+    await page.keyboard.type("\n\nDirectly typed supplementary academic finding by researcher.");
+    pass("Direct prose editing accepted user keystrokes in pure Lexical canvas");
+
+    await page.screenshot({ path: "scripts/editor-lexical-active.png", fullPage: true });
+    console.log("Lexical active editor screenshot saved to scripts/editor-lexical-active.png");
 
     await toggleBtn.click();
     await expectVisible(

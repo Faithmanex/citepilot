@@ -68,6 +68,7 @@ export default function InputArea({
         </h2>
         <button
           type="button"
+          data-testid="load-sample-btn"
           onClick={handleLoadSample}
           className="text-xs font-bold text-[#027e6f] hover:text-[#02665a] flex items-center gap-1.5 transition-colors cursor-pointer"
         >
