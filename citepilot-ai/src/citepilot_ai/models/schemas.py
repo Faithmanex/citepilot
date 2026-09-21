@@ -23,6 +23,11 @@ class CitationResult(BaseModel):
     matched_reference_index: Optional[int] = None
     match_type: Optional[str] = "none"
     issues: List[Dict[str, Any]] = Field(default_factory=list)
+    # Jev (TypeSafe) verification enrichment — all None unless Jev ran (ADR-012).
+    jev_verdict: Optional[str] = None
+    jev_choice: Optional[str] = None
+    jev_confidence: Optional[float] = None
+    jev_auto: Optional[bool] = None
 
 
 class ReferenceResult(BaseModel):

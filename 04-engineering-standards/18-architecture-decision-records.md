@@ -1,8 +1,8 @@
 # 18 — Architecture Decision Records
 
 **Document ID:** CITE-ENG-018
-**Version:** 1.1.0
-**Last Updated:** 2026-08-11
+**Version:** 1.2.0
+**Last Updated:** 2026-09-21
 **Status:** Approved
 **Owner:** Engineering Lead
 **Audience:** All Engineers, Architects, Tech Leads
@@ -375,6 +375,42 @@ Process audits **synchronously** in a single pass: `POST /api/v1/analyse` return
 
 ---
 
+## ADR-012: Jev (TypeSafe System One) as Opt-In Decision Layer
+
+| Field | Value |
+|---|---|
+| **Status** | Accepted (spike scope; promotion criteria below) |
+| **Date** | 2026-09-21 |
+| **Deciders** | CTO, AI Lead |
+
+### Context
+
+Gemini 2.5 Flash is the sole LLM for extraction, matching, and explanations (ADR-008). Two weaknesses showed up together: (1) match/hallucination judgments return free-text JSON that must be parsed and carry no calibrated confidence (`citepilot-ai/src/citepilot_ai/services/llm.py` `extract_json` fallback); (2) a general-purpose agent could replicate the same Gemini-only loop within 12–24 months, so defensibility must come from proprietary verdict data, deep integrations, and auditable confidence — not from the model itself. TypeSafe's Jev (`jev-latest`, `POST /v1/systemone`) returns typed `Choice`/`Noul` verdicts with probabilities + confidence at ~100ms and $0.042/1M input, but cannot generate text and is weak at counting, math, and dates.
+
+### Decision
+
+Add Jev as an **opt-in, fail-open verification layer** behind `TYPESAFE_API_KEY` (empty = Gemini-only, zero behavior change):
+- Gemini keeps extraction/parsing/generation. Jev only answers atomic judgments (`supports`/`contradicts`/`says_nothing` → `verified`/`contradicted`/`unsupported`) per the TypeSafe `citation_check` cookbook.
+- Confidence gate `TYPESAFE_AUTO_ACCEPT=0.8`: ≥ threshold → auto verdict; below → review / keep Gemini verdict.
+- Counting, year/date comparison, and ordering stay in code (Jev jaggedness).
+- Live smoke test 2026-09-21 passed (`jev-1.13.0`, verdict `verified`, confidence-gated to review on thin context).
+
+### Alternatives Considered
+
+| Alternative | Reason for Rejection |
+|---|---|
+| **Jev replaces Gemini** | Jev cannot generate structured extractions or corrections; extraction quality would collapse. |
+| **Second generative fallback (GPT/Claude)** | Doubles key management and latency tail (rejected in ADR-008); Jev is a decider, not a second generator. |
+| **Do nothing** | Leaves the confidence/auditability gap open while generalist agents close the feature gap. |
+
+### Consequences
+
+**Positive:** typed verdicts with calibrated confidence; ~100ms parallel checks; verdict + confidence logs become the proprietary dataset for threshold tuning and downstream classical models; auditable trail for institutional/publisher compliance.
+**Negative:** second vendor (early access, dynamic rate limits, English-primary); requires privacy/DPA review against the 36-hour retention promise before prod; `typesafe-sdk` added to the dependency surface.
+**Neutral:** promotion to default-on requires F1 ≥ 0.95 parity on golden docs, p95 latency win, and Railway `TYPESAFE_API_KEY` + CORS review.
+
+---
+
 ## ADR Register
 
 | ADR | Title | Status | Date |
@@ -390,5 +426,6 @@ Process audits **synchronously** in a single pass: `POST /api/v1/analyse` return
 | ADR-009 | Vercel + Railway Hosting | Accepted (supersedes AWS design) | 2026-06-18 |
 | ADR-010 | PayPal Subscriptions | Accepted (supersedes Stripe design) | 2026-06-25 |
 | ADR-011 | Synchronous MVP | Accepted (supersedes queue design) | 2026-06-20 |
+| ADR-012 | Jev Opt-In Decision Layer | Accepted (spike scope) | 2026-09-21 |
 
 **Removed from registration (never shipped):** OpenAI GPT-4o (old ADR-004), queue-based processing (old ADR-005), AWS hosting (old ADR-007), Stripe (old ADR-008), NextAuth (old ADR-011), Datadog monitoring (old ADR-012 — monitoring remains roadmap-only per `04-engineering-standards/20-monitoring-observability.md`).

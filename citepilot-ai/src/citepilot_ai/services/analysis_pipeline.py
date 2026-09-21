@@ -11,6 +11,7 @@ from .citation_extractor import (
     parse_references,
 )
 from .crossref_service import validate_reference_with_crossref
+from .jev_service import enrich_matches_with_jev, is_jev_enabled
 from .openalex_service import validate_reference_with_openalex
 from .recency_service import calculate_publication_recency
 from .retraction_service import check_retraction_status
@@ -49,6 +50,14 @@ async def run_analysis_pipeline(
 
     # Match citations to references if both exist
     matches = await match_citations_to_references(citations, refs) if (citations and refs) else []
+
+    # Opt-in Jev verification (ADR-012): no-op unless TYPESAFE_API_KEY is set.
+    # Fail-open — Jev errors never break the Gemini verdict.
+    if matches and is_jev_enabled():
+        try:
+            matches = await enrich_matches_with_jev(matches, citations, refs)
+        except Exception as e:
+            logger.warning("Jev enrichment skipped (fail-open): %s", e)
 
     # Run check_style AFTER citations and references are extracted
     style_warnings = await check_style(body_text, citation_style, citations, refs) if body_text else []
@@ -105,6 +114,11 @@ def _build_citation_results(citations: List[Dict], matches: List[Dict]) -> List[
             "matched_reference_index": matched_ref_idx,
             "match_type": match.get("match_type", "none"),
             "issues": match.get("issues", []),
+            # Jev enrichment (ADR-012) — None unless Jev ran.
+            "jev_verdict": match.get("jev_verdict"),
+            "jev_choice": match.get("jev_choice"),
+            "jev_confidence": match.get("jev_confidence"),
+            "jev_auto": match.get("jev_auto"),
         })
 
     return citation_results

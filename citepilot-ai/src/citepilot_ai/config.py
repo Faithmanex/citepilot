@@ -14,6 +14,12 @@ class Settings(BaseSettings):
     max_upload_mb: int = 10
     max_text_chars: int = 200_000  # ~30k words
     rate_limit_per_minute: int = 60
+    # Jev (TypeSafe System One) decision layer — opt-in, disabled by default.
+    # When typesafe_api_key is empty, the pipeline skips all Jev calls (fail-closed to Gemini-only).
+    typesafe_api_key: str = ""
+    typesafe_model: str = "jev-latest"
+    typesafe_enabled: bool = True  # master switch; key must also be set
+    typesafe_auto_accept: float = 0.8  # confidence >= threshold → auto verdict, else review
 
     model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
