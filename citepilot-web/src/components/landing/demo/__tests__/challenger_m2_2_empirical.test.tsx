@@ -100,7 +100,7 @@ describe("Milestone 2 Challenger 2 — Empirical UI & Styling Adversarial Challe
       expect(badge?.className).not.toContain("rounded-[9999px]");
 
       // Diff preview block
-      const diffBlock = card.querySelector(".bg-\\[\\#f5f5f5\\].border");
+      const diffBlock = card.querySelector(".bg-\\[\\#faf6ec\\].border");
       expect(diffBlock).toHaveClass("rounded-lg");
 
       // Metadata block

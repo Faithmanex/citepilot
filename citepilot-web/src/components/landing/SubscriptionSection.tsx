@@ -52,7 +52,7 @@ export default function SubscriptionSection() {
                   { ok: false, text: "PDF & annotated DOCX exports" },
                 ].map(({ ok, text }) => (
                   <li key={text} className={`flex items-start gap-2.5 ${!ok ? "opacity-50" : ""}`}>
-                    <i className={`fas ${ok ? "fa-check text-emerald-600" : "fa-times text-rule"} mt-0.5 text-xs`} />
+                    <i className={`fas ${ok ? "fa-check text-[#285235]" : "fa-times text-rule"} mt-0.5 text-xs`} />
                     <span>{text}</span>
                   </li>
                 ))}
@@ -95,7 +95,7 @@ export default function SubscriptionSection() {
                   "Detailed AI explanations on every finding",
                 ].map((text) => (
                   <li key={text} className="flex items-start gap-2.5">
-                    <i className="fas fa-check text-emerald-600 mt-0.5 text-xs flex-none" />
+                    <i className="fas fa-check text-[#285235] mt-0.5 text-xs flex-none" />
                     <span dangerouslySetInnerHTML={{ __html: text }} />
                   </li>
                 ))}
@@ -114,14 +114,14 @@ export default function SubscriptionSection() {
 
           {/* Professional Tier */}
           <div className="bg-paper-card border-3 border-ink rounded-2xl p-6 sm:p-8 flex flex-col justify-between shadow-lg relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-[#1E5E4B] text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">
+            <div className="absolute top-0 right-0 bg-[#3b6647] text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-xl">
               Recommended
             </div>
 
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-extrabold text-ink flex items-center gap-2">
-                  <i className="fas fa-bolt text-amber-500" /> CitePilot Professional
+                  <i className="fas fa-bolt text-[#93650f]" /> CitePilot Professional
                 </h3>
               </div>
 
@@ -148,7 +148,7 @@ export default function SubscriptionSection() {
                   "Priority Processing & Responsive Email Support",
                 ].map((text) => (
                   <li key={text} className="flex items-start gap-2.5">
-                    <i className="fas fa-check text-emerald-600 mt-0.5 text-xs flex-none" />
+                    <i className="fas fa-check text-[#285235] mt-0.5 text-xs flex-none" />
                     <span dangerouslySetInnerHTML={{ __html: text }} />
                   </li>
                 ))}
@@ -161,7 +161,7 @@ export default function SubscriptionSection() {
               </p>
               <PayPalSubscriptionButton />
               <p className="text-[11px] text-center text-ink-soft opacity-75 mt-2">
-                <i className="fas fa-shield-alt text-emerald-600 mr-1" />
+                <i className="fas fa-shield-alt text-[#285235] mr-1" />
                 Cancel anytime from your PayPal account. 256-bit SSL Encryption.
               </p>
             </div>

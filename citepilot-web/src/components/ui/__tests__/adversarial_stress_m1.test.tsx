@@ -129,7 +129,7 @@ describe("Milestone 1 Adversarial Stress Harness", () => {
       const btn = screen.getByRole("button", { name: /fallback test/i });
       expect(btn).toBeInTheDocument();
       // Should fallback to primary styles and md size
-      expect(btn).toHaveClass("bg-[#027e6f]");
+      expect(btn).toHaveClass("bg-[#2c3e8c]");
       expect(btn).toHaveClass("min-h-[44px]");
     });
 
@@ -236,7 +236,7 @@ describe("Milestone 1 Adversarial Stress Harness", () => {
       expect(screen.getByTestId("badge-icon")).toBeInTheDocument();
       const dot = container.querySelector(".rounded-\\[4px\\]");
       expect(dot).toBeInTheDocument();
-      expect(dot).toHaveClass("bg-[#5b21b6]");
+      expect(dot).toHaveClass("bg-[#93650f]");
     });
 
     it("handles unknown variant and size fallbacks gracefully", () => {
@@ -250,7 +250,7 @@ describe("Milestone 1 Adversarial Stress Harness", () => {
       );
       const badge = container.firstElementChild;
       expect(badge).toBeInTheDocument();
-      expect(badge).toHaveClass("bg-[#e6f4f2]"); // Fallback to teal
+      expect(badge).toHaveClass("bg-[#e7e9f5]"); // Fallback to teal
       expect(badge).toHaveClass("h-[28px]"); // Fallback to md
       expect(badge).toHaveClass("rounded-[8px]");
     });
@@ -385,7 +385,7 @@ describe("Milestone 1 Adversarial Stress Harness", () => {
       );
       card = screen.getByTestId("card-stress");
       expect(card.tagName).toBe("SECTION");
-      expect(card).toHaveClass("bg-[#02665a]");
+      expect(card).toHaveClass("bg-[#24357a]");
       expect(card).toHaveClass("p-0");
     });
   });

@@ -45,8 +45,8 @@ export default function BrandLogo({
       <span
         className={`${iconSize} rounded-full border flex items-center justify-center flex-none font-black shadow-none transition-transform hover:scale-105 ${
           isDark
-            ? "border-[#027e6f] bg-[#027e6f]/20 text-[#a7dcd4]"
-            : "border-[#a7dcd4] bg-[#e6f4f2] text-[#027e6f]"
+            ? "border-[#2c3e8c] bg-[#2c3e8c]/20 text-[#c9cee8]"
+            : "border-[#c9cee8] bg-[#e7e9f5] text-[#2c3e8c]"
         }`}
         aria-hidden="true"
       >
@@ -57,7 +57,7 @@ export default function BrandLogo({
         <div className="flex items-baseline gap-1.5 leading-none">
           <span
             className={`font-display font-extrabold tracking-tight ${textSize} ${
-              isDark ? "text-white" : "text-[#0e101a]"
+              isDark ? "text-white" : "text-[#221d16]"
             }`}
           >
             CitePilot
@@ -65,7 +65,7 @@ export default function BrandLogo({
           {subtitle && (
             <span
               className={`text-xs font-mono font-bold uppercase tracking-wider ${
-                isDark ? "text-slate-400" : "text-[#707070]"
+                isDark ? "text-slate-400" : "text-[#948a76]"
               }`}
             >
               {subtitle}

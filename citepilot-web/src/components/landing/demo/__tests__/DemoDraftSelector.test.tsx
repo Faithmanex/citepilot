@@ -42,7 +42,7 @@ describe("DemoDraftSelector Component", () => {
 
     expect(activeTab).toHaveAttribute("aria-selected", "true");
     expect(activeTab).toHaveClass("bg-[#ffffff]");
-    expect(activeTab).toHaveClass("text-[#0e101a]");
+    expect(activeTab).toHaveClass("text-[#221d16]");
 
     expect(inactiveTab).toHaveAttribute("aria-selected", "false");
     expect(inactiveTab).toHaveClass("bg-transparent");

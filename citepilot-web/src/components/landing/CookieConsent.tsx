@@ -126,14 +126,14 @@ export default function CookieConsent() {
     <aside
       aria-label="Cookie & Privacy Consent"
       data-testid="cookie-consent-banner"
-      className="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 md:left-auto md:right-8 md:max-w-xl z-50 bg-[#ffffff] border border-[#d9d9d9] rounded-[8px] shadow-none p-5 text-left font-sans animate-slide-up"
+      className="fixed bottom-4 sm:bottom-6 left-4 sm:left-6 right-4 sm:right-6 md:left-auto md:right-8 md:max-w-xl z-50 bg-[#ffffff] border border-[#d9cfb8] rounded-[8px] shadow-none p-5 text-left font-sans animate-slide-up"
     >
       <div className="flex items-start justify-between gap-3 mb-2.5">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-[6px] bg-[#e6f4f2] text-[#027e6f] border border-[#a7dcd4] flex items-center justify-center flex-none">
+          <div className="w-6 h-6 rounded-[6px] bg-[#e7e9f5] text-[#2c3e8c] border border-[#c9cee8] flex items-center justify-center flex-none">
             <Shield className="w-3.5 h-3.5" aria-hidden="true" />
           </div>
-          <h3 className="font-display font-bold text-sm sm:text-base text-[#0e101a] tracking-tight">
+          <h3 className="font-display font-bold text-sm sm:text-base text-[#221d16] tracking-tight">
             Privacy &amp; Academic Integrity
           </h3>
         </div>
@@ -141,7 +141,7 @@ export default function CookieConsent() {
         <button
           type="button"
           onClick={handleEssentialOnly}
-          className="text-[#707070] hover:text-[#0e101a] p-1 rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+          className="text-[#948a76] hover:text-[#221d16] p-1 rounded hover:bg-[#faf6ec] transition-colors cursor-pointer"
           aria-label="Dismiss cookie notice with essential cookies only"
           data-testid="cookie-btn-dismiss"
         >
@@ -149,15 +149,15 @@ export default function CookieConsent() {
         </button>
       </div>
 
-      <p className="text-xs sm:text-[13px] text-[#545454] leading-relaxed mb-4">
+      <p className="text-xs sm:text-[13px] text-[#5c5344] leading-relaxed mb-4">
         We use essential cookies to maintain session integrity and anonymized telemetry to improve
         citation retrieval accuracy. We never sell academic manuscript data or train generative
         models on unpublished manuscripts. Compliant with GDPR, CCPA, and FERPA standards.{" "}
-        <Link href="/cookie-policy" className="text-[#027e6f] hover:underline font-medium">
+        <Link href="/cookie-policy" className="text-[#2c3e8c] hover:underline font-medium">
           Cookie Policy
         </Link>{" "}
         and{" "}
-        <Link href="/privacy" className="text-[#027e6f] hover:underline font-medium">
+        <Link href="/privacy" className="text-[#2c3e8c] hover:underline font-medium">
           Privacy Policy
         </Link>
         .
@@ -167,13 +167,13 @@ export default function CookieConsent() {
       {isCustomizing && (
         <div
           data-testid="cookie-custom-drawer"
-          className="mb-4 pt-3 pb-2 border-t border-b border-[#ebebeb] space-y-3"
+          className="mb-4 pt-3 pb-2 border-t border-b border-[#d9cfb8] space-y-3"
         >
           {/* Strictly Necessary */}
           <div className="flex items-center justify-between gap-3 text-xs">
             <div>
-              <div className="font-bold text-[#0e101a]">Strictly Necessary</div>
-              <div className="text-[#707070] text-[11px]">
+              <div className="font-bold text-[#221d16]">Strictly Necessary</div>
+              <div className="text-[#948a76] text-[11px]">
                 Session and security tokens required for manuscript auditing.
               </div>
             </div>
@@ -185,8 +185,8 @@ export default function CookieConsent() {
           {/* Academic Performance & Telemetry */}
           <div className="flex items-center justify-between gap-3 text-xs">
             <div>
-              <div className="font-bold text-[#0e101a]">Academic Performance &amp; Telemetry</div>
-              <div className="text-[#707070] text-[11px]">
+              <div className="font-bold text-[#221d16]">Academic Performance &amp; Telemetry</div>
+              <div className="text-[#948a76] text-[11px]">
                 Anonymized query latency and citation accuracy telemetry.
               </div>
             </div>
@@ -198,15 +198,15 @@ export default function CookieConsent() {
                 className="sr-only peer"
                 data-testid="cookie-toggle-performance"
               />
-              <div className="w-9 h-5 bg-[#d9d9d9] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#027e6f]"></div>
+              <div className="w-9 h-5 bg-[#d9cfb8] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2c3e8c]"></div>
             </label>
           </div>
 
           {/* Interface Preferences */}
           <div className="flex items-center justify-between gap-3 text-xs">
             <div>
-              <div className="font-bold text-[#0e101a]">Interface Preferences</div>
-              <div className="text-[#707070] text-[11px]">
+              <div className="font-bold text-[#221d16]">Interface Preferences</div>
+              <div className="text-[#948a76] text-[11px]">
                 Stores citation style (APA/MLA/Chicago) and theme on your device.
               </div>
             </div>
@@ -218,7 +218,7 @@ export default function CookieConsent() {
                 className="sr-only peer"
                 data-testid="cookie-toggle-preferences"
               />
-              <div className="w-9 h-5 bg-[#d9d9d9] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#027e6f]"></div>
+              <div className="w-9 h-5 bg-[#d9cfb8] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#2c3e8c]"></div>
             </label>
           </div>
         </div>
@@ -242,7 +242,7 @@ export default function CookieConsent() {
                 size="sm"
                 onClick={handleEssentialOnly}
                 data-testid="cookie-btn-essential"
-                className="border border-[#d9d9d9] text-[#0e101a] hover:bg-[#f5f5f5]"
+                className="border border-[#d9cfb8] text-[#221d16] hover:bg-[#faf6ec]"
               >
                 Essential Only
               </Button>
@@ -250,7 +250,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={() => setIsCustomizing(true)}
-              className="inline-flex items-center gap-1 text-xs text-[#707070] hover:text-[#0e101a] font-semibold py-1.5 px-2 rounded hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs text-[#948a76] hover:text-[#221d16] font-semibold py-1.5 px-2 rounded hover:bg-[#faf6ec] transition-colors cursor-pointer"
               data-testid="cookie-btn-customise"
             >
               <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />

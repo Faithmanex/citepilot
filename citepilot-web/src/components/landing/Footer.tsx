@@ -82,7 +82,7 @@ export default function Footer() {
 
   return (
     <footer
-      className="bg-[#0e101a] text-white border-t border-white/10"
+      className="bg-[#221d16] text-white border-t border-white/10"
       role="contentinfo"
       data-testid="landing-footer"
     >
@@ -94,12 +94,12 @@ export default function Footer() {
             <div>
               <Link
                 href="/"
-                className="inline-flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#027e6f] rounded-lg"
+                className="inline-flex items-center gap-2.5 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3e8c] rounded-lg"
                 aria-label="CitePilot Home"
                 data-testid="footer-logo"
               >
                 <span
-                  className="w-7 h-7 rounded-full border border-emerald-500/60 bg-emerald-950/80 text-emerald-400 flex items-center justify-center font-black text-xs shadow-none"
+                  className="w-7 h-7 rounded-full border border-[#285235]/60 bg-[#141f16] text-[#6f9578] flex items-center justify-center font-black text-xs shadow-none"
                   aria-hidden="true"
                 >
                   ✓
@@ -110,7 +110,7 @@ export default function Footer() {
               </Link>
 
               <p
-                className="mt-3 text-sm text-[#b7b7b7] leading-relaxed max-w-sm font-sans"
+                className="mt-3 text-sm text-[#d9cfb8] leading-relaxed max-w-sm font-sans"
                 data-testid="footer-mission"
               >
                 Empowering researchers, university labs, and peer reviewers with automated citation
@@ -135,7 +135,7 @@ export default function Footer() {
                       data-testid={`badge-${badge.label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
                       className="flex items-center gap-1.5 p-2 rounded-[8px] bg-white/5 border border-white/10 text-white/90 text-[11px] font-mono shadow-none"
                     >
-                      <Icon className="w-3.5 h-3.5 text-[#027e6f] flex-none" aria-hidden="true" />
+                      <Icon className="w-3.5 h-3.5 text-[#2c3e8c] flex-none" aria-hidden="true" />
                       <div className="leading-tight truncate">
                         <span className="font-bold block text-white">{badge.label}</span>
                         <span className="text-[9.5px] text-white/60">{badge.sub}</span>
@@ -154,7 +154,7 @@ export default function Footer() {
               className="lg:col-span-2"
               data-testid={`footer-section-${section.title.toLowerCase()}`}
             >
-              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#b7b7b7] mb-4">
+              <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#d9cfb8] mb-4">
                 {section.title}
               </h3>
               <ul className="space-y-2.5 text-sm font-sans">
@@ -164,7 +164,7 @@ export default function Footer() {
                       <button
                         type="button"
                         onClick={handleOpenCookieSettings}
-                        className="text-[#b7b7b7] hover:text-white transition-colors cursor-pointer text-left inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#027e6f] rounded"
+                        className="text-[#d9cfb8] hover:text-white transition-colors cursor-pointer text-left inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#2c3e8c] rounded"
                         data-testid="footer-cookie-settings-btn"
                       >
                         {link.label}
@@ -174,7 +174,7 @@ export default function Footer() {
                         href={link.href}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-[#b7b7b7] hover:text-white transition-colors inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#027e6f] rounded"
+                        className="text-[#d9cfb8] hover:text-white transition-colors inline-flex items-center gap-1 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#2c3e8c] rounded"
                       >
                         <span>{link.label}</span>
                         <ExternalLink className="w-3 h-3 text-white/40" aria-hidden="true" />
@@ -182,11 +182,11 @@ export default function Footer() {
                     ) : (
                       <Link
                         href={link.href}
-                        className="text-[#b7b7b7] hover:text-white transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#027e6f] rounded"
+                        className="text-[#d9cfb8] hover:text-white transition-colors inline-flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#2c3e8c] rounded"
                       >
                         <span>{link.label}</span>
                         {link.badge && (
-                          <span className="px-1.5 py-0.2 rounded-[4px] bg-[#027e6f] text-white text-[10px] font-mono font-bold">
+                          <span className="px-1.5 py-0.2 rounded-[4px] bg-[#2c3e8c] text-white text-[10px] font-mono font-bold">
                             {link.badge}
                           </span>
                         )}
@@ -200,7 +200,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar: Copyright, System Status Pulse, Socials */}
-        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-[#b7b7b7] font-mono">
+        <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-6 text-xs text-[#d9cfb8] font-mono">
           {/* Copyright */}
           <div data-testid="footer-copyright">
             &copy; {currentYear} CitePilot Inc. All rights reserved.
@@ -212,8 +212,8 @@ export default function Footer() {
             data-testid="footer-system-status"
           >
             <span className="relative flex h-2 w-2" aria-hidden="true">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3b6647] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#dee8dd]0"></span>
             </span>
             <span className="text-white/90">All systems operational</span>
             <span className="text-white/50 hidden sm:inline">(99.99% uptime)</span>
@@ -230,7 +230,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="CitePilot on X / Twitter"
-              className="p-2 rounded-[8px] hover:bg-white/10 text-[#b7b7b7] hover:text-white transition-colors"
+              className="p-2 rounded-[8px] hover:bg-white/10 text-[#d9cfb8] hover:text-white transition-colors"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -242,7 +242,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="CitePilot on GitHub"
-              className="p-2 rounded-[8px] hover:bg-white/10 text-[#b7b7b7] hover:text-white transition-colors"
+              className="p-2 rounded-[8px] hover:bg-white/10 text-[#d9cfb8] hover:text-white transition-colors"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -258,7 +258,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="CitePilot on LinkedIn"
-              className="p-2 rounded-[8px] hover:bg-white/10 text-[#b7b7b7] hover:text-white transition-colors"
+              className="p-2 rounded-[8px] hover:bg-white/10 text-[#d9cfb8] hover:text-white transition-colors"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 8.76c.92 0 1.67-.75 1.67-1.67s-.75-1.67-1.67-1.67a1.67 1.67 0 0 0-1.67 1.67c0 .92.75 1.67 1.67 1.67m1.39 9.74v-8.37H5.07v8.37h2.78z" />

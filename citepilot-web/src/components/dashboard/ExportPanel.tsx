@@ -62,7 +62,7 @@ export default function ExportPanel({ data, manuscriptText }: ExportPanelProps) 
     const isError = status.type === "error";
     const isSuccess = status.type === "success";
     return (
-      <div className={`mt-2 flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${isError ? "bg-[#fee2e2] text-[#b91c1c] border-[#fca5a5]" : isSuccess ? "bg-[#e6f4f2] text-[#027e6f] border-[#a7dcd4]" : "bg-[#fef3c7] text-[#b45309] border-[#fde68a]"}`}>
+      <div className={`mt-2 flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-lg border ${isError ? "bg-[#f3dcd6] text-[#a32b21] border-[#ddb3aa]" : isSuccess ? "bg-[#e7e9f5] text-[#2c3e8c] border-[#c9cee8]" : "bg-[#f1e4c8] text-[#93650f] border-[#ecd9a8]"}`}>
         {isError ? <AlertCircle className="w-3.5 h-3.5" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
         {status.message ?? (status.type === "loading" ? "Generating…" : "")}
       </div>
@@ -92,14 +92,14 @@ export default function ExportPanel({ data, manuscriptText }: ExportPanelProps) 
 
   return (
     <section className="space-y-5 animate-fade-in" id="panel-export">
-      <div className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 shadow-none">
-        <h1 className="text-base font-extrabold text-[#0e101a] mb-1 font-display">Export Options</h1>
-        <p className="text-xs text-[#545454] mb-5">
+      <div className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-5 shadow-none">
+        <h1 className="text-base font-extrabold text-[#221d16] mb-1 font-display">Export Options</h1>
+        <p className="text-xs text-[#5c5344] mb-5">
           Download diagnostic reports and formatted redline manuscripts.
         </p>
 
         {!data && (
-          <div className="flex items-center gap-2.5 p-3.5 bg-[#fef3c7] border border-[#fde68a] rounded-lg text-xs text-[#b45309] mb-4">
+          <div className="flex items-center gap-2.5 p-3.5 bg-[#f1e4c8] border border-[#ecd9a8] rounded-lg text-xs text-[#93650f] mb-4">
             <AlertCircle className="w-4 h-4 flex-none" />
             Run an audit first to enable export options.
           </div>
@@ -109,12 +109,12 @@ export default function ExportPanel({ data, manuscriptText }: ExportPanelProps) 
           {exportButtons.map(({ id, label, sub, icon: Icon, tag, status, handler }) => (
             <div key={id} className="flex-1">
               <button
-                className={`flex items-center gap-3 border border-[#ebebeb] bg-[#ffffff] hover:bg-[#f5f5f5] rounded-lg py-4 px-5 cursor-pointer w-full min-h-[44px] text-left transition-all hover:border-[#d9d9d9] shadow-none disabled:opacity-50 disabled:cursor-not-allowed ${status.type === "loading" ? "opacity-60 pointer-events-none" : ""}`}
+                className={`flex items-center gap-3 border border-[#d9cfb8] bg-[#ffffff] hover:bg-[#faf6ec] rounded-lg py-4 px-5 cursor-pointer w-full min-h-[44px] text-left transition-all hover:border-[#d9cfb8] shadow-none disabled:opacity-50 disabled:cursor-not-allowed ${status.type === "loading" ? "opacity-60 pointer-events-none" : ""}`}
                 onClick={handler}
                 disabled={status.type === "loading"}
                 aria-label={label}
               >
-                <div className="w-10 h-10 rounded-lg bg-[#e6f4f2] text-[#027e6f] border border-[#a7dcd4] flex items-center justify-center font-extrabold text-xs flex-none">
+                <div className="w-10 h-10 rounded-lg bg-[#e7e9f5] text-[#2c3e8c] border border-[#c9cee8] flex items-center justify-center font-extrabold text-xs flex-none">
                   {status.type === "loading" ? (
                     <Icon className="w-4 h-4 animate-pulse" />
                   ) : (
@@ -122,10 +122,10 @@ export default function ExportPanel({ data, manuscriptText }: ExportPanelProps) 
                   )}
                 </div>
                 <div>
-                  <div className="font-extrabold text-sm text-[#0e101a] mb-0.5">
+                  <div className="font-extrabold text-sm text-[#221d16] mb-0.5">
                     {status.type === "loading" ? `Generating ${tag}…` : label}
                   </div>
-                  <div className="text-[12px] text-[#707070]">{sub}</div>
+                  <div className="text-[12px] text-[#948a76]">{sub}</div>
                 </div>
               </button>
               <StatusBadge status={status} />

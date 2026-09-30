@@ -185,15 +185,15 @@ export default function PayPalSubscriptionButton({
   return (
     <div className="w-full flex flex-col items-center justify-center my-4">
       {subscribedId ? (
-        <div className="p-4 bg-emerald-50 border-2 border-emerald-500 rounded-xl text-emerald-900 text-center w-full max-w-md animate-fade-in">
-          <div className="w-12 h-12 bg-emerald-500 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+        <div className="p-4 bg-[#dee8dd] border-2 border-[#285235] rounded-xl text-[#1d3a26] text-center w-full max-w-md animate-fade-in">
+          <div className="w-12 h-12 bg-[#dee8dd]0 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
             ✓
           </div>
           <h4 className="font-bold text-lg mb-1">Subscription Active!</h4>
           <p className="text-sm opacity-90 mb-2">
             Thank you for subscribing to CitePilot. Your subscription ID is:
           </p>
-          <code className="bg-white px-3 py-1 rounded border border-emerald-300 font-mono text-xs font-semibold block text-emerald-800 break-all">
+          <code className="bg-white px-3 py-1 rounded border border-[#a8c3ad] font-mono text-xs font-semibold block text-[#285235] break-all">
             {subscribedId}
           </code>
         </div>

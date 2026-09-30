@@ -8,12 +8,12 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const CARD_VARIANTS: Record<string, string> = {
-  paper: "bg-[#ffffff] border border-[#ebebeb] text-[#0e101a]",
-  cloud: "bg-[#f5f5f5] border border-[#ebebeb] text-[#0e101a]",
-  dark: "bg-[#0e101a] border border-white/15 text-white",
-  teal: "bg-[#02665a] border border-white/20 text-white",
-  outlined: "bg-transparent border border-[#d9d9d9] text-[#0e101a]",
-  interactive: "bg-[#ffffff] border border-[#ebebeb] text-[#0e101a] hover:border-[#d9d9d9] transition-colors cursor-pointer",
+  paper: "bg-[#ffffff] border border-[#d9cfb8] text-[#221d16]",
+  cloud: "bg-[#faf6ec] border border-[#d9cfb8] text-[#221d16]",
+  dark: "bg-[#221d16] border border-white/15 text-white",
+  teal: "bg-[#24357a] border border-white/20 text-white",
+  outlined: "bg-transparent border border-[#d9cfb8] text-[#221d16]",
+  interactive: "bg-[#ffffff] border border-[#d9cfb8] text-[#221d16] hover:border-[#d9cfb8] transition-colors cursor-pointer",
 };
 
 const CARD_PADDING: Record<string, string> = {

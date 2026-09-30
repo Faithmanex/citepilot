@@ -276,7 +276,7 @@ describe("Milestone 3: EnterpriseBand Component (EnterpriseBand.tsx)", () => {
   it("renders full-bleed teal band with white headings and dual ghost CTAs", () => {
     render(<EnterpriseBand />);
     const band = screen.getByTestId("landing-enterprise-band");
-    expect(band).toHaveClass("bg-[#027e6f]");
+    expect(band).toHaveClass("bg-[#2c3e8c]");
     expect(band).toHaveClass("text-white");
 
     expect(screen.getByTestId("enterprise-badge")).toHaveTextContent(
@@ -417,7 +417,7 @@ describe("Milestone 3: Footer Component (Footer.tsx)", () => {
     render(<Footer />);
     const footer = screen.getByTestId("landing-footer");
     expect(footer).toBeInTheDocument();
-    expect(footer).toHaveClass("bg-[#0e101a]");
+    expect(footer).toHaveClass("bg-[#221d16]");
     expect(footer).toHaveClass("text-white");
 
     expect(screen.getByTestId("footer-logo")).toHaveTextContent("CitePilot");

@@ -71,39 +71,39 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
       value: stats.missingRefs,
       sub: "No reference list entry found",
       icon: SearchX,
-      color: "#b91c1c",
-      bg: "#fee2e2",
+      color: "#a32b21",
+      bg: "#f3dcd6",
     },
     {
       label: "Uncited References",
       value: stats.uncitedRefs,
       sub: "Entries never cited in text",
       icon: Link2Off,
-      color: "#b45309",
-      bg: "#fef3c7",
+      color: "#93650f",
+      bg: "#f1e4c8",
     },
     {
       label: "Validation Issues",
       value: stats.crDiscrepancies + stats.retractedCount,
       sub: "Discrepancies & retractions",
       icon: FileQuestion,
-      color: "#2563eb",
-      bg: "#eff6ff",
+      color: "#2c3e8c",
+      bg: "#e7e9f5",
     },
     {
       label: "Match Rate",
       value: data ? `${stats.matchRate}%` : "—",
       sub: "Linked to reference list",
       icon: CheckCircle2,
-      color: "#027e6f",
-      bg: "#e6f4f2",
+      color: "#2c3e8c",
+      bg: "#e7e9f5",
     },
   ];
 
   return (
     <section className="space-y-5 animate-fade-in" id="panel-overview">
       {/* Header Banner with Circular SVG Gauge Scorecard */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 sm:p-6 shadow-none">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-5 sm:p-6 shadow-none">
         <div className="flex items-center gap-4">
           {/* 76px Circular SVG Gauge */}
           <div className="w-[76px] h-[76px] relative flex items-center justify-center flex-none">
@@ -112,7 +112,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
                 cx="38"
                 cy="38"
                 r={radius}
-                className="stroke-[#ebebeb]"
+                className="stroke-[#d9cfb8]"
                 strokeWidth="6"
                 fill="transparent"
               />
@@ -120,7 +120,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
                 cx="38"
                 cy="38"
                 r={radius}
-                className={isHighRigor ? "stroke-[#027e6f]" : "stroke-[#1f243c]"}
+                className={isHighRigor ? "stroke-[#2c3e8c]" : "stroke-[#14181f]"}
                 strokeWidth="6"
                 strokeDasharray={circumference}
                 strokeDashoffset={progressOffset}
@@ -130,7 +130,7 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-dash font-bold text-lg sm:text-xl text-[#0e101a] tracking-tight">
+              <span className="font-dash font-bold text-lg sm:text-xl text-[#221d16] tracking-tight">
                 {integrityScore !== null ? `${integrityScore}%` : "—"}
               </span>
             </div>
@@ -138,19 +138,19 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
 
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#707070]">
+              <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#948a76]">
                 Consistency Score
               </span>
               {isHighRigor && (
-                <span className="px-1.5 py-0.5 rounded-[4px] bg-[#e6f4f2] text-[#027e6f] font-mono font-bold text-[10px] inline-flex items-center gap-0.5">
+                <span className="px-1.5 py-0.5 rounded-[4px] bg-[#e7e9f5] text-[#2c3e8c] font-mono font-bold text-[10px] inline-flex items-center gap-0.5">
                   Optimal
                 </span>
               )}
             </div>
-            <h1 className="text-base sm:text-lg font-extrabold text-[#0e101a] font-display">
+            <h1 className="text-base sm:text-lg font-extrabold text-[#221d16] font-display">
               {isRefOnly ? "Reference List Audit" : "Manuscript Audit Summary"}
             </h1>
-            <p className="text-xs text-[#545454] mt-0.5">
+            <p className="text-xs text-[#5c5344] mt-0.5">
               {data
                 ? `Verified ${citations.length} citations against ${refs.length} reference entries.`
                 : "Upload or paste your manuscript above, then click 'Run Audit'."}
@@ -164,10 +164,10 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
         {summaryCards.map(({ label, value, sub, icon: Icon, color, bg }) => (
           <div
             key={label}
-            className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-4 shadow-none"
+            className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 shadow-none"
           >
             <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-bold text-[#1f243c]">{label}</span>
+              <span className="text-xs font-bold text-[#14181f]">{label}</span>
               <span
                 className="p-1 rounded-lg"
                 style={{ backgroundColor: bg }}
@@ -176,24 +176,24 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
               </span>
             </div>
             <div
-              className="font-mono text-2xl font-black text-[#0e101a]"
+              className="font-mono text-2xl font-black text-[#221d16]"
             >
               {value}
             </div>
-            <div className="text-[11px] text-[#707070] mt-0.5">{sub}</div>
+            <div className="text-[11px] text-[#948a76] mt-0.5">{sub}</div>
           </div>
         ))}
       </div>
 
       {/* Priority Findings */}
-      <div className="bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 space-y-3 shadow-none">
-        <h2 className="text-xs font-bold text-[#1f243c] uppercase tracking-wider font-mono flex items-center gap-2">
-          <ShieldAlert className="w-4 h-4 text-[#b45309]" />
+      <div className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-5 space-y-3 shadow-none">
+        <h2 className="text-xs font-bold text-[#14181f] uppercase tracking-wider font-mono flex items-center gap-2">
+          <ShieldAlert className="w-4 h-4 text-[#93650f]" />
           Key Issues & Alerts
         </h2>
 
         {priorityItems.length === 0 ? (
-          <div className="flex items-center gap-2.5 p-3.5 bg-[#e6f4f2] border border-[#a7dcd4] rounded-lg text-xs text-[#027e6f]">
+          <div className="flex items-center gap-2.5 p-3.5 bg-[#e7e9f5] border border-[#c9cee8] rounded-lg text-xs text-[#2c3e8c]">
             <ShieldCheck className="w-4 h-4 flex-none" />
             <span>
               {data
@@ -208,8 +208,8 @@ export default function OverviewPanel({ data, mode }: OverviewPanelProps) {
                 key={idx}
                 className={`p-3 rounded-lg text-xs font-mono border ${
                   item.type === "error"
-                    ? "bg-[#fee2e2] border-[#fca5a5] text-[#b91c1c]"
-                    : "bg-[#fef3c7] border-[#fde68a] text-[#b45309]"
+                    ? "bg-[#f3dcd6] border-[#ddb3aa] text-[#a32b21]"
+                    : "bg-[#f1e4c8] border-[#ecd9a8] text-[#93650f]"
                 }`}
               >
                 {item.label}

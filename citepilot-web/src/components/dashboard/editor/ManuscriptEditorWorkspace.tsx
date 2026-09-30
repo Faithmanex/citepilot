@@ -84,10 +84,10 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
       aria-label="CitePilot Production Manuscript Editor"
       className={`w-full max-w-[1200px] mx-auto transition-all ${className}`.trim()}
     >
-      <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-lg p-4 sm:p-6 lg:p-8 shadow-none space-y-5 sm:space-y-6">
+      <div className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 sm:p-6 lg:p-8 shadow-none space-y-5 sm:space-y-6">
         {/* Top Segmented Category Filter & Action Bar */}
         <div
-          className="flex flex-wrap items-center justify-between gap-2.5 p-2 bg-[#f5f5f5] border border-[#ebebeb] rounded-lg shadow-none"
+          className="flex flex-wrap items-center justify-between gap-2.5 p-2 bg-[#faf6ec] border border-[#d9cfb8] rounded-lg shadow-none"
           role="tablist"
           aria-label="Manuscript Inspection Categories"
         >
@@ -105,8 +105,8 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
                   className={[
                     "h-9 px-3.5 text-xs font-bold rounded-lg border shadow-none transition-all flex items-center gap-1.5 cursor-pointer select-none",
                     isActive
-                      ? "bg-[#ffffff] text-[#0e101a] border-[#d9d9d9]"
-                      : "bg-transparent text-[#545454] border-transparent hover:text-[#0e101a] hover:bg-[#ebebeb]",
+                      ? "bg-[#ffffff] text-[#221d16] border-[#d9cfb8]"
+                      : "bg-transparent text-[#5c5344] border-transparent hover:text-[#221d16] hover:bg-[#d9cfb8]",
                   ]
                     .filter(Boolean)
                     .join(" ")}
@@ -117,7 +117,7 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
                   <span>{tab.label}</span>
                   <span
                     className={`text-[10px] font-mono font-bold px-1.5 py-0.2 rounded-full ${
-                      isActive ? "bg-[#e6f4f2] text-[#027e6f]" : "bg-[#e5e5e5] text-[#707070]"
+                      isActive ? "bg-[#e7e9f5] text-[#2c3e8c]" : "bg-[#d9cfb8] text-[#948a76]"
                     }`}
                   >
                     {tab.count}
@@ -133,8 +133,8 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
               className={[
                 "h-9 px-3 text-xs font-bold rounded-lg border shadow-none flex items-center gap-1.5 transition-colors cursor-pointer select-none",
                 isCustomTyping
-                  ? "bg-[#ffffff] text-[#027e6f] border-[#027e6f]"
-                  : "text-[#545454] hover:text-[#0e101a] border-[#d9d9d9] bg-[#ffffff] hover:bg-[#ebebeb]",
+                  ? "bg-[#ffffff] text-[#2c3e8c] border-[#2c3e8c]"
+                  : "text-[#5c5344] hover:text-[#221d16] border-[#d9cfb8] bg-[#ffffff] hover:bg-[#d9cfb8]",
               ]
                 .filter(Boolean)
                 .join(" ")}
@@ -162,8 +162,8 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
             className={[
               "h-9 px-3 text-xs font-bold rounded-lg border shadow-none flex items-center gap-1.5 transition-colors cursor-pointer select-none",
               isDirty
-                ? "text-[#545454] hover:text-[#0e101a] border-[#d9d9d9] bg-[#ffffff] hover:bg-[#ebebeb]"
-                : "text-[#b7b7b7] border-transparent bg-transparent cursor-not-allowed opacity-50",
+                ? "text-[#5c5344] hover:text-[#221d16] border-[#d9cfb8] bg-[#ffffff] hover:bg-[#d9cfb8]"
+                : "text-[#d9cfb8] border-transparent bg-transparent cursor-not-allowed opacity-50",
             ]
               .filter(Boolean)
               .join(" ")}

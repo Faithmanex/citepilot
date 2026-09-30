@@ -49,7 +49,7 @@ export const TRUST_METRICS = [
 export default function TrustBar() {
   return (
     <section
-      className="w-full bg-[#f5f5f5] border-y border-[#ebebeb] py-12 sm:py-16"
+      className="w-full bg-[#faf6ec] border-y border-[#d9cfb8] py-12 sm:py-16"
       role="region"
       aria-label="Institutional Trust and Partner Logo Cloud"
       data-testid="landing-trustbar"
@@ -66,13 +66,13 @@ export default function TrustBar() {
             Institutional Trust &amp; Scale
           </Badge>
           <h2
-            className="font-display font-bold text-[22px] sm:text-[28px] md:text-[32px] text-[#0e101a] tracking-tight leading-[1.25]"
+            className="font-display font-bold text-[22px] sm:text-[28px] md:text-[32px] text-[#221d16] tracking-tight leading-[1.25]"
             data-testid="trustbar-headline"
           >
             Trusted by 250,000+ researchers across 1,200+ universities worldwide
           </h2>
           <p
-            className="mt-2.5 text-[15px] sm:text-[16px] text-[#545454] leading-relaxed"
+            className="mt-2.5 text-[15px] sm:text-[16px] text-[#5c5344] leading-relaxed"
             data-testid="trustbar-subtext"
           >
             From Ivy League laboratories to global publisher workflows, leading scholars rely on
@@ -90,9 +90,9 @@ export default function TrustBar() {
                 <div
                   key={metric.id}
                   data-testid={`trustbar-chip-${metric.id}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-white border border-[#d9d9d9] text-[12px] font-mono font-semibold text-[#0e101a] shadow-none"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] bg-white border border-[#d9cfb8] text-[12px] font-mono font-semibold text-[#221d16] shadow-none"
                 >
-                  <Icon className="w-3.5 h-3.5 text-[#027e6f]" aria-hidden="true" />
+                  <Icon className="w-3.5 h-3.5 text-[#2c3e8c]" aria-hidden="true" />
                   <span>{metric.label}</span>
                 </div>
               );
@@ -102,21 +102,21 @@ export default function TrustBar() {
 
         {/* 8-Partner Logo Cloud Grid */}
         <div
-          className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-6 items-center justify-items-center pt-6 border-t border-[#ebebeb]"
+          className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4 sm:gap-6 items-center justify-items-center pt-6 border-t border-[#d9cfb8]"
           data-testid="trustbar-logo-cloud"
         >
           {PARTNERS.map((partner) => (
             <div
               key={partner.id}
               data-testid={`partner-logo-${partner.id}`}
-              className="w-full h-16 sm:h-20 flex flex-col items-center justify-center rounded-[8px] bg-white border border-[#ebebeb] px-3 py-2 text-center transition-all duration-150 hover:border-[#d9d9d9] group select-none shadow-none"
+              className="w-full h-16 sm:h-20 flex flex-col items-center justify-center rounded-[8px] bg-white border border-[#d9cfb8] px-3 py-2 text-center transition-all duration-150 hover:border-[#d9cfb8] group select-none shadow-none"
               aria-label={`Partner: ${partner.name}`}
             >
-              <span className="font-display font-extrabold text-[15px] sm:text-[16px] tracking-tight text-[#707070] group-hover:text-[#0e101a] transition-colors">
+              <span className="font-display font-extrabold text-[15px] sm:text-[16px] tracking-tight text-[#948a76] group-hover:text-[#221d16] transition-colors">
                 {partner.shortName}
               </span>
               {partner.subtext && (
-                <span className="text-[10px] font-sans font-medium text-[#707070] -mt-0.5 tracking-widest uppercase">
+                <span className="text-[10px] font-sans font-medium text-[#948a76] -mt-0.5 tracking-widest uppercase">
                   {partner.subtext}
                 </span>
               )}

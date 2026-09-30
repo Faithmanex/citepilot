@@ -122,14 +122,14 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
   return (
     <div
       data-testid="document-export-suite"
-      className={`bg-[#ffffff] border border-[#ebebeb] rounded-lg p-5 shadow-none space-y-4 ${className}`.trim()}
+      className={`bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-5 shadow-none space-y-4 ${className}`.trim()}
     >
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#1f243c]">
+          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#14181f]">
             Academic Export Suite
           </h3>
-          <p className="text-xs text-[#707070] mt-0.5">
+          <p className="text-xs text-[#948a76] mt-0.5">
             Export revised manuscripts and diagnostic verification reports
           </p>
         </div>
@@ -137,12 +137,12 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
           type="button"
           data-testid="copy-manuscript-btn"
           onClick={handleCopyCleanManuscript}
-          className="text-xs font-bold px-3 py-1.5 rounded-md border border-[#d9d9d9] hover:border-[#027e6f] hover:text-[#027e6f] bg-white transition-all flex items-center gap-1.5 cursor-pointer"
+          className="text-xs font-bold px-3 py-1.5 rounded-md border border-[#d9cfb8] hover:border-[#2c3e8c] hover:text-[#2c3e8c] bg-white transition-all flex items-center gap-1.5 cursor-pointer"
         >
           {copied ? (
             <>
-              <Check className="w-3.5 h-3.5 text-[#027e6f]" />
-              <span className="text-[#027e6f]">Copied to Clipboard</span>
+              <Check className="w-3.5 h-3.5 text-[#2c3e8c]" />
+              <span className="text-[#2c3e8c]">Copied to Clipboard</span>
             </>
           ) : (
             <>
@@ -156,19 +156,19 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
       {/* Primary Export Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-1">
         {/* Clean Revised Word Document */}
-        <div className="border-2 border-[#027e6f]/40 hover:border-[#027e6f] bg-[#fcfdfd] rounded-lg p-4 flex flex-col justify-between transition-all">
+        <div className="border-2 border-[#2c3e8c]/40 hover:border-[#2c3e8c] bg-[#faf6ec] rounded-lg p-4 flex flex-col justify-between transition-all">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#027e6f]/10 text-[#027e6f] border border-[#027e6f]/20">
+              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#2c3e8c]/10 text-[#2c3e8c] border border-[#2c3e8c]/20">
                 Recommended
               </span>
-              <span className="text-[10px] font-mono font-bold text-[#707070]">DOCX</span>
+              <span className="text-[10px] font-mono font-bold text-[#948a76]">DOCX</span>
             </div>
-            <h4 className="text-xs font-bold text-[#0e101a] flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-[#027e6f]" />
+            <h4 className="text-xs font-bold text-[#221d16] flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#2c3e8c]" />
               Clean Revised Word Doc
             </h4>
-            <p className="text-[11px] text-[#545454] leading-normal">
+            <p className="text-[11px] text-[#5c5344] leading-normal">
               Fully updated manuscript with all accepted fixes and clean academic typography.
             </p>
           </div>
@@ -179,7 +179,7 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
               data-testid="export-clean-docx-btn"
               onClick={handleDownloadCleanDocx}
               disabled={cleanDocxState.status === "loading"}
-              className="w-full bg-[#027e6f] hover:bg-[#02665a] text-white text-xs font-bold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full bg-[#2c3e8c] hover:bg-[#24357a] text-white text-xs font-bold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
               <span>
@@ -189,7 +189,7 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
             {cleanDocxState.status !== "idle" && (
               <div
                 className={`mt-1.5 text-[10px] font-semibold flex items-center gap-1 ${
-                  cleanDocxState.status === "success" ? "text-[#027e6f]" : "text-[#b91c1c]"
+                  cleanDocxState.status === "success" ? "text-[#2c3e8c]" : "text-[#a32b21]"
                 }`}
               >
                 {cleanDocxState.status === "success" ? (
@@ -204,19 +204,19 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
         </div>
 
         {/* Redline Annotated Word Document */}
-        <div className="border border-[#ebebeb] hover:border-[#027e6f]/40 bg-[#ffffff] rounded-lg p-4 flex flex-col justify-between transition-all">
+        <div className="border border-[#d9cfb8] hover:border-[#2c3e8c]/40 bg-[#ffffff] rounded-lg p-4 flex flex-col justify-between transition-all">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#f0f0f0] text-[#545454]">
+              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#f1ebdc] text-[#5c5344]">
                 Audit Mode
               </span>
-              <span className="text-[10px] font-mono font-bold text-[#707070]">DOCX</span>
+              <span className="text-[10px] font-mono font-bold text-[#948a76]">DOCX</span>
             </div>
-            <h4 className="text-xs font-bold text-[#0e101a] flex items-center gap-1.5">
-              <FileDown className="w-3.5 h-3.5 text-[#545454]" />
+            <h4 className="text-xs font-bold text-[#221d16] flex items-center gap-1.5">
+              <FileDown className="w-3.5 h-3.5 text-[#5c5344]" />
               Redline Annotated Word Doc
             </h4>
-            <p className="text-[11px] text-[#545454] leading-normal">
+            <p className="text-[11px] text-[#5c5344] leading-normal">
               Word document containing tracked style annotations and highlight comments.
             </p>
           </div>
@@ -227,7 +227,7 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
               data-testid="export-redline-docx-btn"
               onClick={handleDownloadRedlineDocx}
               disabled={redlineDocxState.status === "loading"}
-              className="w-full border border-[#d9d9d9] hover:bg-[#f5f5f5] text-[#0e101a] text-xs font-bold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full border border-[#d9cfb8] hover:bg-[#faf6ec] text-[#221d16] text-xs font-bold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
               <span>
@@ -237,7 +237,7 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
             {redlineDocxState.status !== "idle" && (
               <div
                 className={`mt-1.5 text-[10px] font-semibold flex items-center gap-1 ${
-                  redlineDocxState.status === "success" ? "text-[#027e6f]" : "text-[#b91c1c]"
+                  redlineDocxState.status === "success" ? "text-[#2c3e8c]" : "text-[#a32b21]"
                 }`}
               >
                 {redlineDocxState.status === "success" ? (
@@ -252,19 +252,19 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
         </div>
 
         {/* PDF Diagnostic Certificate */}
-        <div className="border border-[#ebebeb] hover:border-[#027e6f]/40 bg-[#ffffff] rounded-lg p-4 flex flex-col justify-between transition-all">
+        <div className="border border-[#d9cfb8] hover:border-[#2c3e8c]/40 bg-[#ffffff] rounded-lg p-4 flex flex-col justify-between transition-all">
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#f0f0f0] text-[#545454]">
+              <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded-full bg-[#f1ebdc] text-[#5c5344]">
                 Audit Report
               </span>
-              <span className="text-[10px] font-mono font-bold text-[#707070]">PDF</span>
+              <span className="text-[10px] font-mono font-bold text-[#948a76]">PDF</span>
             </div>
-            <h4 className="text-xs font-bold text-[#0e101a] flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-[#545454]" />
+            <h4 className="text-xs font-bold text-[#221d16] flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-[#5c5344]" />
               PDF Verification Report
             </h4>
-            <p className="text-[11px] text-[#545454] leading-normal">
+            <p className="text-[11px] text-[#5c5344] leading-normal">
               Complete diagnostic report with Crossref checks and retraction findings.
             </p>
           </div>
@@ -275,7 +275,7 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
               data-testid="export-pdf-report-btn"
               onClick={handleDownloadPdf}
               disabled={pdfState.status === "loading"}
-              className="w-full border border-[#d9d9d9] hover:bg-[#f5f5f5] text-[#0e101a] text-xs font-bold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full border border-[#d9cfb8] hover:bg-[#faf6ec] text-[#221d16] text-xs font-bold py-2 px-3 rounded-md flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
             >
               <Download className="w-3.5 h-3.5" />
               <span>
@@ -285,7 +285,7 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
             {pdfState.status !== "idle" && (
               <div
                 className={`mt-1.5 text-[10px] font-semibold flex items-center gap-1 ${
-                  pdfState.status === "success" ? "text-[#027e6f]" : "text-[#b91c1c]"
+                  pdfState.status === "success" ? "text-[#2c3e8c]" : "text-[#a32b21]"
                 }`}
               >
                 {pdfState.status === "success" ? (

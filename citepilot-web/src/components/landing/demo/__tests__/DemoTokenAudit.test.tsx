@@ -46,7 +46,7 @@ describe("Demo Token Compliance & Design System Audit (DemoTokenAudit)", () => {
     expect(shadowElements.length).toBe(0);
   });
 
-  it("strictly uses hairline 1px borders (#ebebeb, #d9d9d9, or #a7dcd4)", () => {
+  it("strictly uses hairline 1px borders (#d9cfb8, #d9cfb8, or #c9cee8)", () => {
     const { container } = render(<InteractiveDemoEditor defaultDraftId="lit-review" />);
 
     // No heavy borders (border-4, border-8)
@@ -54,13 +54,13 @@ describe("Demo Token Compliance & Design System Audit (DemoTokenAudit)", () => {
     expect(heavyBorders.length).toBe(0);
   });
 
-  it("reserves Grammarly Teal (#027e6f) exclusively for primary actions, active states, and verified indicators", () => {
+  it("reserves Grammarly Teal (#2c3e8c) exclusively for primary actions, active states, and verified indicators", () => {
     render(<InteractiveDemoEditor defaultDraftId="lit-review" />);
 
     const lit1 = screen.getByTestId("highlight-lit-1");
     fireEvent.click(lit1);
 
     const acceptBtn = screen.getByRole("button", { name: /accept fix/i });
-    expect(acceptBtn).toHaveClass("bg-[#027e6f]");
+    expect(acceptBtn).toHaveClass("bg-[#2c3e8c]");
   });
 });

@@ -20,7 +20,7 @@ describe("InteractiveDemoEditor Component", () => {
     expect(card).toBeInTheDocument();
     expect(card).toHaveClass("rounded-lg");
     expect(card).toHaveClass("shadow-none");
-    expect(card).toHaveClass("border-[#d9d9d9]");
+    expect(card).toHaveClass("border-[#d9cfb8]");
   });
 
   it("renders all four primary UI subsystems (Selector, Surface, Score Counter, Suggestion Card)", () => {

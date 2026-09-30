@@ -191,7 +191,7 @@ export default function Header() {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-[100] h-16 bg-[#ffffff]/95 backdrop-blur-md border-b border-[#ebebeb]"
+      className="sticky top-0 z-[100] h-16 bg-[#f1ebdc]/95 backdrop-blur-md border-b border-[#d9cfb8]"
       role="banner"
       data-testid="landing-header"
     >
@@ -199,7 +199,7 @@ export default function Header() {
         {/* Brand Logo */}
         <Link
           href="/"
-          className="inline-flex items-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#027e6f] rounded-lg"
+          className="inline-flex items-center group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3e8c] rounded-lg"
           aria-label="CitePilot Home"
           data-testid="header-logo"
         >
@@ -228,16 +228,16 @@ export default function Header() {
                   aria-expanded={isOpen}
                   aria-haspopup="true"
                   data-testid={`nav-trigger-${category.id}`}
-                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-[14px] font-semibold rounded-lg min-h-[44px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#027e6f] cursor-pointer ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-2 text-[14px] font-semibold rounded-lg min-h-[44px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3e8c] cursor-pointer ${
                     isOpen
-                      ? "text-[#0e101a] bg-[#f5f5f5]"
-                      : "text-[#545454] hover:text-[#0e101a] hover:bg-[#f5f5f5]"
+                      ? "text-[#221d16] bg-[#faf6ec]"
+                      : "text-[#5c5344] hover:text-[#221d16] hover:bg-[#faf6ec]"
                   }`}
                 >
                   <span>{category.label}</span>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-[#707070] transition-transform duration-200 ${
-                      isOpen ? "rotate-180 text-[#0e101a]" : ""
+                    className={`w-3.5 h-3.5 text-[#948a76] transition-transform duration-200 ${
+                      isOpen ? "rotate-180 text-[#221d16]" : ""
                     }`}
                     aria-hidden="true"
                   />
@@ -246,7 +246,7 @@ export default function Header() {
                 {/* Dropdown Popover */}
                 {isOpen && (
                   <div
-                    className="absolute top-[calc(100%+4px)] left-1/2 -translate-x-1/2 w-[320px] sm:w-[360px] bg-[#ffffff] border border-[#ebebeb] rounded-lg shadow-none p-2 z-50 animate-fade-in"
+                    className="absolute top-[calc(100%+4px)] left-1/2 -translate-x-1/2 w-[320px] sm:w-[360px] bg-[#ffffff] border border-[#d9cfb8] rounded-lg shadow-none p-2 z-50 animate-fade-in"
                     role="menu"
                     aria-orientation="vertical"
                     data-testid={`nav-popover-${category.id}`}
@@ -258,19 +258,19 @@ export default function Header() {
                           href={item.href}
                           onClick={() => setActiveDropdown(null)}
                           role="menuitem"
-                          className="group p-2.5 rounded-lg hover:bg-[#f5f5f5] transition-colors flex flex-col gap-0.5 text-left no-underline"
+                          className="group p-2.5 rounded-lg hover:bg-[#faf6ec] transition-colors flex flex-col gap-0.5 text-left no-underline"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-[13px] font-bold text-[#0e101a] group-hover:text-[#027e6f] transition-colors">
+                            <span className="text-[13px] font-bold text-[#221d16] group-hover:text-[#2c3e8c] transition-colors">
                               {item.title}
                             </span>
                             {item.badge && (
-                              <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-bold bg-[#e6f4f2] text-[#027e6f] border border-[#a7dcd4]">
+                              <span className="px-1.5 py-0.5 rounded-[4px] text-[10px] font-mono font-bold bg-[#e7e9f5] text-[#2c3e8c] border border-[#c9cee8]">
                                 {item.badge}
                               </span>
                             )}
                           </div>
-                          <span className="text-[12px] text-[#707070] leading-snug">
+                          <span className="text-[12px] text-[#948a76] leading-snug">
                             {item.description}
                           </span>
                         </a>
@@ -289,7 +289,7 @@ export default function Header() {
             variant="ghost"
             size="sm"
             onClick={() => router.push("/login")}
-            className="text-[14px] font-semibold text-[#545454] hover:text-[#0e101a]"
+            className="text-[14px] font-semibold text-[#5c5344] hover:text-[#221d16]"
             aria-label="Log in to CitePilot"
             data-testid="header-btn-login"
           >
@@ -316,7 +316,7 @@ export default function Header() {
             aria-expanded={mobileMenuOpen}
             aria-label="Toggle navigation menu"
             data-testid="header-mobile-toggle"
-            className="h-10 w-10 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#ebebeb] bg-[#ffffff] text-[#0e101a] hover:bg-[#f5f5f5] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#027e6f] cursor-pointer"
+            className="h-10 w-10 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-[#d9cfb8] bg-[#ffffff] text-[#221d16] hover:bg-[#faf6ec] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2c3e8c] cursor-pointer"
           >
             {mobileMenuOpen ? (
               <X className="w-5 h-5" aria-hidden="true" />
@@ -330,7 +330,7 @@ export default function Header() {
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
         <nav
-          className="md:hidden bg-[#ffffff] border-b border-[#ebebeb] px-4 py-5 flex flex-col gap-4 shadow-none max-h-[calc(100vh-64px)] overflow-y-auto"
+          className="md:hidden bg-[#f1ebdc] border-b border-[#d9cfb8] px-4 py-5 flex flex-col gap-4 shadow-none max-h-[calc(100vh-64px)] overflow-y-auto"
           aria-label="Mobile Navigation"
           data-testid="header-mobile-drawer"
         >
@@ -338,17 +338,17 @@ export default function Header() {
             {NAV_CATEGORIES.map((category) => {
               const isExpanded = mobileExpandedCat === category.id;
               return (
-                <div key={category.id} className="border-b border-[#f5f5f5] last:border-b-0 pb-1">
+                <div key={category.id} className="border-b border-[#faf6ec] last:border-b-0 pb-1">
                   <button
                     type="button"
                     onClick={() => toggleMobileCat(category.id)}
                     aria-expanded={isExpanded}
                     data-testid={`mobile-nav-cat-${category.id}`}
-                    className="w-full flex items-center justify-between px-3 py-2.5 text-[14px] font-bold text-[#0e101a] rounded-lg hover:bg-[#f5f5f5] transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2.5 text-[14px] font-bold text-[#221d16] rounded-lg hover:bg-[#faf6ec] transition-colors cursor-pointer"
                   >
                     <span>{category.label}</span>
                     <ChevronDown
-                      className={`w-4 h-4 text-[#707070] transition-transform duration-200 ${
+                      className={`w-4 h-4 text-[#948a76] transition-transform duration-200 ${
                         isExpanded ? "rotate-180" : ""
                       }`}
                     />
@@ -364,12 +364,12 @@ export default function Header() {
                           key={item.title}
                           href={item.href}
                           onClick={() => setMobileMenuOpen(false)}
-                          className="p-2 rounded-lg hover:bg-[#f5f5f5] transition-colors flex flex-col gap-0.5 no-underline"
+                          className="p-2 rounded-lg hover:bg-[#faf6ec] transition-colors flex flex-col gap-0.5 no-underline"
                         >
-                          <span className="text-[13px] font-bold text-[#0e101a]">
+                          <span className="text-[13px] font-bold text-[#221d16]">
                             {item.title}
                           </span>
-                          <span className="text-[11px] text-[#707070]">{item.description}</span>
+                          <span className="text-[11px] text-[#948a76]">{item.description}</span>
                         </a>
                       ))}
                     </div>
@@ -379,7 +379,7 @@ export default function Header() {
             })}
           </div>
 
-          <div className="flex flex-col gap-2 pt-2 border-t border-[#ebebeb]">
+          <div className="flex flex-col gap-2 pt-2 border-t border-[#d9cfb8]">
             <Button
               variant="secondary"
               size="md"

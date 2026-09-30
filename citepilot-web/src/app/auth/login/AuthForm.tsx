@@ -73,15 +73,15 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
   return (
     <div className="space-y-6">
       {errorMsg && (
-        <div className="p-3 bg-[#fee2e2] border border-[#fca5a5] text-[#b91c1c] text-sm rounded-lg flex items-start gap-2">
-          <AlertCircle className="w-5 h-5 shrink-0 text-[#b91c1c] mt-0.5" />
+        <div className="p-3 bg-[#f3dcd6] border border-[#ddb3aa] text-[#a32b21] text-sm rounded-lg flex items-start gap-2">
+          <AlertCircle className="w-5 h-5 shrink-0 text-[#a32b21] mt-0.5" />
           <span>{errorMsg}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-3 bg-[#e6f4f2] border border-[#a7dcd4] text-[#027e6f] text-sm rounded-lg flex items-start gap-2">
-          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#027e6f] mt-0.5" />
+        <div className="p-3 bg-[#e7e9f5] border border-[#c9cee8] text-[#2c3e8c] text-sm rounded-lg flex items-start gap-2">
+          <CheckCircle2 className="w-5 h-5 shrink-0 text-[#2c3e8c] mt-0.5" />
           <span>{successMsg}</span>
         </div>
       )}
@@ -89,46 +89,46 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode === "signup" && (
           <div>
-            <label className="block text-xs font-semibold text-[#545454] uppercase tracking-wider mb-1">
+            <label className="block text-xs font-semibold text-[#5c5344] uppercase tracking-wider mb-1">
               Full Name
             </label>
             <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#948a76]" />
               <input
                 type="text"
                 required
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 placeholder="Dr. Eleanor Vance"
-                className="w-full pl-10 pr-4 py-2.5 bg-[#ffffff] border border-[#d9d9d9] rounded-lg text-sm text-[#0e101a] focus:outline-none focus:ring-2 focus:ring-[#027e6f] focus:border-transparent transition-all"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#ffffff] border border-[#d9cfb8] rounded-lg text-sm text-[#221d16] focus:outline-none focus:ring-2 focus:ring-[#2c3e8c] focus:border-transparent transition-all"
               />
             </div>
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-[#545454] uppercase tracking-wider mb-1">
+          <label className="block text-xs font-semibold text-[#5c5344] uppercase tracking-wider mb-1">
             Email Address
           </label>
           <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#948a76]" />
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="eleanor.vance@university.edu"
-              className="w-full pl-10 pr-4 py-2.5 bg-[#ffffff] border border-[#d9d9d9] rounded-lg text-sm text-[#0e101a] focus:outline-none focus:ring-2 focus:ring-[#027e6f] focus:border-transparent transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#ffffff] border border-[#d9cfb8] rounded-lg text-sm text-[#221d16] focus:outline-none focus:ring-2 focus:ring-[#2c3e8c] focus:border-transparent transition-all"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-[#545454] uppercase tracking-wider mb-1">
+          <label className="block text-xs font-semibold text-[#5c5344] uppercase tracking-wider mb-1">
             Password
           </label>
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#707070]" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#948a76]" />
             <input
               type="password"
               required
@@ -136,7 +136,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full pl-10 pr-4 py-2.5 bg-[#ffffff] border border-[#d9d9d9] rounded-lg text-sm text-[#0e101a] focus:outline-none focus:ring-2 focus:ring-[#027e6f] focus:border-transparent transition-all"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#ffffff] border border-[#d9cfb8] rounded-lg text-sm text-[#221d16] focus:outline-none focus:ring-2 focus:ring-[#2c3e8c] focus:border-transparent transition-all"
             />
           </div>
         </div>
@@ -144,7 +144,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         <button
           type="submit"
           disabled={loading || oauthLoading}
-          className="w-full py-2.5 px-4 bg-[#027e6f] hover:bg-[#02665a] text-white text-sm font-semibold rounded-lg shadow-none flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
+          className="w-full py-2.5 px-4 bg-[#2c3e8c] hover:bg-[#24357a] text-white text-sm font-semibold rounded-lg shadow-none flex items-center justify-center gap-2 transition-all disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
@@ -160,10 +160,10 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
 
       <div className="relative my-4">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-[#ebebeb]"></div>
+          <div className="w-full border-t border-[#d9cfb8]"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-[#ffffff] px-2 text-[#707070] font-medium">Or continue with</span>
+          <span className="bg-[#ffffff] px-2 text-[#948a76] font-medium">Or continue with</span>
         </div>
       </div>
 
@@ -171,7 +171,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
         type="button"
         onClick={() => handleOAuth("google")}
         disabled={loading || oauthLoading}
-        className="w-full py-2.5 px-4 bg-[#ffffff] hover:bg-[#f5f5f5] border border-[#0e101a] text-[#0e101a] text-sm font-semibold rounded-lg flex items-center justify-center gap-2.5 shadow-none transition-all disabled:opacity-50 cursor-pointer"
+        className="w-full py-2.5 px-4 bg-[#ffffff] hover:bg-[#faf6ec] border border-[#221d16] text-[#221d16] text-sm font-semibold rounded-lg flex items-center justify-center gap-2.5 shadow-none transition-all disabled:opacity-50 cursor-pointer"
       >
         {oauthLoading ? (
           <Loader2 className="w-4 h-4 animate-spin" />

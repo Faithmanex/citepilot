@@ -54,7 +54,7 @@ export function InteractiveDemoEditor({
       aria-label="CitePilot Live Interactive Citation Demo"
       className={`w-full max-w-[1200px] mx-auto transition-all ${className}`.trim()}
     >
-      <div className="bg-[#ffffff] border border-[#d9d9d9] rounded-lg p-4 sm:p-6 lg:p-8 shadow-none space-y-5 sm:space-y-6">
+      <div className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 sm:p-6 lg:p-8 shadow-none space-y-5 sm:space-y-6">
         {/* Top Segmented Draft Switcher & Reset Action */}
         <DemoDraftSelector
           activeDraftId={activeDraftId}

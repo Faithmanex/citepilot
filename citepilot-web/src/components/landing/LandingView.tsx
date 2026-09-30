@@ -21,7 +21,7 @@ export default function LandingView() {
       role="region"
       aria-label="CitePilot Landing Page"
       data-testid="landing-view"
-      className="min-h-screen bg-[#ffffff] text-[#0e101a] flex flex-col font-sans selection:bg-[#e6f4f2] selection:text-[#027e6f]"
+      className="min-h-screen bg-[#f1ebdc] text-[#221d16] flex flex-col font-sans selection:bg-[#e7e9f5] selection:text-[#2c3e8c]"
     >
       {/* 1. 64px Sticky Top Navigation */}
       <Header />

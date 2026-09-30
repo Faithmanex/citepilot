@@ -135,11 +135,11 @@ export function LexicalDocumentCanvas({
               <ContentEditable
                 data-testid="lexical-content-editable"
                 aria-label="Academic Manuscript Lexical Rich Text Editor"
-                className="w-full flex-1 min-h-[300px] p-4 sm:p-6 font-serif text-[15px] sm:text-[16px] leading-[1.8] text-[#0e101a] bg-[#ffffff] border border-[#d9d9d9] rounded-lg shadow-none focus:border-[#027e6f] focus:ring-2 focus:ring-[#027e6f]/20 focus:outline-none transition-all selection:bg-[#ccebe6]"
+                className="w-full flex-1 min-h-[300px] p-4 sm:p-6 font-serif text-[15px] sm:text-[16px] leading-[1.8] text-[#221d16] bg-[#ffffff] border border-[#d9cfb8] rounded-lg shadow-none focus:border-[#2c3e8c] focus:ring-2 focus:ring-[#2c3e8c]/20 focus:outline-none transition-all selection:bg-[#e7e9f5]"
               />
             }
             placeholder={
-              <div className="absolute top-4 sm:top-6 left-4 sm:left-6 text-[#707070] italic font-serif text-[15px] sm:text-[16px] pointer-events-none select-none">
+              <div className="absolute top-4 sm:top-6 left-4 sm:left-6 text-[#948a76] italic font-serif text-[15px] sm:text-[16px] pointer-events-none select-none">
                 Start writing or paste your academic manuscript here…
               </div>
             }

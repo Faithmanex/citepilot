@@ -51,7 +51,7 @@ export const ENTERPRISE_STATS: EnterpriseStat[] = [
 export default function EnterpriseBand() {
   return (
     <section
-      className="w-full bg-[#027e6f] text-white py-20 sm:py-24 md:py-28 relative overflow-hidden"
+      className="w-full bg-[#2c3e8c] text-white py-20 sm:py-24 md:py-28 relative overflow-hidden"
       id="enterprise"
       role="region"
       aria-label="CitePilot Enterprise & Institutional Licensing"
@@ -105,7 +105,7 @@ export default function EnterpriseBand() {
               variant="ghost-white"
               size="lg"
               withArrow
-              className="w-full sm:w-auto font-bold text-[15px] border-white hover:bg-white hover:text-[#027e6f] shadow-none"
+              className="w-full sm:w-auto font-bold text-[15px] border-white hover:bg-white hover:text-[#2c3e8c] shadow-none"
               data-testid="enterprise-btn-trial"
             >
               Request institutional trial

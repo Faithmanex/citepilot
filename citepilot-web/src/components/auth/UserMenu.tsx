@@ -29,7 +29,7 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
       <div className="flex items-center gap-2">
         <button
           onClick={onOpenAuth}
-          className="px-3.5 py-1.5 text-xs font-semibold text-[#027e6f] bg-[#e6f4f2] hover:bg-[#a7dcd4]/30 rounded-lg transition-colors cursor-pointer"
+          className="px-3.5 py-1.5 text-xs font-semibold text-[#2c3e8c] bg-[#e7e9f5] hover:bg-[#c9cee8]/30 rounded-lg transition-colors cursor-pointer"
         >
           Sign In
         </button>
@@ -51,9 +51,9 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setDropdownOpen((prev) => !prev)}
-        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-[#f5f5f5] transition-all text-left cursor-pointer border border-transparent hover:border-[#ebebeb]"
+        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-[#faf6ec] transition-all text-left cursor-pointer border border-transparent hover:border-[#d9cfb8]"
       >
-        <div className="w-8 h-8 rounded-full bg-[#027e6f] text-white font-bold text-xs flex items-center justify-center shadow-none">
+        <div className="w-8 h-8 rounded-full bg-[#2c3e8c] text-white font-bold text-xs flex items-center justify-center shadow-none">
           {profile?.avatar_url ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -66,34 +66,34 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
           )}
         </div>
         <div className="hidden sm:flex flex-col">
-          <span className="text-xs font-bold text-[#0e101a] leading-tight truncate max-w-[120px]">
+          <span className="text-xs font-bold text-[#221d16] leading-tight truncate max-w-[120px]">
             {displayName}
           </span>
           <span
             className={`text-[10px] font-semibold leading-tight ${
-              isPro ? "text-[#027e6f]" : "text-[#707070]"
+              isPro ? "text-[#2c3e8c]" : "text-[#948a76]"
             }`}
           >
             {tierLabel}
           </span>
         </div>
-        <ChevronDown className="w-3.5 h-3.5 text-[#707070] hidden sm:block" />
+        <ChevronDown className="w-3.5 h-3.5 text-[#948a76] hidden sm:block" />
       </button>
 
       {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-[#ffffff] rounded-lg shadow-none border border-[#ebebeb] py-2 z-50 animate-fade-in text-[#0e101a]">
-          <div className="px-4 py-2 border-b border-[#ebebeb]">
-            <p className="text-xs font-bold text-[#0e101a] truncate">{displayName}</p>
-            <p className="text-[11px] text-[#707070] truncate">{user.email}</p>
+        <div className="absolute right-0 mt-2 w-56 bg-[#ffffff] rounded-lg shadow-none border border-[#d9cfb8] py-2 z-50 animate-fade-in text-[#221d16]">
+          <div className="px-4 py-2 border-b border-[#d9cfb8]">
+            <p className="text-xs font-bold text-[#221d16] truncate">{displayName}</p>
+            <p className="text-[11px] text-[#948a76] truncate">{user.email}</p>
             <div className="mt-2 flex items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[10px] font-bold ${
                   isPro
-                    ? "bg-[#e6f4f2] text-[#027e6f] border border-[#a7dcd4]"
-                    : "bg-[#f5f5f5] text-[#545454] border border-[#ebebeb]"
+                    ? "bg-[#e7e9f5] text-[#2c3e8c] border border-[#c9cee8]"
+                    : "bg-[#faf6ec] text-[#5c5344] border border-[#d9cfb8]"
                 }`}
               >
-                {isPro ? <Sparkles className="w-2.5 h-2.5 text-[#027e6f]" /> : <Shield className="w-2.5 h-2.5" />}
+                {isPro ? <Sparkles className="w-2.5 h-2.5 text-[#2c3e8c]" /> : <Shield className="w-2.5 h-2.5" />}
                 {tierLabel}
               </span>
             </div>
@@ -106,9 +106,9 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
                   setDropdownOpen(false);
                   onOpenSubscription();
                 }}
-                className="w-full px-4 py-2 text-left text-xs font-bold text-[#027e6f] hover:bg-[#e6f4f2] flex items-center gap-2 transition-colors cursor-pointer"
+                className="w-full px-4 py-2 text-left text-xs font-bold text-[#2c3e8c] hover:bg-[#e7e9f5] flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <Sparkles className="w-4 h-4 text-[#027e6f]" />
+                <Sparkles className="w-4 h-4 text-[#2c3e8c]" />
                 Upgrade to Pro (Unlimited)
               </button>
             )}
@@ -119,9 +119,9 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
                   setDropdownOpen(false);
                   onOpenSubscription();
                 }}
-                className="w-full px-4 py-2 text-left text-xs font-medium text-[#0e101a] hover:bg-[#f5f5f5] flex items-center gap-2 transition-colors cursor-pointer"
+                className="w-full px-4 py-2 text-left text-xs font-medium text-[#221d16] hover:bg-[#faf6ec] flex items-center gap-2 transition-colors cursor-pointer"
               >
-                <CheckCircle className="w-4 h-4 text-[#027e6f]" />
+                <CheckCircle className="w-4 h-4 text-[#2c3e8c]" />
                 Manage Subscription
               </button>
             )}
@@ -131,7 +131,7 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
                 setDropdownOpen(false);
                 signOut();
               }}
-              className="w-full px-4 py-2 text-left text-xs font-medium text-[#b91c1c] hover:bg-[#fee2e2]/60 flex items-center gap-2 transition-colors cursor-pointer"
+              className="w-full px-4 py-2 text-left text-xs font-medium text-[#a32b21] hover:bg-[#f3dcd6]/60 flex items-center gap-2 transition-colors cursor-pointer"
             >
               <LogOut className="w-4 h-4" />
               Sign Out

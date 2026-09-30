@@ -201,30 +201,30 @@ describe("Milestone 3 Challenger 2: Flat Surface Elevation (Zero Drop Shadows) &
     });
   });
 
-  it("verifies 1px hairline borders (#ebebeb, #d9d9d9, white/10, white/20) on M3 core sections", () => {
-    // Header border-b border-[#ebebeb]
+  it("verifies 1px hairline borders (#d9cfb8, #d9cfb8, white/10, white/20) on M3 core sections", () => {
+    // Header border-b border-[#d9cfb8]
     const { container: headerContainer } = render(<Header />);
     const header = headerContainer.querySelector("header")!;
     expect(header.className).toContain("border-b");
-    expect(header.className).toContain("border-[#ebebeb]");
+    expect(header.className).toContain("border-[#d9cfb8]");
 
-    // Hero border-b border-[#ebebeb]
+    // Hero border-b border-[#d9cfb8]
     const { container: heroContainer } = render(<Hero />);
     const hero = heroContainer.querySelector("section")!;
     expect(hero.className).toContain("border-b");
-    expect(hero.className).toContain("border-[#ebebeb]");
+    expect(hero.className).toContain("border-[#d9cfb8]");
 
-    // TrustBar border-y border-[#ebebeb]
+    // TrustBar border-y border-[#d9cfb8]
     const { container: trustContainer } = render(<TrustBar />);
     const trust = trustContainer.querySelector("section")!;
     expect(trust.className).toContain("border-y");
-    expect(trust.className).toContain("border-[#ebebeb]");
+    expect(trust.className).toContain("border-[#d9cfb8]");
 
-    // FeatureTriptych border-b border-[#ebebeb]
+    // FeatureTriptych border-b border-[#d9cfb8]
     const { container: triptychContainer } = render(<FeatureTriptych />);
     const triptych = triptychContainer.querySelector("section")!;
     expect(triptych.className).toContain("border-b");
-    expect(triptych.className).toContain("border-[#ebebeb]");
+    expect(triptych.className).toContain("border-[#d9cfb8]");
 
     // Footer border-t border-white/10
     const { container: footerContainer } = render(<Footer />);
@@ -252,13 +252,13 @@ describe("Milestone 3 Challenger 2: Flat Surface Elevation (Zero Drop Shadows) &
   });
 });
 
-describe("Milestone 3 Challenger 2: #027e6f Grammarly Teal Exclusivity & Containment", () => {
+describe("Milestone 3 Challenger 2: #2c3e8c Grammarly Teal Exclusivity & Containment", () => {
   afterEach(() => {
     cleanup();
   });
 
-  it("verifies #027e6f is strictly reserved for primary actions, verified badges, and enterprise band", () => {
-    // 1. Primary Button uses #027e6f
+  it("verifies #2c3e8c is strictly reserved for primary actions, verified badges, and enterprise band", () => {
+    // 1. Primary Button uses #2c3e8c
     const { container: btnContainer } = render(
       <div>
         <Button variant="primary">Primary Action</Button>
@@ -266,52 +266,52 @@ describe("Milestone 3 Challenger 2: #027e6f Grammarly Teal Exclusivity & Contain
         <Button variant="ghost-white">Ghost White</Button>
       </div>
     );
-    const primaryBtn = btnContainer.querySelector(".bg-\\[\\#027e6f\\]");
+    const primaryBtn = btnContainer.querySelector(".bg-\\[\\#2c3e8c\\]");
     expect(primaryBtn).not.toBeNull();
     expect(primaryBtn?.textContent).toBe("Primary Action");
 
     const secondaryBtn = btnContainer.querySelectorAll("button")[1];
-    expect(secondaryBtn.className).not.toContain("bg-[#027e6f]");
-    expect(secondaryBtn.className).toContain("border-[#0e101a]");
+    expect(secondaryBtn.className).not.toContain("bg-[#2c3e8c]");
+    expect(secondaryBtn.className).toContain("border-[#221d16]");
 
-    // 2. Verified / Teal Badge uses #027e6f text and dot
+    // 2. Verified / Teal Badge uses #2c3e8c text and dot
     const { container: badgeContainer } = render(
       <Badge variant="teal" dot>Verified Badge</Badge>
     );
     const badge = badgeContainer.querySelector("span")!;
-    expect(badge.className).toContain("text-[#027e6f]");
-    expect(badge.className).toContain("bg-[#e6f4f2]");
-    expect(badge.className).toContain("border-[#a7dcd4]");
+    expect(badge.className).toContain("text-[#2c3e8c]");
+    expect(badge.className).toContain("bg-[#e7e9f5]");
+    expect(badge.className).toContain("border-[#c9cee8]");
 
-    // 3. EnterpriseBand uses full-bleed bg-[#027e6f]
+    // 3. EnterpriseBand uses full-bleed bg-[#2c3e8c]
     const { container: entContainer } = render(<EnterpriseBand />);
     const enterpriseSection = entContainer.querySelector("section")!;
-    expect(enterpriseSection.className).toContain("bg-[#027e6f]");
+    expect(enterpriseSection.className).toContain("bg-[#2c3e8c]");
     expect(enterpriseSection.className).toContain("text-white");
 
     // 4. Hero primary CTA uses primary teal
     const { container: heroContainer } = render(<Hero />);
     const heroPrimary = heroContainer.querySelector("[data-testid='hero-btn-primary']")!;
-    expect(heroPrimary.className).toContain("bg-[#027e6f]");
+    expect(heroPrimary.className).toContain("bg-[#2c3e8c]");
 
     // 5. Header primary CTA uses primary teal
     const { container: headerContainer } = render(<Header />);
     const headerSignup = headerContainer.querySelector("[data-testid='header-btn-signup']")!;
-    expect(headerSignup.className).toContain("bg-[#027e6f]");
+    expect(headerSignup.className).toContain("bg-[#2c3e8c]");
   });
 
-  it("verifies achromatic canvas: 90%+ surfaces are paper (#ffffff), cloud (#f5f5f5), or dark ink (#0e101a)", () => {
+  it("verifies achromatic canvas: 90%+ surfaces are paper (#ffffff), cloud (#faf6ec), or dark ink (#221d16)", () => {
     const { container: landingContainer } = render(<LandingView />);
     const main = landingContainer.querySelector("main")!;
     expect(main).toBeInTheDocument();
 
     // Check Header surface
     const header = landingContainer.querySelector("header")!;
-    expect(header.className).toContain("bg-[#ffffff]");
+    expect(header.className).toContain("bg-[#f1ebdc]");
 
     // Check TrustBar surface
     const trustBar = landingContainer.querySelector("[data-testid='landing-trustbar']")!;
-    expect(trustBar.className).toContain("bg-[#f5f5f5]");
+    expect(trustBar.className).toContain("bg-[#faf6ec]");
 
     // Check FeatureTriptych surface
     const triptych = landingContainer.querySelector("[data-testid='landing-feature-triptych']")!;
@@ -319,7 +319,7 @@ describe("Milestone 3 Challenger 2: #027e6f Grammarly Teal Exclusivity & Contain
 
     // Check Footer surface
     const footer = landingContainer.querySelector("footer")!;
-    expect(footer.className).toContain("bg-[#0e101a]");
+    expect(footer.className).toContain("bg-[#221d16]");
   });
 });
 
@@ -337,6 +337,6 @@ describe("Milestone 3 Challenger 2: Interactive Demo Engine Integration & Tokens
     const mainBox = editorSection.firstElementChild!;
     expect(mainBox.className).toContain("rounded-lg");
     expect(mainBox.className).toContain("shadow-none");
-    expect(mainBox.className).toContain("border-[#d9d9d9]");
+    expect(mainBox.className).toContain("border-[#d9cfb8]");
   });
 });

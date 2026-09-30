@@ -38,27 +38,27 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
   return (
     <div
       data-testid="document-editor-canvas"
-      className={`bg-[#ffffff] border border-[#ebebeb] rounded-lg shadow-none flex flex-col min-h-[560px] transition-all ${className}`.trim()}
+      className={`bg-[#ffffff] border border-[#d9cfb8] rounded-lg shadow-none flex flex-col min-h-[560px] transition-all ${className}`.trim()}
     >
       {/* Canvas Top Bar */}
-      <div className="flex flex-wrap items-center justify-between px-5 py-3 border-b border-[#ebebeb] bg-[#fcfdfd] rounded-t-lg gap-3">
+      <div className="flex flex-wrap items-center justify-between px-5 py-3 border-b border-[#d9cfb8] bg-[#faf6ec] rounded-t-lg gap-3">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span
               className={`w-2.5 h-2.5 rounded-full ${
-                isCustomTyping ? "bg-[#d97706]" : "bg-[#027e6f]"
+                isCustomTyping ? "bg-[#93650f]" : "bg-[#2c3e8c]"
               } animate-pulse`}
               aria-hidden="true"
             />
-            <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#1f243c]">
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-[#14181f]">
               {isCustomTyping ? "Direct Prose Editing" : "Academic Manuscript Canvas"}
             </span>
           </div>
 
           {/* Section Indicator Landmark */}
           {sections.length > 0 && !isCustomTyping && (
-            <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#707070] bg-[#f0f0f0] px-2 py-0.5 rounded font-mono">
-              <Hash className="w-3 h-3 text-[#545454]" />
+            <div className="hidden sm:flex items-center gap-1 text-[11px] text-[#948a76] bg-[#f1ebdc] px-2 py-0.5 rounded font-mono">
+              <Hash className="w-3 h-3 text-[#5c5344]" />
               <span>{sections.length} Academic Sections</span>
             </div>
           )}
@@ -66,11 +66,11 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
 
         {/* Word count & Mode toggle */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-xs font-mono text-[#707070]">
-            <span className="font-semibold text-[#0e101a]">{words}</span>
+          <div className="flex items-center gap-2 text-xs font-mono text-[#948a76]">
+            <span className="font-semibold text-[#221d16]">{words}</span>
             <span>words</span>
             <span>•</span>
-            <span className="font-semibold text-[#0e101a]">{chars}</span>
+            <span className="font-semibold text-[#221d16]">{chars}</span>
             <span>chars</span>
             <span className="hidden md:inline">• ~{readingTimeMinutes} min read</span>
           </div>
@@ -79,7 +79,7 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
             type="button"
             data-testid="toggle-edit-mode-btn"
             onClick={() => onToggleCustomTyping(!isCustomTyping)}
-            className="text-xs font-bold px-3 py-1.5 rounded-md border border-[#d9d9d9] hover:border-[#027e6f] hover:text-[#027e6f] bg-white transition-all flex items-center gap-1.5 cursor-pointer"
+            className="text-xs font-bold px-3 py-1.5 rounded-md border border-[#d9cfb8] hover:border-[#2c3e8c] hover:text-[#2c3e8c] bg-white transition-all flex items-center gap-1.5 cursor-pointer"
           >
             {isCustomTyping ? (
               <>
@@ -117,15 +117,15 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
             </div>
 
             {/* Live Highlight Preview Underneath Lexical Canvas */}
-            <div className="p-4 bg-[#fcfdfd] border border-[#ebebeb] rounded-lg space-y-2">
-              <div className="flex items-center justify-between text-[11px] font-mono font-bold uppercase tracking-wider text-[#707070]">
+            <div className="p-4 bg-[#faf6ec] border border-[#d9cfb8] rounded-lg space-y-2">
+              <div className="flex items-center justify-between text-[11px] font-mono font-bold uppercase tracking-wider text-[#948a76]">
                 <span>Live Audit Preview (Click any highlight):</span>
-                <span className="text-[#027e6f] flex items-center gap-1">
+                <span className="text-[#2c3e8c] flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> Auto-syncing
                 </span>
               </div>
               <div
-                className="font-sans text-[15px] leading-[1.75] text-[#1f243c] select-text"
+                className="font-sans text-[15px] leading-[1.75] text-[#14181f] select-text"
                 data-testid="interactive-manuscript-preview"
               >
                 {textSegments.map((segment) => {
@@ -151,10 +151,10 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
         ) : (
           <div
             data-testid="interactive-manuscript-canvas"
-            className="font-sans text-[15px] sm:text-[16px] leading-[1.8] text-[#1f243c] select-text flex-1 whitespace-pre-wrap"
+            className="font-sans text-[15px] sm:text-[16px] leading-[1.8] text-[#14181f] select-text flex-1 whitespace-pre-wrap"
           >
             {textSegments.length === 0 ? (
-              <p className="text-[#707070] italic">No document text loaded.</p>
+              <p className="text-[#948a76] italic">No document text loaded.</p>
             ) : (
               textSegments.map((segment) => {
                 if (segment.type === "text") {
@@ -179,7 +179,7 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
       </div>
 
       {/* Canvas Footer */}
-      <div className="px-5 py-2.5 border-t border-[#ebebeb] bg-[#fafafa] rounded-b-lg flex flex-wrap items-center justify-between text-xs text-[#707070] gap-2">
+      <div className="px-5 py-2.5 border-t border-[#d9cfb8] bg-[#faf6ec] rounded-b-lg flex flex-wrap items-center justify-between text-xs text-[#948a76] gap-2">
         <div className="flex items-center gap-3">
           <span>Click any colored span to inspect and accept 1-click fixes</span>
         </div>

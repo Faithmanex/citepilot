@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -102,7 +102,7 @@ export function FloatingBubbleToolbar({ onInspectSelection }: FloatingBubbleTool
         left: `${position.left}px`,
         transform: "translateX(-50%)",
       }}
-      className="fixed z-50 flex items-center gap-1 px-1.5 py-1 bg-[#0e101a] text-white rounded-lg shadow-xl border border-neutral-700/80 animate-in fade-in zoom-in-95 duration-150 select-none"
+      className="fixed z-50 flex items-center gap-1 px-1.5 py-1 bg-[#221d16] text-white rounded-lg shadow-xl border border-neutral-700/80 animate-in fade-in zoom-in-95 duration-150 select-none"
     >
       <button
         type="button"
@@ -113,7 +113,7 @@ export function FloatingBubbleToolbar({ onInspectSelection }: FloatingBubbleTool
         }}
         className={[
           "p-1.5 rounded hover:bg-neutral-800 transition-colors cursor-pointer",
-          isBold ? "bg-neutral-800 text-[#027e6f]" : "text-neutral-300",
+          isBold ? "bg-neutral-800 text-[#2c3e8c]" : "text-neutral-300",
         ].join(" ")}
       >
         <Bold className="w-3.5 h-3.5" />
@@ -128,7 +128,7 @@ export function FloatingBubbleToolbar({ onInspectSelection }: FloatingBubbleTool
         }}
         className={[
           "p-1.5 rounded hover:bg-neutral-800 transition-colors cursor-pointer",
-          isItalic ? "bg-neutral-800 text-[#027e6f]" : "text-neutral-300",
+          isItalic ? "bg-neutral-800 text-[#2c3e8c]" : "text-neutral-300",
         ].join(" ")}
       >
         <Italic className="w-3.5 h-3.5" />
@@ -143,7 +143,7 @@ export function FloatingBubbleToolbar({ onInspectSelection }: FloatingBubbleTool
         }}
         className={[
           "p-1.5 rounded hover:bg-neutral-800 transition-colors cursor-pointer",
-          isCode ? "bg-neutral-800 text-[#027e6f]" : "text-neutral-300",
+          isCode ? "bg-neutral-800 text-[#2c3e8c]" : "text-neutral-300",
         ].join(" ")}
       >
         <Code className="w-3.5 h-3.5" />
@@ -171,7 +171,7 @@ export function FloatingBubbleToolbar({ onInspectSelection }: FloatingBubbleTool
               e.preventDefault();
               onInspectSelection(selectedText);
             }}
-            className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded bg-[#027e6f]/30 text-[#4bd5c3] hover:bg-[#027e6f]/50 transition-colors cursor-pointer"
+            className="flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded bg-[#2c3e8c]/30 text-[#6b7fc4] hover:bg-[#2c3e8c]/50 transition-colors cursor-pointer"
           >
             <Sparkles className="w-3 h-3" />
             <span>Audit Selection</span>

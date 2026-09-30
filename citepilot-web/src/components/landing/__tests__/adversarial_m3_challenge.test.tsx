@@ -136,7 +136,7 @@ describe("Milestone 3 Empirical Adversarial Challenge: Header & Navigation Subsy
     expect(header).toHaveClass("sticky");
     expect(header).toHaveClass("top-0");
     expect(header).toHaveClass("border-b");
-    expect(header).toHaveClass("border-[#ebebeb]");
+    expect(header).toHaveClass("border-[#d9cfb8]");
 
     // Verify desktop buttons have rounded-lg (8px) and zero shadows
     const loginBtn = screen.getByTestId("header-btn-login");
@@ -347,7 +347,7 @@ describe("Milestone 3 Empirical Adversarial Challenge: Responsive Viewport Grid 
 
     cards.forEach((card) => {
       expect(card.className).toContain("rounded-[8px]");
-      expect(card.className).toContain("border-[#ebebeb]");
+      expect(card.className).toContain("border-[#d9cfb8]");
       expect(card.className).toContain("shadow-none");
     });
   });

@@ -38,29 +38,29 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 const variantStyles: Record<string, string> = {
   // Primary Teal Filled
   primary:
-    "bg-[#027e6f] text-white border border-[#027e6f] hover:bg-[#02665a] hover:border-[#02665a] active:bg-[#014d44] active:border-[#014d44] focus-visible:ring-[#027e6f] focus-visible:ring-offset-white font-bold",
+    "bg-[#2c3e8c] text-white border border-[#2c3e8c] hover:bg-[#24357a] hover:border-[#24357a] active:bg-[#1b2a66] active:border-[#1b2a66] focus-visible:ring-[#2c3e8c] focus-visible:ring-offset-white font-bold",
   "primary-teal":
-    "bg-[#027e6f] text-white border border-[#027e6f] hover:bg-[#02665a] hover:border-[#02665a] active:bg-[#014d44] active:border-[#014d44] focus-visible:ring-[#027e6f] focus-visible:ring-offset-white font-bold",
+    "bg-[#2c3e8c] text-white border border-[#2c3e8c] hover:bg-[#24357a] hover:border-[#24357a] active:bg-[#1b2a66] active:border-[#1b2a66] focus-visible:ring-[#2c3e8c] focus-visible:ring-offset-white font-bold",
 
   // Secondary Dark Outlined
   secondary:
-    "bg-transparent text-[#0e101a] border border-[#0e101a] hover:bg-[#0e101a] hover:text-white hover:border-[#0e101a] active:bg-[#1c1c1c] active:text-white active:border-[#1c1c1c] focus-visible:ring-[#0e101a] focus-visible:ring-offset-white font-semibold",
+    "bg-transparent text-[#221d16] border border-[#221d16] hover:bg-[#221d16] hover:text-white hover:border-[#221d16] active:bg-[#221d16] active:text-white active:border-[#221d16] focus-visible:ring-[#221d16] focus-visible:ring-offset-white font-semibold",
   "secondary-dark":
-    "bg-transparent text-[#0e101a] border border-[#0e101a] hover:bg-[#0e101a] hover:text-white hover:border-[#0e101a] active:bg-[#1c1c1c] active:text-white active:border-[#1c1c1c] focus-visible:ring-[#0e101a] focus-visible:ring-offset-white font-semibold",
+    "bg-transparent text-[#221d16] border border-[#221d16] hover:bg-[#221d16] hover:text-white hover:border-[#221d16] active:bg-[#221d16] active:text-white active:border-[#221d16] focus-visible:ring-[#221d16] focus-visible:ring-offset-white font-semibold",
 
   // Ghost White Outlined (for teal / dark backgrounds)
   "ghost-white":
-    "bg-transparent text-white border border-white/80 hover:bg-white/15 hover:border-white hover:text-white active:bg-white/25 active:border-white focus-visible:ring-white focus-visible:ring-offset-[#027e6f] font-semibold",
+    "bg-transparent text-white border border-white/80 hover:bg-white/15 hover:border-white hover:text-white active:bg-white/25 active:border-white focus-visible:ring-white focus-visible:ring-offset-[#2c3e8c] font-semibold",
   ghostWhite:
-    "bg-transparent text-white border border-white/80 hover:bg-white/15 hover:border-white hover:text-white active:bg-white/25 active:border-white focus-visible:ring-white focus-visible:ring-offset-[#027e6f] font-semibold",
+    "bg-transparent text-white border border-white/80 hover:bg-white/15 hover:border-white hover:text-white active:bg-white/25 active:border-white focus-visible:ring-white focus-visible:ring-offset-[#2c3e8c] font-semibold",
 
   // Subdued Ghost (tertiary / subtle actions)
   subdued:
-    "bg-transparent text-[#545454] border border-transparent hover:bg-[#f5f5f5] hover:text-[#0e101a] active:bg-[#ebebeb] active:text-[#0e101a] focus-visible:ring-[#0e101a] focus-visible:ring-offset-1 font-medium",
+    "bg-transparent text-[#5c5344] border border-transparent hover:bg-[#faf6ec] hover:text-[#221d16] active:bg-[#d9cfb8] active:text-[#221d16] focus-visible:ring-[#221d16] focus-visible:ring-offset-1 font-medium",
   "subdued-ghost":
-    "bg-transparent text-[#545454] border border-transparent hover:bg-[#f5f5f5] hover:text-[#0e101a] active:bg-[#ebebeb] active:text-[#0e101a] focus-visible:ring-[#0e101a] focus-visible:ring-offset-1 font-medium",
+    "bg-transparent text-[#5c5344] border border-transparent hover:bg-[#faf6ec] hover:text-[#221d16] active:bg-[#d9cfb8] active:text-[#221d16] focus-visible:ring-[#221d16] focus-visible:ring-offset-1 font-medium",
   ghost:
-    "bg-transparent text-[#545454] border border-transparent hover:bg-[#f5f5f5] hover:text-[#0e101a] active:bg-[#ebebeb] active:text-[#0e101a] focus-visible:ring-[#0e101a] focus-visible:ring-offset-1 font-medium",
+    "bg-transparent text-[#5c5344] border border-transparent hover:bg-[#faf6ec] hover:text-[#221d16] active:bg-[#d9cfb8] active:text-[#221d16] focus-visible:ring-[#221d16] focus-visible:ring-offset-1 font-medium",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

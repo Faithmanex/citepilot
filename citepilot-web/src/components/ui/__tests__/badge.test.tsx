@@ -15,9 +15,9 @@ describe("Grammarly Editorial Badge & Tag Component", () => {
     const { container } = render(<Badge>Missing Citation</Badge>);
     const badge = container.firstElementChild;
     expect(badge).toBeInTheDocument();
-    expect(badge).toHaveClass("bg-[#e6f4f2]");
-    expect(badge).toHaveClass("text-[#027e6f]");
-    expect(badge).toHaveClass("border-[#a7dcd4]");
+    expect(badge).toHaveClass("bg-[#e7e9f5]");
+    expect(badge).toHaveClass("text-[#2c3e8c]");
+    expect(badge).toHaveClass("border-[#c9cee8]");
     expect(badge).toHaveClass("rounded-[8px]");
     expect(badge).toHaveClass("shadow-none");
     expect(badge).toHaveTextContent("Missing Citation");
@@ -27,42 +27,42 @@ describe("Grammarly Editorial Badge & Tag Component", () => {
     // 1. Missing Citation (Teal)
     const { container, rerender } = render(<Badge variant="missing-citation">Missing Citation</Badge>);
     let badge = container.firstElementChild;
-    expect(badge).toHaveClass("bg-[#e6f4f2]");
-    expect(badge).toHaveClass("text-[#027e6f]");
-    expect(badge).toHaveClass("border-[#a7dcd4]");
+    expect(badge).toHaveClass("bg-[#e7e9f5]");
+    expect(badge).toHaveClass("text-[#2c3e8c]");
+    expect(badge).toHaveClass("border-[#c9cee8]");
 
     // 2. Claim Needs Source (Amber)
     rerender(<Badge variant="claim-needs-source">Claim Needs Source</Badge>);
     badge = container.firstElementChild;
-    expect(badge).toHaveClass("bg-[#fef3c7]");
-    expect(badge).toHaveClass("text-[#92400e]");
-    expect(badge).toHaveClass("border-[#fde68a]");
+    expect(badge).toHaveClass("bg-[#f1e4c8]");
+    expect(badge).toHaveClass("text-[#93650f]");
+    expect(badge).toHaveClass("border-[#ecd9a8]");
 
     // 3. Outdated Reference (Violet)
     rerender(<Badge variant="outdated-reference">Outdated Reference</Badge>);
     badge = container.firstElementChild;
-    expect(badge).toHaveClass("bg-[#ede9fe]");
-    expect(badge).toHaveClass("text-[#5b21b6]");
-    expect(badge).toHaveClass("border-[#ddd6fe]");
+    expect(badge).toHaveClass("bg-[#f1e4c8]");
+    expect(badge).toHaveClass("text-[#93650f]");
+    expect(badge).toHaveClass("border-[#ecd9a8]");
 
     // 4. Tone & Clarity (Slate)
     rerender(<Badge variant="tone-clarity">Tone & Clarity</Badge>);
     badge = container.firstElementChild;
-    expect(badge).toHaveClass("bg-[#f5f5f5]");
-    expect(badge).toHaveClass("text-[#1f243c]");
-    expect(badge).toHaveClass("border-[#d9d9d9]");
+    expect(badge).toHaveClass("bg-[#faf6ec]");
+    expect(badge).toHaveClass("text-[#14181f]");
+    expect(badge).toHaveClass("border-[#d9cfb8]");
   });
 
   it("renders error and info variants", () => {
     const { container, rerender } = render(<Badge variant="error">Retracted DOI</Badge>);
     let badge = container.firstElementChild;
-    expect(badge).toHaveClass("bg-[#fee2e2]");
-    expect(badge).toHaveClass("text-[#b91c1c]");
+    expect(badge).toHaveClass("bg-[#f3dcd6]");
+    expect(badge).toHaveClass("text-[#a32b21]");
 
     rerender(<Badge variant="info">APA 7th Edition</Badge>);
     badge = container.firstElementChild;
-    expect(badge).toHaveClass("bg-[#eff6ff]");
-    expect(badge).toHaveClass("text-[#2563eb]");
+    expect(badge).toHaveClass("bg-[#e7e9f5]");
+    expect(badge).toHaveClass("text-[#2c3e8c]");
   });
 
   it("renders dark and outline variants", () => {
@@ -73,7 +73,7 @@ describe("Grammarly Editorial Badge & Tag Component", () => {
     rerender(<Badge variant="outline">Achromatic</Badge>);
     badge = container.firstElementChild;
     expect(badge).toHaveClass("bg-transparent");
-    expect(badge).toHaveClass("text-[#0e101a]");
+    expect(badge).toHaveClass("text-[#221d16]");
   });
 
   it("renders size scales (sm, md, lg) with 8px radius standard", () => {
@@ -97,7 +97,7 @@ describe("Grammarly Editorial Badge & Tag Component", () => {
     const { container } = render(<Badge dot variant="missing-citation">Verified</Badge>);
     const dot = container.querySelector(".rounded-\\[4px\\]");
     expect(dot).toBeInTheDocument();
-    expect(dot).toHaveClass("bg-[#027e6f]");
+    expect(dot).toHaveClass("bg-[#2c3e8c]");
   });
 
   it("renders leading icon", () => {
@@ -122,7 +122,7 @@ describe("Grammarly Editorial Badge & Tag Component", () => {
   it("works seamlessly when rendered via Tag alias", () => {
     const { container } = render(<Tag variant="claim-needs-source">Tag Alias</Tag>);
     const tag = container.firstElementChild;
-    expect(tag).toHaveClass("bg-[#fef3c7]");
+    expect(tag).toHaveClass("bg-[#f1e4c8]");
     expect(tag).toHaveClass("rounded-[8px]");
   });
 });

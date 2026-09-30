@@ -7,7 +7,7 @@ const testimonials = [
     role: "Senior Researcher, Public Health",
     institution: "University of Ghana",
     initials: "AO",
-    color: "#1E5E4B",
+    color: "#3b6647",
   },
   {
     quote: "I run every student dissertation chapter through CitePilot before approval. The Crossref verification alone is worth the subscription — it flags mismatched DOIs instantly.",
@@ -15,7 +15,7 @@ const testimonials = [
     role: "Dissertation Supervisor",
     institution: "University of Bologna",
     initials: "EM",
-    color: "#1E3A8A",
+    color: "#2c3e8c",
   },
   {
     quote: "As a journal reviewer, I recommended CitePilot to our editorial board. It identified two retracted source citations in a manuscript we nearly accepted. Incredible tool.",
@@ -23,7 +23,7 @@ const testimonials = [
     role: "Peer Reviewer & Associate Editor",
     institution: "Journal of Academic Integrity",
     initials: "JO",
-    color: "#825500",
+    color: "#93650f",
   },
 ];
 
@@ -56,7 +56,7 @@ export default function Testimonials() {
               {/* Stars */}
               <div className="flex gap-1" aria-label="5 out of 5 stars">
                 {Array(5).fill(0).map((_, i) => (
-                  <i key={i} className="fas fa-star text-amber-500 text-xs" aria-hidden="true" />
+                  <i key={i} className="fas fa-star text-[#93650f] text-xs" aria-hidden="true" />
                 ))}
               </div>
 

@@ -10,12 +10,12 @@ export interface SectionProps extends React.HTMLAttributes<HTMLElement> {
 }
 
 const VARIANT_MAP: Record<string, string> = {
-  paper: "bg-[#ffffff] text-[#0e101a]",
-  cloud: "bg-[#f5f5f5] text-[#0e101a] border-y border-[#ebebeb]",
-  midnight: "bg-[#1f243c] text-white",
-  ink: "bg-[#0e101a] text-white",
-  teal: "bg-[#027e6f] text-white",
-  bordered: "bg-[#ffffff] text-[#0e101a] border-b border-[#ebebeb]",
+  paper: "bg-[#ffffff] text-[#221d16]",
+  cloud: "bg-[#faf6ec] text-[#221d16] border-y border-[#d9cfb8]",
+  midnight: "bg-[#14181f] text-white",
+  ink: "bg-[#221d16] text-white",
+  teal: "bg-[#2c3e8c] text-white",
+  bordered: "bg-[#ffffff] text-[#221d16] border-b border-[#d9cfb8]",
 };
 
 const SPACING_MAP: Record<string, string> = {

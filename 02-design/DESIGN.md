@@ -11,57 +11,54 @@ CitePilot bridges the timeless aesthetic of **traditional editorial proofreading
 1. **Paper & Ink Palette**: Replaces sterile web-white with tactile, warm paper tones (`#F1EBDC` / `#FAF6EC`) and deep carbon ink (`#221D16`), evoking academic manuscripts, press proofs, and library archives.
 2. **Editorial Stamp & Margin Annotations**: Uses rotated double-bordered rubber stamp badges (`VERIFIED`, `MISMATCH`, `UNCITED`) and handwritten cursive margin annotations (`Caveat`) for intuitive proofreading feedback.
 3. **High-Contrast Issue Color System**:
-   - 🔴 **Error / Mismatch (`#A32B21` / `#B23A2E`)**: Mismatched citations, missing bibliography entries, and retracted papers.
-   - 🟠 **Warning / Discrepancy (`#93650F` / `#B4740E`)**: Style manual rule violations, year mismatches, and uncited factual claims.
-   - 🟢 **Verified Match (`#3B6647` / `#2F6F5E`)**: Exact citation-reference matches and Crossref-verified metadata.
-   - 🔵 **Academic Brand Accent (`#2C3E8C` / `#6366F1`)**: Interactive buttons, active tabs, and primary action controls.
+   - 🔴 **Error / Mismatch (`#A32B21`)**: Mismatched citations, missing bibliography entries, and retracted papers.
+   - 🟠 **Warning / Discrepancy (`#93650F`)**: Style manual rule violations, year mismatches, and uncited factual claims.
+   - 🟢 **Verified Match (`#3B6647`)**: Exact citation-reference matches and Crossref-verified metadata.
+   - 🔵 **Academic Brand Accent (`#2C3E8C`)**: Interactive buttons, active tabs, and primary action controls.
 
 ---
 
-## 📐 2. Design Tokens & CSS Variables
+## 📐 2. Brand Design Tokens (Single Source of Truth)
 
-### A. Editorial / Landing Design System (`citepilot-v2.html`)
-```css
-:root {
-  --paper:        #F1EBDC; /* Warm aged paper background */
-  --paper-card:   #FAF6EC; /* Card surfaces and manuscript container */
-  --ink:          #221D16; /* Primary dark carbon ink */
-  --ink-soft:     #5C5344; /* Secondary subdued text */
-  --ink-faint:    #948A76; /* Faint annotations, borders, captions */
-  --rule:         #D9CFB8; /* Paper grid and section divider lines */
-  --red:          #A32B21; /* Citation mismatch & retraction red */
-  --red-bg:       #F3DCD6; /* Red highlight background */
-  --ochre:        #93650F; /* Style warning ochre */
-  --ochre-bg:     #F1E4C8; /* Ochre highlight background */
-  --green:        #3B6647; /* Verified match green */
-  --green-bg:     #DEE8DD; /* Green highlight background */
-}
-```
+These tokens are the **canonical CitePilot brand standard**. The runtime source of truth is [`citepilot-web/src/app/globals.css`](../citepilot-web/src/app/globals.css) (`@theme`); this section must be kept in sync with it. Both the landing page and the app dashboard use the **same** paper/ink system.
 
-### B. App Dashboard Design System (`citepilot-dashboard.html`)
-```css
-:root {
-  --sidebar:              #14181F; /* Dark charcoal navigation sidebar */
-  --sidebar-line:         #252B36; /* Sidebar group dividers */
-  --sidebar-text:         #9CA3B0; /* Sidebar item text */
-  --sidebar-text-active:  #FAFAF7; /* Active nav text */
-  --paper:                #F4F3EE; /* Main canvas background */
-  --card:                 #FFFFFF; /* White panel cards */
-  --ink:                  #14181F; /* Main body text */
-  --ink-soft:             #4A5160; /* Muted text */
-  --ink-faint:            #8A8F99; /* Subtext */
-  --line:                 #E4E2D8; /* Divider lines */
-  --verified:             #2F6F5E; /* Emerald verified green */
-  --verified-bg:          #E7F0EC; /* Light green chip background */
-  --warning:              #B4740E; /* Amber warning ochre */
-  --warning-bg:           #F6EEDD; /* Light amber chip background */
-  --error:                #B23A2E; /* Crimson error red */
-  --error-bg:             #F5E7E3; /* Light red chip background */
-  --brand:                #2C3E8C; /* Academic navy/indigo accent */
-  --brand-bg:             #E7E9F5; /* Light indigo pill background */
-  --radius:               6px;
-}
-```
+### A. Editorial Core (Paper & Ink)
+
+| Token (`globals.css`) | Value | Role |
+|---|---|---|
+| `--color-paper` | `#F1EBDC` | Warm aged paper — page background |
+| `--color-paper-card` / `--color-cloud` | `#FAF6EC` | Card surfaces and manuscript container |
+| `--color-card` | `#FFFFFF` | Raised white panels |
+| `--color-ink-black` / `--color-ink` | `#221D16` | Primary carbon ink (body text) |
+| `--color-ink-soft` | `#5C5344` | Secondary subdued text |
+| `--color-ink-faint` | `#948A76` | Faint annotations, captions |
+| `--color-rule` / `--color-line` | `#D9CFB8` | Paper grid and divider lines |
+| `--color-brand` | `#2C3E8C` | Academic indigo accent (primary actions, links, focus) |
+| `--color-brand-hover` | `#24357A` | Accent hover |
+| `--color-brand-bg` | `#E7E9F5` | Accent tint |
+| `--color-focus-ring` | `#2C3E8C` | Focus outline |
+
+### B. Functional Status
+
+| Token (`globals.css`) | Value | Role |
+|---|---|---|
+| `--color-verified` / `--color-status-verified` | `#3B6647` | Verified / matched citation (green) |
+| `--color-verified-bg` | `#DEE8DD` | Verified highlight |
+| `--color-warning` / `--color-status-warning` | `#93650F` | Style warning / uncited claim (ochre) |
+| `--color-warning-bg` | `#F1E4C8` | Warning highlight |
+| `--color-error` / `--color-status-error` | `#A32B21` | Mismatch / retraction (red) |
+| `--color-error-bg` | `#F3DCD6` | Error highlight |
+
+### C. App Chrome (Sidebar)
+
+| Token (`globals.css`) | Value | Role |
+|---|---|---|
+| `--color-sidebar` | `#14181F` | Dark charcoal navigation sidebar |
+| `--color-sidebar-line` | `#252B36` | Sidebar group dividers |
+| `--color-sidebar-text` | `#9CA3B0` | Sidebar item text |
+| `--color-sidebar-text-active` | `#FAFAF7` | Active nav text |
+
+Border radius is standardized to **8px** (`--radius-sm` … `--radius-full`), and elevation is flat with **zero drop shadows**; both are defined in `globals.css`.
 
 ---
 

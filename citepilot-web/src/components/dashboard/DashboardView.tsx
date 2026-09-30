@@ -168,7 +168,7 @@ export default function DashboardView() {
   const badges = computeAuditStats(analysisData);
 
   return (
-    <div className="dash-body bg-[#ffffff] text-[#0e101a] min-h-screen selection:bg-[#e6f4f2] selection:text-[#027e6f] font-sans">
+    <div className="dash-body bg-[#f1ebdc] text-[#221d16] min-h-screen selection:bg-[#e7e9f5] selection:text-[#2c3e8c] font-sans">
       <div className="flex flex-col md:grid md:grid-cols-[240px_1fr] min-h-screen">
         <Sidebar
           activePanel={activePanel}
@@ -178,7 +178,7 @@ export default function DashboardView() {
           onClose={() => setMobileNavOpen(false)}
           onOpenSubscription={() => setSubscriptionModalOpen(true)}
         />
-        <main className="min-w-0 w-full bg-[#ffffff] flex flex-col" role="main">
+        <main className="min-w-0 w-full bg-[#f1ebdc] flex flex-col" role="main">
           <Topbar
             mode={currentMode}
             onModeChange={handleModeChange}
@@ -204,12 +204,12 @@ export default function DashboardView() {
                 hasText={!!manuscriptText.trim()}
               />
             ) : (
-              <details className="group bg-[#fcfdfd] border border-[#ebebeb] rounded-lg overflow-hidden transition-all">
-                <summary className="px-4 py-2.5 cursor-pointer text-xs font-mono font-bold uppercase tracking-wider text-[#545454] hover:text-[#0e101a] flex items-center justify-between select-none">
+              <details className="group bg-[#faf6ec] border border-[#d9cfb8] rounded-lg overflow-hidden transition-all">
+                <summary className="px-4 py-2.5 cursor-pointer text-xs font-mono font-bold uppercase tracking-wider text-[#5c5344] hover:text-[#221d16] flex items-center justify-between select-none">
                   <span>Replace Document or Edit Raw Input</span>
-                  <span className="text-[10px] text-[#707070] group-open:rotate-180 transition-transform">▼</span>
+                  <span className="text-[10px] text-[#948a76] group-open:rotate-180 transition-transform">▼</span>
                 </summary>
-                <div className="p-4 pt-0 border-t border-[#ebebeb] bg-white">
+                <div className="p-4 pt-0 border-t border-[#d9cfb8] bg-white">
                   <InputArea
                     onFileSelect={handleFileSelect}
                     onTextChange={handleTextChange}
@@ -224,14 +224,14 @@ export default function DashboardView() {
             {/* Shimmer Skeleton Loader state when audit is running */}
             {progress.visible ? (
               <div className="space-y-4 animate-pulse">
-                <div className="h-32 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
+                <div className="h-32 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
-                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
-                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
-                  <div className="h-28 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
+                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
+                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
+                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
+                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
                 </div>
-                <div className="h-64 bg-[#ffffff] border border-[#ebebeb] rounded-lg" />
+                <div className="h-64 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
               </div>
             ) : (
               <>
@@ -248,12 +248,12 @@ export default function DashboardView() {
                       />
 
                       {/* Collapsible Macro Diagnostic Metrics */}
-                      <details className="group border border-[#ebebeb] bg-[#fafafa] rounded-lg overflow-hidden transition-all">
-                        <summary className="p-4 cursor-pointer font-bold text-xs uppercase tracking-wider text-[#545454] hover:text-[#0e101a] flex items-center justify-between select-none">
+                      <details className="group border border-[#d9cfb8] bg-[#faf6ec] rounded-lg overflow-hidden transition-all">
+                        <summary className="p-4 cursor-pointer font-bold text-xs uppercase tracking-wider text-[#5c5344] hover:text-[#221d16] flex items-center justify-between select-none">
                           <span>View Macro Diagnostics & Full Metric Breakdown</span>
-                          <span className="text-[11px] font-normal text-[#707070] group-open:rotate-180 transition-transform">▼</span>
+                          <span className="text-[11px] font-normal text-[#948a76] group-open:rotate-180 transition-transform">▼</span>
                         </summary>
-                        <div className="p-4 pt-0 bg-white border-t border-[#ebebeb]">
+                        <div className="p-4 pt-0 bg-white border-t border-[#d9cfb8]">
                           <OverviewPanel data={analysisData} mode={currentMode} />
                         </div>
                       </details>
@@ -295,7 +295,7 @@ export default function DashboardView() {
       {/* Toast Notification */}
       <div
         id="toast"
-        className={`fixed bottom-6 right-6 bg-[#ffffff] border border-[#ebebeb] text-[#0e101a] px-4 py-3 rounded-lg text-xs font-bold flex items-center gap-2.5 shadow-none z-50 transition-all duration-300 ${
+        className={`fixed bottom-6 right-6 bg-[#ffffff] border border-[#d9cfb8] text-[#221d16] px-4 py-3 rounded-lg text-xs font-bold flex items-center gap-2.5 shadow-none z-50 transition-all duration-300 ${
           toastVisible
             ? "translate-y-0 opacity-100"
             : "translate-y-6 opacity-0 pointer-events-none"
@@ -303,35 +303,35 @@ export default function DashboardView() {
         role="status"
         aria-live="polite"
       >
-        <CheckCircle2 className="w-4 h-4 text-[#027e6f]" />
+        <CheckCircle2 className="w-4 h-4 text-[#2c3e8c]" />
         <span id="toast-msg">{toastMsg}</span>
       </div>
 
       {/* Error Modal */}
       {errorModal.visible && (
         <div
-          className="fixed inset-0 bg-[#0e101a]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 bg-[#221d16]/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="error-modal-title"
         >
-          <div className="bg-[#ffffff] border border-[#fca5a5] rounded-lg max-w-lg w-full p-6 shadow-none space-y-4">
+          <div className="bg-[#ffffff] border border-[#ddb3aa] rounded-lg max-w-lg w-full p-6 shadow-none space-y-4">
             <h2
               id="error-modal-title"
-              className="text-[#b91c1c] font-extrabold text-base flex items-center gap-2"
+              className="text-[#a32b21] font-extrabold text-base flex items-center gap-2"
             >
-              <AlertOctagon className="w-5 h-5 text-[#b91c1c]" />
+              <AlertOctagon className="w-5 h-5 text-[#a32b21]" />
               {errorModal.title || "Audit Error"}
             </h2>
             <p
               tabIndex={0}
-              className="text-xs text-[#1f243c] font-mono bg-[#fee2e2]/40 p-3.5 rounded-lg border border-[#fca5a5] leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap"
+              className="text-xs text-[#14181f] font-mono bg-[#f3dcd6]/40 p-3.5 rounded-lg border border-[#ddb3aa] leading-relaxed max-h-56 overflow-y-auto whitespace-pre-wrap"
             >
               {errorModal.message}
             </p>
             <div className="text-right pt-2">
               <button
-                className="px-4 py-2 bg-[#0e101a] hover:bg-[#1f243c] text-white font-bold text-xs rounded-lg border border-[#0e101a] transition-colors cursor-pointer"
+                className="px-4 py-2 bg-[#221d16] hover:bg-[#14181f] text-white font-bold text-xs rounded-lg border border-[#221d16] transition-colors cursor-pointer"
                 onClick={closeErrorModal}
               >
                 Dismiss

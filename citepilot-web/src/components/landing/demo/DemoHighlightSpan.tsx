@@ -24,28 +24,28 @@ const CATEGORY_STYLES: Record<
   }
 > = {
   "missing-citation": {
-    base: "bg-[#e6f4f2] text-[#027e6f] border-b-2 border-[#027e6f]",
-    hover: "hover:bg-[#d5eee9]",
-    selected: "bg-[#d5eee9] ring-2 ring-[#027e6f] ring-offset-1",
-    border: "border-[#027e6f]",
+    base: "bg-[#e7e9f5] text-[#2c3e8c] border-b-2 border-[#2c3e8c]",
+    hover: "hover:bg-[#e7e9f5]",
+    selected: "bg-[#e7e9f5] ring-2 ring-[#2c3e8c] ring-offset-1",
+    border: "border-[#2c3e8c]",
   },
   "claim-needs-source": {
-    base: "bg-[#fef3c7] text-[#92400e] border-b-2 border-dashed border-[#b45309]",
-    hover: "hover:bg-[#fde68a]/70",
-    selected: "bg-[#fde68a] ring-2 ring-[#b45309] ring-offset-1",
-    border: "border-[#b45309]",
+    base: "bg-[#f1e4c8] text-[#93650f] border-b-2 border-dashed border-[#93650f]",
+    hover: "hover:bg-[#ecd9a8]/70",
+    selected: "bg-[#ecd9a8] ring-2 ring-[#93650f] ring-offset-1",
+    border: "border-[#93650f]",
   },
   "outdated-reference": {
-    base: "bg-[#ede9fe] text-[#5b21b6] border-b-2 border-dotted border-[#5b21b6]",
-    hover: "hover:bg-[#ddd6fe]/70",
-    selected: "bg-[#ddd6fe] ring-2 ring-[#5b21b6] ring-offset-1",
-    border: "border-[#5b21b6]",
+    base: "bg-[#f1e4c8] text-[#93650f] border-b-2 border-dotted border-[#93650f]",
+    hover: "hover:bg-[#ecd9a8]/70",
+    selected: "bg-[#ecd9a8] ring-2 ring-[#93650f] ring-offset-1",
+    border: "border-[#93650f]",
   },
   "tone-clarity": {
-    base: "bg-[#f5f5f5] text-[#1f243c] border-b-2 border-[#4d536e]",
-    hover: "hover:bg-[#ebebeb]",
-    selected: "bg-[#ebebeb] ring-2 ring-[#4d536e] ring-offset-1",
-    border: "border-[#4d536e]",
+    base: "bg-[#faf6ec] text-[#14181f] border-b-2 border-[#5c5344]",
+    hover: "hover:bg-[#d9cfb8]",
+    selected: "bg-[#d9cfb8] ring-2 ring-[#5c5344] ring-offset-1",
+    border: "border-[#5c5344]",
   },
 };
 

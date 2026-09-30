@@ -61,16 +61,16 @@ export function DemoSuggestionCard({
   if (!suggestion) {
     return (
       <div
-        className={`bg-[#f5f5f5] border border-[#ebebeb] rounded-lg p-6 shadow-none text-center flex flex-col items-center justify-center min-h-[220px] transition-all ${className}`.trim()}
+        className={`bg-[#faf6ec] border border-[#d9cfb8] rounded-lg p-6 shadow-none text-center flex flex-col items-center justify-center min-h-[220px] transition-all ${className}`.trim()}
         data-testid="suggestion-card-empty"
       >
-        <div className="w-10 h-10 rounded-lg bg-[#ebebeb] flex items-center justify-center text-[#707070] mb-3">
-          <Sparkles className="w-5 h-5 text-[#027e6f]" />
+        <div className="w-10 h-10 rounded-lg bg-[#d9cfb8] flex items-center justify-center text-[#948a76] mb-3">
+          <Sparkles className="w-5 h-5 text-[#2c3e8c]" />
         </div>
-        <h4 className="text-sm font-bold text-[#1f243c] font-dash mb-1">
+        <h4 className="text-sm font-bold text-[#14181f] font-dash mb-1">
           No Citation Selected
         </h4>
-        <p className="text-xs text-[#545454] max-w-xs leading-relaxed">
+        <p className="text-xs text-[#5c5344] max-w-xs leading-relaxed">
           Click any highlighted phrase in the manuscript canvas to review CitePilot&apos;s recommendations, CrossRef verification, and apply one-click fixes.
         </p>
       </div>
@@ -84,7 +84,7 @@ export function DemoSuggestionCard({
       role="region"
       aria-label={`Suggestion details for ${categoryLabel}`}
       data-testid="demo-suggestion-card"
-      className={`bg-[#ffffff] border border-[#d9d9d9] rounded-lg p-4 sm:p-5 shadow-none flex flex-col gap-3.5 transition-all ${className}`.trim()}
+      className={`bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 sm:p-5 shadow-none flex flex-col gap-3.5 transition-all ${className}`.trim()}
     >
       {/* Header Row */}
       <div className="flex items-center justify-between gap-2">
@@ -104,7 +104,7 @@ export function DemoSuggestionCard({
             type="button"
             onClick={onClose}
             aria-label="Close suggestion card"
-            className="w-7 h-7 rounded-lg text-[#707070] hover:text-[#0e101a] hover:bg-[#ebebeb] flex items-center justify-center transition-colors cursor-pointer"
+            className="w-7 h-7 rounded-lg text-[#948a76] hover:text-[#221d16] hover:bg-[#d9cfb8] flex items-center justify-center transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -113,30 +113,30 @@ export function DemoSuggestionCard({
 
       {/* Title and Educational Rationale */}
       <div>
-        <h4 className="text-sm font-bold font-dash text-[#1f243c] tracking-tight">
+        <h4 className="text-sm font-bold font-dash text-[#14181f] tracking-tight">
           {suggestion.title}
         </h4>
-        <p className="text-xs text-[#545454] leading-relaxed mt-1">
+        <p className="text-xs text-[#5c5344] leading-relaxed mt-1">
           {suggestion.rationale}
         </p>
       </div>
 
       {/* Diff & Citation Comparison Block */}
-      <div className="bg-[#f5f5f5] border border-[#ebebeb] rounded-lg p-3 space-y-2 text-xs">
+      <div className="bg-[#faf6ec] border border-[#d9cfb8] rounded-lg p-3 space-y-2 text-xs">
         <div>
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#707070] mb-0.5">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#948a76] mb-0.5">
             Original Text:
           </div>
-          <div className="text-[#545454] line-through decoration-red-500/70 font-sans leading-relaxed">
+          <div className="text-[#5c5344] line-through decoration-red-500/70 font-sans leading-relaxed">
             {suggestion.originalText}
           </div>
         </div>
 
-        <div className="pt-2 border-t border-[#ebebeb]">
-          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#027e6f] mb-0.5">
+        <div className="pt-2 border-t border-[#d9cfb8]">
+          <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#2c3e8c] mb-0.5">
             Recommended Revision:
           </div>
-          <div className="text-[#0e101a] font-semibold font-sans leading-relaxed">
+          <div className="text-[#221d16] font-semibold font-sans leading-relaxed">
             {suggestion.replacementText}
           </div>
         </div>
@@ -144,23 +144,23 @@ export function DemoSuggestionCard({
 
       {/* Scholarly Metadata Row */}
       {suggestion.metadata && (
-        <div className="px-2.5 py-2 bg-[#fdfdfd] border border-[#ebebeb] rounded-lg text-[11px] font-mono flex flex-wrap items-center justify-between gap-2 text-[#545454]">
+        <div className="px-2.5 py-2 bg-[#faf6ec] border border-[#d9cfb8] rounded-lg text-[11px] font-mono flex flex-wrap items-center justify-between gap-2 text-[#5c5344]">
           <div className="flex items-center gap-1.5">
             {suggestion.metadata.crossrefVerified && (
-              <span className="inline-flex items-center gap-1 text-[#027e6f] font-bold">
+              <span className="inline-flex items-center gap-1 text-[#2c3e8c] font-bold">
                 <ShieldCheck className="w-3.5 h-3.5" />
                 <span>CrossRef Verified</span>
               </span>
             )}
             {suggestion.metadata.authors && (
-              <span className="text-[#707070] truncate max-w-[180px]">
+              <span className="text-[#948a76] truncate max-w-[180px]">
                 • {suggestion.metadata.authors}
               </span>
             )}
           </div>
 
           {suggestion.metadata.doi && (
-            <span className="text-[#027e6f] hover:underline flex items-center gap-1 truncate max-w-[150px]">
+            <span className="text-[#2c3e8c] hover:underline flex items-center gap-1 truncate max-w-[150px]">
               <span>doi:{suggestion.metadata.doi}</span>
               <ExternalLink className="w-3 h-3 flex-none" />
             </span>
@@ -169,11 +169,11 @@ export function DemoSuggestionCard({
       )}
 
       {/* Action Button Bar */}
-      <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#ebebeb]">
+      <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#d9cfb8]">
         <button
           type="button"
           onClick={() => onDismiss(suggestion.id)}
-          className="h-8 px-3 text-xs font-bold rounded-lg border border-[#d9d9d9] bg-[#ffffff] text-[#545454] hover:text-[#0e101a] hover:bg-[#ebebeb] transition-colors cursor-pointer shadow-none flex items-center gap-1"
+          className="h-8 px-3 text-xs font-bold rounded-lg border border-[#d9cfb8] bg-[#ffffff] text-[#5c5344] hover:text-[#221d16] hover:bg-[#d9cfb8] transition-colors cursor-pointer shadow-none flex items-center gap-1"
         >
           <X className="w-3.5 h-3.5" />
           <span>Dismiss</span>
@@ -182,7 +182,7 @@ export function DemoSuggestionCard({
         <button
           type="button"
           onClick={() => onAccept(suggestion.id)}
-          className="h-8 px-4 text-xs font-bold rounded-lg bg-[#027e6f] hover:bg-[#02665a] text-white border-0 transition-colors flex items-center gap-1.5 cursor-pointer shadow-none"
+          className="h-8 px-4 text-xs font-bold rounded-lg bg-[#2c3e8c] hover:bg-[#24357a] text-white border-0 transition-colors flex items-center gap-1.5 cursor-pointer shadow-none"
         >
           <Check className="w-3.5 h-3.5" />
           <span>Accept Fix</span>

@@ -19,7 +19,7 @@ export default function Hero() {
 
   return (
     <section
-      className="pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-20 md:pb-24 border-b border-[#ebebeb] bg-[#ffffff] relative overflow-hidden"
+      className="pt-12 sm:pt-16 md:pt-20 pb-16 sm:pb-20 md:pb-24 border-b border-[#d9cfb8] bg-[#f1ebdc] relative overflow-hidden"
       role="region"
       aria-label="CitePilot Hero and Interactive Demo"
       data-testid="landing-hero"
@@ -40,16 +40,16 @@ export default function Hero() {
 
         {/* Display Headline in Manrope */}
         <h1
-          className="font-display font-extrabold text-3xl sm:text-5xl md:text-6xl lg:text-[64px] leading-[1.08] tracking-[-0.0100em] text-[#0e101a] max-w-4xl mx-auto"
+          className="font-display font-extrabold text-3xl sm:text-5xl md:text-6xl lg:text-[64px] leading-[1.08] tracking-[-0.0100em] text-[#221d16] max-w-4xl mx-auto"
           data-testid="hero-headline"
         >
           Write with absolute <br className="hidden sm:inline" />
-          <span className="text-[#027e6f]">academic confidence.</span>
+          <span className="text-[#2c3e8c]">academic confidence.</span>
         </h1>
 
         {/* Centered Editorial Subtext */}
         <p
-          className="mt-4 sm:mt-6 font-sans text-base sm:text-lg md:text-xl leading-relaxed text-[#4d536e] max-w-2xl mx-auto"
+          className="mt-4 sm:mt-6 font-sans text-base sm:text-lg md:text-xl leading-relaxed text-[#5c5344] max-w-2xl mx-auto"
           data-testid="hero-subtext"
         >
           CitePilot audits manuscripts in real time for missing references, unsupported claims, and
@@ -84,13 +84,13 @@ export default function Hero() {
 
         {/* Legal Microcopy */}
         <div
-          className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs text-[#707070] font-medium tracking-tight"
+          className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs text-[#948a76] font-medium tracking-tight"
           data-testid="hero-microcopy"
         >
           <span>Free for individual researchers</span>
-          <span className="text-[#b7b7b7]">•</span>
+          <span className="text-[#d9cfb8]">•</span>
           <span>No credit card required</span>
-          <span className="text-[#b7b7b7]">•</span>
+          <span className="text-[#d9cfb8]">•</span>
           <span>GDPR &amp; FERPA compliant</span>
         </div>
 
@@ -100,15 +100,15 @@ export default function Hero() {
           className="mt-12 sm:mt-16 w-full max-w-[1200px] text-left"
           data-testid="hero-demo-container"
         >
-          <div className="flex items-center justify-between px-4 py-2.5 bg-[#f5f5f5] border border-b-0 border-[#d9d9d9] rounded-t-lg text-xs font-mono font-semibold text-[#545454]">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-[#faf6ec] border border-b-0 border-[#d9cfb8] rounded-t-lg text-xs font-mono font-semibold text-[#5c5344]">
             <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-[3px] bg-[#027e6f] inline-block" />
+              <span className="w-2.5 h-2.5 rounded-[3px] bg-[#2c3e8c] inline-block" />
               <span>CitePilot Live Manuscript Auditor</span>
             </div>
-            <span className="text-[#707070] hidden sm:inline">Real-Time Suggestion Engine</span>
+            <span className="text-[#948a76] hidden sm:inline">Real-Time Suggestion Engine</span>
           </div>
 
-          <div className="border border-[#d9d9d9] rounded-b-lg bg-[#ffffff] shadow-none overflow-hidden">
+          <div className="border border-[#d9cfb8] rounded-b-lg bg-[#ffffff] shadow-none overflow-hidden">
             <InteractiveDemoEditor defaultDraftId="lit-review" />
           </div>
         </div>

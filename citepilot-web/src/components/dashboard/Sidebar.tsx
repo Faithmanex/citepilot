@@ -61,7 +61,7 @@ export default function Sidebar({
       )}
 
       <aside
-        className={`bg-[#0e101a] border-r border-[#1f243c] flex flex-col h-screen overflow-y-auto ${
+        className={`bg-[#221d16] border-r border-[#14181f] flex flex-col h-screen overflow-y-auto ${
           isOpen
             ? "fixed inset-y-0 left-0 z-50 w-64 shadow-none"
             : "hidden md:flex md:sticky md:top-0 w-[240px]"
@@ -70,7 +70,7 @@ export default function Sidebar({
         aria-label="Audit Navigation"
       >
         {/* Brand Header */}
-        <div className="flex items-center justify-between px-4 py-4 border-b border-[#1f243c]">
+        <div className="flex items-center justify-between px-4 py-4 border-b border-[#14181f]">
           <Link href="/" aria-label="CitePilot Home">
             <BrandLogo variant="dark" size="sm" subtitle="AUDIT" />
           </Link>
@@ -101,8 +101,8 @@ export default function Sidebar({
                 key={item.panel}
                 className={`flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#027e6f] text-white shadow-none"
-                    : "text-[#b7b7b7] hover:text-white hover:bg-white/10"
+                    ? "bg-[#2c3e8c] text-white shadow-none"
+                    : "text-[#d9cfb8] hover:text-white hover:bg-white/10"
                 }`}
                 onClick={() => {
                   onPanelChange(item.panel);
@@ -115,7 +115,7 @@ export default function Sidebar({
                   <span className="truncate">{item.label}</span>
                 </div>
                 {item.badgeKey && badgeCount > 0 && (
-                  <span className={`ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-[4px] flex-none ${isActive ? "bg-white/20 text-white" : "bg-[#b91c1c] text-white"}`}>
+                  <span className={`ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-[4px] flex-none ${isActive ? "bg-white/20 text-white" : "bg-[#a32b21] text-white"}`}>
                     {badgeCount}
                   </span>
                 )}
@@ -125,18 +125,18 @@ export default function Sidebar({
         </nav>
 
         {/* Footer */}
-        <div className="px-3 pb-4 pt-2 border-t border-[#1f243c] space-y-2">
+        <div className="px-3 pb-4 pt-2 border-t border-[#14181f] space-y-2">
           <button
             onClick={onOpenSubscription}
-            className="w-full py-2.5 px-3 bg-[#027e6f] hover:bg-[#02665a] text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-none"
+            className="w-full py-2.5 px-3 bg-[#2c3e8c] hover:bg-[#24357a] text-white font-bold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-none"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#a7dcd4]" />
+            <Sparkles className="w-3.5 h-3.5 text-[#c9cee8]" />
             Upgrade to Pro
           </button>
 
           <button
             onClick={() => router.push("/")}
-            className="w-full py-2 px-3 text-[#707070] hover:text-slate-200 hover:bg-white/5 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full py-2 px-3 text-[#948a76] hover:text-slate-200 hover:bg-white/5 font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer"
             aria-label="Back to home page"
           >
             <ArrowLeft className="w-3.5 h-3.5" />

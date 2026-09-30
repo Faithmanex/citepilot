@@ -2,102 +2,103 @@
 
 @theme {
   /* ==========================================================================
-     Grammarly Editorial Color Palette Tokens (12 Core Colors + States)
+     Paper & Ink Editorial Color Palette Tokens (Warm Sepia System)
      ========================================================================== */
-  --color-teal-primary: #027e6f;
-  --color-teal-hover: #02665a;
-  --color-teal-active: #014d44;
-  --color-teal-tint: #e6f4f2;
-  --color-teal-border: #a7dcd4;
+  --color-teal-primary: #2c3e8c;
+  --color-teal-hover: #24357a;
+  --color-teal-active: #1b2a66;
+  --color-teal-tint: #e7e9f5;
+  --color-teal-border: #c9cee8;
 
-  --color-midnight-navy: #1f243c;
-  --color-ink-black: #0e101a;
-  --color-carbon: #1c1c1c;
-  --color-slate: #4d536e;
-  --color-graphite: #545454;
-  --color-steel: #707070;
-  --color-silver: #b7b7b7;
-  --color-ash: #d9d9d9;
-  --color-fog: #ebebeb;
-  --color-cloud: #f5f5f5;
-  --color-paper: #ffffff;
+  --color-midnight-navy: #14181f;
+  --color-ink-black: #221d16;
+  --color-carbon: #221d16;
+  --color-slate: #5c5344;
+  --color-graphite: #5c5344;
+  --color-steel: #948a76;
+  --color-silver: #d9cfb8;
+  --color-ash: #d9cfb8;
+  --color-fog: #d9cfb8;
+  --color-cloud: #faf6ec;
+  --color-paper: #f1ebdc;
 
   /* ==========================================================================
      Audit Status & Functional Feedback Palette
      ========================================================================== */
-  /* Teal / Verified / Missing Citation */
-  --color-status-verified: #027e6f;
-  --color-status-verified-bg: #e6f4f2;
-  --color-status-verified-border: #a7dcd4;
-  --color-status-teal: #027e6f;
-  --color-status-teal-bg: #e6f4f2;
-  --color-status-teal-border: #a7dcd4;
+  /* Green / Verified Match */
+  --color-status-verified: #3b6647;
+  --color-status-verified-bg: #dee8dd;
+  --color-status-verified-border: #bfd3c0;
+  /* Navy / Accent / Missing Citation */
+  --color-status-teal: #2c3e8c;
+  --color-status-teal-bg: #e7e9f5;
+  --color-status-teal-border: #c9cee8;
 
-  /* Amber / Warning / Claim Needs Source */
-  --color-status-warning: #b45309;
-  --color-status-warning-bg: #fef3c7;
-  --color-status-warning-border: #fde68a;
-  --color-status-amber: #b45309;
-  --color-status-amber-text: #92400e;
-  --color-status-amber-bg: #fef3c7;
-  --color-status-amber-border: #fde68a;
+  /* Ochre / Warning / Claim Needs Source */
+  --color-status-warning: #93650f;
+  --color-status-warning-bg: #f1e4c8;
+  --color-status-warning-border: #ecd9a8;
+  --color-status-amber: #93650f;
+  --color-status-amber-text: #93650f;
+  --color-status-amber-bg: #f1e4c8;
+  --color-status-amber-border: #ecd9a8;
 
-  /* Violet / Outdated Reference */
-  --color-status-violet: #5b21b6;
-  --color-status-violet-bg: #ede9fe;
-  --color-status-violet-border: #ddd6fe;
+  /* Ochre / Outdated Reference */
+  --color-status-violet: #93650f;
+  --color-status-violet-bg: #f1e4c8;
+  --color-status-violet-border: #ecd9a8;
 
   /* Slate / Tone & Clarity */
-  --color-status-slate: #1f243c;
-  --color-status-slate-text: #4d536e;
-  --color-status-slate-bg: #f5f5f5;
-  --color-status-slate-border: #d9d9d9;
+  --color-status-slate: #14181f;
+  --color-status-slate-text: #5c5344;
+  --color-status-slate-bg: #faf6ec;
+  --color-status-slate-border: #d9cfb8;
 
   /* Red / Error / Retraction Alert */
-  --color-status-error: #b91c1c;
-  --color-status-error-bg: #fee2e2;
-  --color-status-error-border: #fca5a5;
-  --color-status-red: #b91c1c;
-  --color-status-red-bg: #fee2e2;
-  --color-status-red-border: #fca5a5;
+  --color-status-error: #a32b21;
+  --color-status-error-bg: #f3dcd6;
+  --color-status-error-border: #ddb3aa;
+  --color-status-red: #a32b21;
+  --color-status-red-bg: #f3dcd6;
+  --color-status-red-border: #ddb3aa;
 
-  /* Blue / Info / Citation Style Advisory */
-  --color-status-info: #2563eb;
-  --color-status-info-bg: #eff6ff;
-  --color-status-info-border: #bfdbfe;
-  --color-status-blue: #2563eb;
-  --color-status-blue-bg: #eff6ff;
-  --color-status-blue-border: #bfdbfe;
+  /* Navy / Info / Citation Style Advisory */
+  --color-status-info: #2c3e8c;
+  --color-status-info-bg: #e7e9f5;
+  --color-status-info-border: #c9cee8;
+  --color-status-blue: #2c3e8c;
+  --color-status-blue-bg: #e7e9f5;
+  --color-status-blue-border: #c9cee8;
 
   /* ==========================================================================
      Backward-Compatibility Aliases for Monorepo Dashboard Components
      ========================================================================== */
-  --color-ink: #0e101a;
-  --color-ink-soft: #545454;
-  --color-ink-faint: #707070;
-  --color-paper-card: #f5f5f5;
+  --color-ink: #221d16;
+  --color-ink-soft: #5c5344;
+  --color-ink-faint: #948a76;
+  --color-paper-card: #faf6ec;
   --color-card: #ffffff;
-  --color-rule: #ebebeb;
-  --color-line: #d9d9d9;
-  --color-brand: #027e6f;
-  --color-brand-hover: #02665a;
-  --color-brand-bg: #e6f4f2;
-  --color-verified: #027e6f;
-  --color-verified-bg: #e6f4f2;
-  --color-warning: #b45309;
-  --color-warning-bg: #fef3c7;
-  --color-error: #b91c1c;
-  --color-error-bg: #fee2e2;
-  --color-focus-ring: #027e6f;
+  --color-rule: #d9cfb8;
+  --color-line: #d9cfb8;
+  --color-brand: #2c3e8c;
+  --color-brand-hover: #24357a;
+  --color-brand-bg: #e7e9f5;
+  --color-verified: #3b6647;
+  --color-verified-bg: #dee8dd;
+  --color-warning: #93650f;
+  --color-warning-bg: #f1e4c8;
+  --color-error: #a32b21;
+  --color-error-bg: #f3dcd6;
+  --color-focus-ring: #2c3e8c;
 
   --color-sidebar: #14181f;
   --color-sidebar-line: #252b36;
-  --color-sidebar-text: #cbd5e1;
-  --color-sidebar-text-active: #ffffff;
-  --color-dash-paper: #f5f5f5;
-  --color-dash-ink: #0e101a;
-  --color-dash-ink-soft: #545454;
-  --color-dash-ink-faint: #707070;
+  --color-sidebar-text: #9ca3b0;
+  --color-sidebar-text-active: #fafaf7;
+  --color-dash-paper: #f1ebdc;
+  --color-dash-ink: #221d16;
+  --color-dash-ink-soft: #5c5344;
+  --color-dash-ink-faint: #948a76;
 
   /* ==========================================================================
      Strict 8px Border Radius Standard (No Pills / No Oversized Corners)

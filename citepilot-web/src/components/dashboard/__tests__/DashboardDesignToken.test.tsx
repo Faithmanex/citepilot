@@ -82,20 +82,21 @@ describe("Dashboard Design Token & UI Synchronization Audit", () => {
     cleanup();
   });
 
-  it("ensures zero legacy parchment or sepia tokens in dashboard source files", () => {
+  it("ensures zero legacy teal palette tokens in dashboard source files", () => {
     const dashboardDir = path.resolve(__dirname, "..");
     const files = fs.readdirSync(dashboardDir).filter((f) => f.endsWith(".tsx"));
 
     const legacyTokens = [
-      "#FAF6EC",
-      "#FAF9F5",
-      "#F4F3EE",
-      "#F1EBDC",
-      "#E8E0CE",
-      "#C7BC9F",
-      "#1E5E4B",
-      "#221D16",
-      "#353027",
+      "#027e6f",
+      "#02665a",
+      "#014d44",
+      "#e6f4f2",
+      "#a7dcd4",
+      "#0e101a",
+      "#f5f5f5",
+      "#ebebeb",
+      "#1f243c",
+      "#545454",
     ];
 
     files.forEach((file) => {

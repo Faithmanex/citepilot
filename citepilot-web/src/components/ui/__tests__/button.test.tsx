@@ -14,7 +14,7 @@ describe("Grammarly Editorial Button Component", () => {
     render(<Button>Get CitePilot</Button>);
     const button = screen.getByRole("button", { name: /get citepilot/i });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveClass("bg-[#027e6f]");
+    expect(button).toHaveClass("bg-[#2c3e8c]");
     expect(button).toHaveClass("rounded-lg");
     expect(button).toHaveClass("shadow-none");
     expect(button).toHaveClass("min-h-[44px]");
@@ -23,8 +23,8 @@ describe("Grammarly Editorial Button Component", () => {
   it("renders secondary dark outlined variant correctly", () => {
     render(<Button variant="secondary">Try Interactive Demo</Button>);
     const button = screen.getByRole("button", { name: /try interactive demo/i });
-    expect(button).toHaveClass("border-[#0e101a]");
-    expect(button).toHaveClass("text-[#0e101a]");
+    expect(button).toHaveClass("border-[#221d16]");
+    expect(button).toHaveClass("text-[#221d16]");
     expect(button).toHaveClass("bg-transparent");
     expect(button).toHaveClass("rounded-lg");
     expect(button).toHaveClass("shadow-none");
@@ -42,7 +42,7 @@ describe("Grammarly Editorial Button Component", () => {
   it("renders subdued ghost variant correctly", () => {
     render(<Button variant="subdued">Log in</Button>);
     const button = screen.getByRole("button", { name: /log in/i });
-    expect(button).toHaveClass("text-[#545454]");
+    expect(button).toHaveClass("text-[#5c5344]");
     expect(button).toHaveClass("border-transparent");
     expect(button).toHaveClass("rounded-lg");
   });

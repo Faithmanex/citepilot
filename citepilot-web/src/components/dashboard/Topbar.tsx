@@ -54,7 +54,7 @@ export default function Topbar({
 }: TopbarProps) {
   return (
     <header
-      className="sticky top-0 z-30 bg-[#ffffff] border-b border-[#ebebeb] px-4 sm:px-6 py-3 shadow-none"
+      className="sticky top-0 z-30 bg-[#ffffff] border-b border-[#d9cfb8] px-4 sm:px-6 py-3 shadow-none"
       role="banner"
     >
       <div className="flex items-center gap-3 flex-wrap justify-between">
@@ -63,7 +63,7 @@ export default function Topbar({
           {onToggleMobileSidebar && (
             <button
               type="button"
-              className="md:hidden flex items-center justify-center w-9 h-9 bg-[#f5f5f5] border border-[#ebebeb] rounded-lg text-[#545454] hover:text-[#0e101a] hover:bg-[#ebebeb] transition-colors"
+              className="md:hidden flex items-center justify-center w-9 h-9 bg-[#faf6ec] border border-[#d9cfb8] rounded-lg text-[#5c5344] hover:text-[#221d16] hover:bg-[#d9cfb8] transition-colors"
               onClick={onToggleMobileSidebar}
               aria-label="Open Navigation"
             >
@@ -75,8 +75,8 @@ export default function Topbar({
           <div
             className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
               hasDocument
-                ? "bg-[#e6f4f2] border-[#a7dcd4] text-[#027e6f]"
-                : "bg-[#f5f5f5] border-[#d9d9d9] text-[#545454]"
+                ? "bg-[#e7e9f5] border-[#c9cee8] text-[#2c3e8c]"
+                : "bg-[#faf6ec] border-[#d9cfb8] text-[#5c5344]"
             }`}
           >
             <FileText className="w-3.5 h-3.5 flex-none" />
@@ -85,7 +85,7 @@ export default function Topbar({
             </span>
             {hasDocument && (
               <button
-                className="ml-0.5 text-[#707070] hover:text-[#b91c1c] p-0.5 rounded transition-colors"
+                className="ml-0.5 text-[#948a76] hover:text-[#a32b21] p-0.5 rounded transition-colors"
                 onClick={(e) => {
                   e.stopPropagation();
                   onClearDocument();
@@ -101,12 +101,12 @@ export default function Topbar({
         {/* Right: Controls */}
         <div className="flex items-center gap-2 flex-wrap ml-auto">
           {/* Audit Mode toggle */}
-          <div className="bg-[#f5f5f5] border border-[#ebebeb] rounded-lg p-1 flex items-center gap-1">
+          <div className="bg-[#faf6ec] border border-[#d9cfb8] rounded-lg p-1 flex items-center gap-1">
             <button
               className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                 mode === "full"
-                  ? "bg-[#ffffff] text-[#0e101a] border border-[#d9d9d9] shadow-none"
-                  : "text-[#545454] hover:text-[#0e101a]"
+                  ? "bg-[#ffffff] text-[#221d16] border border-[#d9cfb8] shadow-none"
+                  : "text-[#5c5344] hover:text-[#221d16]"
               }`}
               onClick={() => onModeChange("full")}
             >
@@ -115,8 +115,8 @@ export default function Topbar({
             <button
               className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
                 mode === "reference_only"
-                  ? "bg-[#ffffff] text-[#0e101a] border border-[#d9d9d9] shadow-none"
-                  : "text-[#545454] hover:text-[#0e101a]"
+                  ? "bg-[#ffffff] text-[#221d16] border border-[#d9cfb8] shadow-none"
+                  : "text-[#5c5344] hover:text-[#221d16]"
               }`}
               onClick={() => onModeChange("reference_only")}
             >
@@ -126,7 +126,7 @@ export default function Topbar({
 
           {/* Citation Style */}
           <select
-            className="bg-[#ffffff] border border-[#d9d9d9] text-[#0e101a] text-xs font-bold h-9 px-3 rounded-lg outline-none focus:border-[#027e6f] transition-colors cursor-pointer"
+            className="bg-[#ffffff] border border-[#d9cfb8] text-[#221d16] text-xs font-bold h-9 px-3 rounded-lg outline-none focus:border-[#2c3e8c] transition-colors cursor-pointer"
             value={style}
             onChange={(e) => onStyleChange(e.target.value as CitationStyle)}
             aria-label="Citation style"
@@ -141,7 +141,7 @@ export default function Topbar({
 
           <button
             data-testid="run-audit-btn"
-            className="flex items-center gap-2 h-9 px-4 bg-[#027e6f] hover:bg-[#02665a] text-white font-bold text-xs rounded-lg shadow-none transition-all cursor-pointer disabled:opacity-60"
+            className="flex items-center gap-2 h-9 px-4 bg-[#2c3e8c] hover:bg-[#24357a] text-white font-bold text-xs rounded-lg shadow-none transition-all cursor-pointer disabled:opacity-60"
             onClick={onRunAudit}
             disabled={progress.visible}
             aria-label="Run citation audit"
@@ -154,7 +154,7 @@ export default function Topbar({
             <span>{progress.visible ? "Auditing…" : "Run Audit"}</span>
           </button>
 
-          <div className="pl-1 border-l border-[#ebebeb]">
+          <div className="pl-1 border-l border-[#d9cfb8]">
             <UserMenu
               onOpenAuth={onOpenAuth}
               onOpenSubscription={onOpenSubscription}
@@ -165,14 +165,14 @@ export default function Topbar({
 
       {/* Progress bar */}
       {progress.visible && (
-        <div className="mt-2.5 pt-2 border-t border-[#ebebeb]">
-          <div className="h-1.5 bg-[#ebebeb] rounded-lg overflow-hidden">
+        <div className="mt-2.5 pt-2 border-t border-[#d9cfb8]">
+          <div className="h-1.5 bg-[#d9cfb8] rounded-lg overflow-hidden">
             <div
-              className="h-full bg-[#027e6f] transition-all duration-500 rounded-lg"
+              className="h-full bg-[#2c3e8c] transition-all duration-500 rounded-lg"
               style={{ width: `${progress.pct}%` }}
             />
           </div>
-          <p className="text-[11px] text-[#707070] font-mono mt-1">
+          <p className="text-[11px] text-[#948a76] font-mono mt-1">
             {progress.message} — {progress.pct}%
           </p>
         </div>
