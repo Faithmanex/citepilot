@@ -2,6 +2,17 @@
 
 Project-specific gotchas, root causes of past failures, and patterns that future sessions should know.
 
+## AI service migrated from Python (FastAPI) to Next.js Route Handlers
+
+The AI analysis service was ported from Python/FastAPI (`citepilot-ai/`, Railway) into the web app so **everything deploys to one Vercel project**. The Python service was removed after the port (it remains in git history).
+
+- **Location**: `citepilot-web/src/lib/ai/` (services) + `citepilot-web/src/app/api/{v1,health}` (Route Handlers).
+- **Endpoints**: `POST /api/v1/analyse`, `POST /api/v1/export/pdf`, `POST /api/v1/export/docx`, `GET /api/health`, `GET /health`.
+- **No rewrite**: `next.config.ts` no longer proxies `/api/v1/*` to Railway. The client (`src/lib/api.ts`) calls same-origin `/api/v1` when `NEXT_PUBLIC_API_URL` is unset.
+- **Library swaps**: Gemini via `@google/genai`; schemas via `zod`; DOCX parse via `mammoth`; PDF parse via `unpdf`; DOCX export via `docx`; PDF export via `pdf-lib`.
+- **Jev (TypeSafe)**: the Python SDK has no Node equivalent, so `src/lib/ai/jev.ts` is a **fail-open no-op** (default disabled). No behavior change unless `TYPESAFE_API_KEY` is set.
+- **Gotcha**: the route handlers use the Node runtime (`export const runtime = "nodejs"`). Do not switch them to Edge — `Buffer`, `mammoth`, and `unpdf` require Node.
+
 ## TOML: dependencies must be under `[project]`
 
 In `pyproject.toml`, runtime dependencies must be placed directly under the `[project]` table per [PEP 621](https://peps.python.org/pep-0621/). If they end up under `[build-system]` (e.g. after a mis-edit), `uv` and `pip` silently ignore them — no error, no install.
@@ -56,19 +67,21 @@ The top-level `README.md` document index and directory tree previously did not m
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key |
 | `SUPABASE_SERVICE_ROLE_KEY` | **Required** — fail-loudly if missing (used by `src/lib/supabase/admin.ts` for webhooks/subscriptions) |
-| `NEXT_PUBLIC_API_URL` | e.g. `https://citepilot-ai.up.railway.app/api/v1` |
+| `NEXT_PUBLIC_API_URL` | Optional — leave unset to use the co-located API at `<origin>/api/v1` |
 | `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET` | PayPal app credentials (for webhook/activate verification) |
 | `PAYPAL_WEBHOOK_ID` | PayPal webhook ID (required in prod — webhooks without it are rejected) |
 | `PAYPAL_API_BASE` | Optional, defaults to `https://api-m.paypal.com` |
+| `GOOGLE_API_KEY` | **Required for analysis** — powers the `/api/v1/analyse` Gemini pipeline (503 if missing) |
+| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-flash-lite` |
+| `CROSSREF_MAILTO` | Optional contact email for the Crossref polite pool |
+| `API_KEY` | Optional — if set, clients must send `X-API-Key` or `Authorization: Bearer <key>` |
+| `MAX_UPLOAD_MB` / `MAX_TEXT_CHARS` / `RATE_LIMIT_PER_MINUTE` | Optional AI request limits |
 | `NODE_ENV` | `production` |
 
-### AI service (`citepilot-ai` on Railway)
-| Variable | Notes |
-|---|---|
-| `GOOGLE_API_KEY` | Required for analysis — not validated at startup, so healthcheck passes without it |
-| `CITE_API_KEY` / `API_KEY` | Optional — if set, clients must send `X-API-Key` or `Authorization: Bearer <key>` (recommended for production) |
-| `CORS_ORIGINS` | Comma-separated allowlist, e.g. `https://citepilot.ai,https://www.citepilot.ai` — do not use `*` in prod when API key is set |
-| `RATE_LIMIT_PER_MINUTE` | Optional, defaults to 20 |
+See `citepilot-web/.env.example` for the full list.
+
+### AI service (Railway) — RETIRED
+The Python FastAPI service and its Railway deploy are gone (source removed after the port). Its env vars were migrated into the Vercel project (see the Web table above). Kept here for historical reference only.
 
 ### Legacy Gateway (`citepilot-gateway` — not present in this checkout)
 | Variable | Notes |
@@ -79,7 +92,7 @@ The top-level `README.md` document index and directory tree previously did not m
 
 ## Environment quirks (Windows dev machine)
 
-- **Python**: `uv` is the package manager, not `pip`. Start the AI service with `uv run uvicorn citepilot_ai.main:app --host 0.0.0.0 --port 8000 --reload`.
+- **AI service**: now runs inside the web app — start everything with `npm run dev` (Next.js) from `citepilot-web/`. The legacy Python service, if you ever run it locally, uses `uv run uvicorn citepilot_ai.main:app --host 0.0.0.0 --port 8000 --reload`.
 - **Node.js**: `npm` is the package manager for `citepilot-web` (`package-lock.json` present); `pnpm` also works but do not mix lockfiles. The legacy `citepilot-gateway` (not in this checkout) used `pnpm`.
 - **PostgreSQL / Supabase**: Migrations live in `supabase/migrations/` — apply via Supabase dashboard SQL editor.
 - **Security hardening (2026-08-26)**: See `supabase/migrations/014_fix_rls_and_hardening.sql` — RLS now covers all user-data tables, `users` UPDATE is locked against privilege escalation, and `handle_new_user()` has pinned `search_path`.

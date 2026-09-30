@@ -5,25 +5,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: process.cwd(),
   },
-  async rewrites() {
-    const apiTarget =
-      process.env.NEXT_PUBLIC_API_URL ||
-      process.env.API_URL ||
-      "https://citepilot-ai-production.up.railway.app/api/v1";
-
-    const cleanTarget = apiTarget.replace(/\/$/, "");
-    const destination = cleanTarget.endsWith("/api/v1")
-      ? `${cleanTarget}/:path*`
-      : `${cleanTarget}/api/v1/:path*`;
-
-    return [
-      {
-        source: "/api/v1/:path*",
-        destination,
-      },
-    ];
-  },
+  // The AI service is now co-located with the web app as Next.js Route
+  // Handlers under /api/v1/* (see src/lib/ai + src/app/api). No external
+  // rewrite is required; everything deploys together on Vercel.
+  serverExternalPackages: ["unpdf", "mammoth"],
 };
 
 export default nextConfig;
-
