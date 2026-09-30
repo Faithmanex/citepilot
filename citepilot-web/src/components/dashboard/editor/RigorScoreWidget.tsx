@@ -2,11 +2,17 @@
 
 import React from "react";
 import type { RigorMetrics } from "@/lib/editor/types";
-import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 
 export interface RigorScoreWidgetProps {
   metrics: RigorMetrics;
   className?: string;
+}
+
+function getStatusLabel(score: number): string {
+  if (score >= 95) return "Ready for Journal Submission";
+  if (score >= 85) return "Strong Academic Rigor";
+  if (score >= 75) return "Moderate Verification Needed";
+  return "Needs Immediate Attention";
 }
 
 export const RigorScoreWidget: React.FC<RigorScoreWidgetProps> = ({
@@ -20,135 +26,92 @@ export const RigorScoreWidget: React.FC<RigorScoreWidgetProps> = ({
     citationIntegrity,
     styleCompliance,
     claimVerification,
-    referenceReliability,
   } = metrics;
 
-  const getTierInfo = (score: number) => {
-    if (score >= 85) {
-      return {
-        label: "Publication Ready",
-        color: "text-[#2c3e8c]",
-        bgColor: "bg-[#e7e9f5]",
-        borderColor: "border-[#2c3e8c]/30",
-        icon: CheckCircle2,
-      };
-    }
-    if (score >= 60) {
-      return {
-        label: "Needs Revisions",
-        color: "text-[#93650f]",
-        bgColor: "bg-[#f1e4c8]",
-        borderColor: "border-[#93650f]/30",
-        icon: AlertTriangle,
-      };
-    }
-    return {
-      label: "Significant Deficits",
-      color: "text-[#a32b21]",
-      bgColor: "bg-[#f3dcd6]",
-      borderColor: "border-[#a32b21]/30",
-      icon: XCircle,
-    };
-  };
+  const radius = 32;
+  const circumference = 2 * Math.PI * radius; // ~201.06px
+  const clamped = Math.max(0, Math.min(100, overallScore));
+  const progressOffset = circumference - (circumference * clamped) / 100;
+  const isHighRigor = overallScore >= 85;
+  const unresolved = Math.max(0, totalIssues - resolvedIssues);
+  const statusLabel = getStatusLabel(overallScore);
 
-  const tier = getTierInfo(overallScore);
-  const TierIcon = tier.icon;
+  const tiles: { id: string; label: string; value: number; testid: string }[] = [
+    { id: "coverage", label: "Coverage", value: citationIntegrity, testid: "metric-tile-coverage" },
+    { id: "integrity", label: "Integrity", value: claimVerification, testid: "metric-tile-claim-integrity" },
+    { id: "tone", label: "Tone", value: styleCompliance, testid: "metric-tile-scholarly-tone" },
+  ];
 
   return (
     <div
       data-testid="rigor-score-widget"
-      className={`bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-5 shadow-none space-y-4 ${className}`.trim()}
+      role="region"
+      aria-label="Citation Rigor Scorecard"
+      className={`bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 sm:p-5 shadow-none flex flex-col gap-3.5 transition-all ${className}`.trim()}
     >
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ShieldCheck className="w-4 h-4 text-[#2c3e8c]" />
-          <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-[#14181f]">
-            Academic Rigor Score
-          </h3>
-        </div>
-        <span
-          className={`text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 border ${tier.bgColor} ${tier.color} ${tier.borderColor}`}
-        >
-          <TierIcon className="w-3 h-3" />
-          {tier.label}
-        </span>
-      </div>
-
-      {/* Main Score Display */}
-      <div className="flex items-baseline justify-between pt-1 pb-2 border-b border-[#f1ebdc]">
-        <div>
-          <div className="text-3xl sm:text-4xl font-extrabold tracking-tight text-[#221d16] font-sans">
-            {overallScore}
-            <span className="text-lg font-normal text-[#948a76]">/100</span>
+      {/* Top Row: Circular Gauge + Status Headline */}
+      <div className="flex items-center gap-4">
+        <div className="w-[76px] h-[76px] relative flex items-center justify-center flex-none">
+          <svg className="w-[76px] h-[76px] -rotate-90" viewBox="0 0 76 76">
+            <circle
+              cx="38"
+              cy="38"
+              r={radius}
+              className="stroke-[#d9cfb8]"
+              strokeWidth="6"
+              fill="transparent"
+            />
+            <circle
+              cx="38"
+              cy="38"
+              r={radius}
+              className={isHighRigor ? "stroke-[#2c3e8c]" : "stroke-[#14181f]"}
+              strokeWidth="6"
+              strokeDasharray={circumference}
+              strokeDashoffset={progressOffset}
+              strokeLinecap="round"
+              fill="transparent"
+              style={{ transition: "stroke-dashoffset 0.4s ease-out, stroke 0.4s ease" }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-dash font-bold text-lg sm:text-xl text-[#221d16] tracking-tight">
+              {overallScore}%
+            </span>
           </div>
-          <p className="text-[11px] text-[#948a76] mt-0.5">
-            {resolvedIssues} of {totalIssues} issues resolved in this session
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#948a76]">
+            Citation Rigor
+          </span>
+          <h3 className="text-sm sm:text-[15px] font-bold text-[#14181f] font-dash truncate">
+            {statusLabel}
+          </h3>
+          <p className="text-xs text-[#5c5344] mt-0.5">
+            {unresolved > 0
+              ? `${unresolved} suggested revisions pending`
+              : "All citations verified and aligned!"}
           </p>
         </div>
-
-        {/* Mini progress ring or bar */}
-        <div className="w-24 h-2 bg-[#f1ebdc] rounded-full overflow-hidden self-center">
-          <div
-            className="h-full bg-[#2c3e8c] transition-all duration-500 rounded-full"
-            style={{ width: `${overallScore}%` }}
-          />
-        </div>
       </div>
 
-      {/* Sub-Metrics Breakdown */}
-      <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
-        <div>
-          <div className="flex justify-between text-[#948a76] mb-1 text-[11px]">
-            <span>Citations</span>
-            <span className="font-mono font-bold text-[#221d16]">{citationIntegrity}%</span>
+      {/* 3 Sub-Metric Score Tiles */}
+      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#d9cfb8]">
+        {tiles.map((tile) => (
+          <div
+            key={tile.id}
+            data-testid={tile.testid}
+            className="bg-[#faf6ec] border border-[#d9cfb8] rounded-lg p-2 text-center shadow-none"
+          >
+            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#948a76] truncate">
+              {tile.label}
+            </div>
+            <div className="text-xs sm:text-sm font-bold text-[#14181f] font-dash mt-0.5">
+              {tile.value}%
+            </div>
           </div>
-          <div className="w-full h-1.5 bg-[#f1ebdc] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#93650f] transition-all duration-300"
-              style={{ width: `${citationIntegrity}%` }}
-            />
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between text-[#948a76] mb-1 text-[11px]">
-            <span>Style Compliance</span>
-            <span className="font-mono font-bold text-[#221d16]">{styleCompliance}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-[#f1ebdc] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#93650f] transition-all duration-300"
-              style={{ width: `${styleCompliance}%` }}
-            />
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between text-[#948a76] mb-1 text-[11px]">
-            <span>Claim Validation</span>
-            <span className="font-mono font-bold text-[#221d16]">{claimVerification}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-[#f1ebdc] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#a32b21] transition-all duration-300"
-              style={{ width: `${claimVerification}%` }}
-            />
-          </div>
-        </div>
-
-        <div>
-          <div className="flex justify-between text-[#948a76] mb-1 text-[11px]">
-            <span>References</span>
-            <span className="font-mono font-bold text-[#221d16]">{referenceReliability}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-[#f1ebdc] rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[#2c3e8c] transition-all duration-300"
-              style={{ width: `${referenceReliability}%` }}
-            />
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   );

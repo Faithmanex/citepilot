@@ -1,11 +1,11 @@
 import type { EditorThemeClasses } from "lexical";
 
 export const lexicalEditorTheme: EditorThemeClasses = {
-  paragraph: "mb-3 leading-relaxed text-[#221d16] font-serif text-[15px] sm:text-base selection:bg-[#e7e9f5]",
+  paragraph: "mb-3.5 leading-relaxed text-[#221d16] font-serif selection:bg-[#e7e9f5]",
   heading: {
-    h1: "text-2xl font-bold font-sans tracking-tight text-[#221d16] mt-6 mb-3",
-    h2: "text-xl font-bold font-sans tracking-tight text-[#221d16] mt-5 mb-2",
-    h3: "text-lg font-semibold font-sans text-[#221d16] mt-4 mb-2",
+    h1: "text-2xl font-bold tracking-tight text-[#221d16] mt-6 mb-3",
+    h2: "text-xl font-bold tracking-tight text-[#221d16] mt-5 mb-2",
+    h3: "text-lg font-semibold text-[#221d16] mt-4 mb-2",
   },
   text: {
     bold: "font-bold text-[#221d16]",

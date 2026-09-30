@@ -263,6 +263,21 @@ export const LiveSuggestionFeed: React.FC<LiveSuggestionFeedProps> = ({
             </button>
           </div>
         </div>
+      ) : counts.all > 0 ? (
+        <div
+          data-testid="suggestion-card-empty"
+          className="bg-[#faf6ec] border border-[#d9cfb8] rounded-lg p-6 shadow-none text-center flex flex-col items-center justify-center min-h-[200px] transition-all"
+        >
+          <div className="w-10 h-10 rounded-lg bg-[#d9cfb8] flex items-center justify-center mb-3">
+            <Sparkles className="w-5 h-5 text-[#2c3e8c]" />
+          </div>
+          <h4 className="text-sm font-bold text-[#14181f] font-dash mb-1">
+            No Citation Selected
+          </h4>
+          <p className="text-xs text-[#5c5344] max-w-xs leading-relaxed">
+            Click any highlighted phrase in the manuscript canvas to review CitePilot&apos;s recommendations, CrossRef verification, and apply one-click fixes.
+          </p>
+        </div>
       ) : null}
 
       {/* Stream of Suggestions List */}

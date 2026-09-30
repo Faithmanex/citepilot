@@ -142,12 +142,12 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
               {isCustomTyping ? (
                 <>
                   <Eye className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>View Highlights</span>
+                  <span>Show Findings</span>
                 </>
               ) : (
                 <>
                   <Edit3 className="w-3.5 h-3.5" aria-hidden="true" />
-                  <span>Direct Prose Editor</span>
+                  <span>Edit Document</span>
                 </>
               )}
             </button>
@@ -169,7 +169,7 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
               .join(" ")}
           >
             <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-            <span>Reset Draft</span>
+            <span>Reset</span>
           </button>
         </div>
 
@@ -184,7 +184,6 @@ export const ManuscriptEditorWorkspace: React.FC<ManuscriptEditorWorkspaceProps>
               sections={academicSections}
               isCustomTyping={isCustomTyping}
               onUpdateText={updateText}
-              onToggleCustomTyping={setIsCustomTyping}
               onSelectSuggestion={setSelectedSuggestionId}
               onHoverSuggestion={setHoveredSuggestionId}
             />

@@ -126,20 +126,20 @@ export function LexicalDocumentCanvas({
   return (
     <div
       data-testid="lexical-document-canvas"
-      className={`relative w-full flex-1 flex flex-col ${className}`.trim()}
+      className={`w-full ${className}`.trim()}
     >
       <LexicalComposer initialConfig={initialConfig}>
-        <div className="relative flex-1 flex flex-col">
+        <div className="doc-page relative">
           <RichTextPlugin
             contentEditable={
               <ContentEditable
                 data-testid="lexical-content-editable"
-                aria-label="Academic Manuscript Lexical Rich Text Editor"
-                className="w-full flex-1 min-h-[300px] p-4 sm:p-6 font-serif text-[15px] sm:text-[16px] leading-[1.8] text-[#221d16] bg-[#ffffff] border border-[#d9cfb8] rounded-lg shadow-none focus:border-[#2c3e8c] focus:ring-2 focus:ring-[#2c3e8c]/20 focus:outline-none transition-all selection:bg-[#e7e9f5]"
+                aria-label="Academic Manuscript Word-Style Editor"
+                className="outline-none min-h-[420px] py-0.5 selection:bg-[#e7e9f5]"
               />
             }
             placeholder={
-              <div className="absolute top-4 sm:top-6 left-4 sm:left-6 text-[#948a76] italic font-serif text-[15px] sm:text-[16px] pointer-events-none select-none">
+              <div className="absolute top-[28px] left-[22px] sm:top-16 sm:left-[72px] text-[#948a76] italic pointer-events-none select-none">
                 Start writing or paste your academic manuscript here…
               </div>
             }
