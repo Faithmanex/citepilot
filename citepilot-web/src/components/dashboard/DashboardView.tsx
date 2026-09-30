@@ -4,21 +4,13 @@ import { useState, useCallback, useEffect } from "react";
 import type { AuditResponse, CitationStyle, AuditMode } from "@/lib/types";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useAudit } from "@/lib/useAudit";
-import { computeAuditStats } from "@/lib/auditStats";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import InputArea from "./InputArea";
-import OverviewPanel from "./OverviewPanel";
-import MatchingPanel from "./MatchingPanel";
-import CrossrefPanel from "./CrossrefPanel";
-import StylePanel from "./StylePanel";
-import ClaimsPanel from "./ClaimsPanel";
-import RecencyPanel from "./RecencyPanel";
-import StructurePanel from "./StructurePanel";
 import ExportPanel from "./ExportPanel";
 import HistoryPanel from "./HistoryPanel";
 import ManuscriptEditorWorkspace from "./editor/ManuscriptEditorWorkspace";
-import { extractTextFromDocx, extractDocxSemantic } from "@/lib/editor/docxExtractor";
+import { extractDocxSemantic } from "@/lib/editor/docxExtractor";
 import AuthModal from "../auth/AuthModal";
 import SubscriptionModal from "../subscription/SubscriptionModal";
 import { AlertOctagon, CheckCircle2 } from "lucide-react";
@@ -27,7 +19,7 @@ export default function DashboardView() {
   const { user, isPro } = useAuth();
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
-  const [activePanel, setActivePanel] = useState("overview");
+  const [activePanel, setActivePanel] = useState("editor");
   const [currentMode, setCurrentMode] = useState<AuditMode>("full");
   const [style, setStyle] = useState<CitationStyle>("apa7");
   const [analysisData, setAnalysisData] = useState<AuditResponse | null>(null);
@@ -42,7 +34,7 @@ export default function DashboardView() {
   const documentName = uploadedFile
     ? uploadedFile.name
     : manuscriptText.trim()
-      ? "Pasted Manuscript"
+      ? "Pasted manuscript"
       : "No document loaded";
 
   const showToast = useCallback((msg: string) => {
@@ -86,9 +78,7 @@ export default function DashboardView() {
       setCurrentMode(newMode);
       if (analysisData) {
         const isRefOnly = newMode === "reference_only";
-        showToast(
-          `Switched to ${isRefOnly ? "Reference-List-Only" : "Full Manuscript"} mode.`
-        );
+        showToast(`Switched to ${isRefOnly ? "references only" : "whole document"}.`);
       }
     },
     [analysisData, showToast]
@@ -109,7 +99,7 @@ export default function DashboardView() {
           if (extracted && extracted.text.trim()) {
             setManuscriptText(extracted.text);
             setManuscriptHtml(extracted.html);
-            showToast(`Loaded ${file.name} with original formatting in editor`);
+            showToast(`Loaded ${file.name}`);
           }
         } catch (err) {
           console.warn("Realtime docx extraction warning:", err);
@@ -142,7 +132,7 @@ export default function DashboardView() {
     setManuscriptHtml(undefined);
   }, []);
 
-  // Keyboard shortcut (Cmd/Ctrl + Enter to trigger audit)
+  // Keyboard shortcut (Cmd/Ctrl + Enter to run)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
@@ -161,11 +151,9 @@ export default function DashboardView() {
     if (audit.results.text || audit.results.manuscript_text) {
       setManuscriptText(audit.results.text || audit.results.manuscript_text || "");
     }
-    setActivePanel("overview");
-    showToast(`Loaded audit: ${audit.document_name}`);
+    setActivePanel("editor");
+    showToast(`Loaded ${audit.document_name}`);
   }, [showToast]);
-
-  const badges = computeAuditStats(analysisData);
 
   return (
     <div className="dash-body bg-[#f1ebdc] text-[#221d16] min-h-screen selection:bg-[#e7e9f5] selection:text-[#2c3e8c] font-sans">
@@ -173,7 +161,6 @@ export default function DashboardView() {
         <Sidebar
           activePanel={activePanel}
           onPanelChange={handlePanelChange}
-          badges={badges}
           isOpen={mobileNavOpen}
           onClose={() => setMobileNavOpen(false)}
           onOpenSubscription={() => setSubscriptionModalOpen(true)}
@@ -195,21 +182,9 @@ export default function DashboardView() {
           />
 
           <div className="flex-1 px-4 sm:px-8 py-6 pb-20 max-w-7xl w-full mx-auto space-y-6">
-            {!hasDocument ? (
-              <InputArea
-                onFileSelect={handleFileSelect}
-                onTextChange={handleTextChange}
-                onClear={handleClearDocument}
-                hasFile={!!uploadedFile}
-                hasText={!!manuscriptText.trim()}
-              />
-            ) : (
-              <details className="group bg-[#faf6ec] border border-[#d9cfb8] rounded-lg overflow-hidden transition-all">
-                <summary className="px-4 py-2.5 cursor-pointer text-xs font-mono font-bold uppercase tracking-wider text-[#5c5344] hover:text-[#221d16] flex items-center justify-between select-none">
-                  <span>Replace Document or Edit Raw Input</span>
-                  <span className="text-[10px] text-[#948a76] group-open:rotate-180 transition-transform">▼</span>
-                </summary>
-                <div className="p-4 pt-0 border-t border-[#d9cfb8] bg-white">
+            {activePanel === "editor" && (
+              <>
+                {!hasDocument ? (
                   <InputArea
                     onFileSelect={handleFileSelect}
                     onTextChange={handleTextChange}
@@ -217,76 +192,57 @@ export default function DashboardView() {
                     hasFile={!!uploadedFile}
                     hasText={!!manuscriptText.trim()}
                   />
-                </div>
-              </details>
+                ) : (
+                  <details className="group bg-[#faf6ec] border border-[#d9cfb8] rounded-lg overflow-hidden transition-all">
+                    <summary className="px-4 py-2.5 cursor-pointer text-xs font-semibold text-[#5c5344] hover:text-[#221d16] flex items-center justify-between select-none">
+                      <span>Replace document</span>
+                      <span className="text-[10px] text-[#948a76] group-open:rotate-180 transition-transform">▼</span>
+                    </summary>
+                    <div className="p-4 pt-0 border-t border-[#d9cfb8] bg-white">
+                      <InputArea
+                        onFileSelect={handleFileSelect}
+                        onTextChange={handleTextChange}
+                        onClear={handleClearDocument}
+                        hasFile={!!uploadedFile}
+                        hasText={!!manuscriptText.trim()}
+                      />
+                    </div>
+                  </details>
+                )}
+
+                {progress.visible ? (
+                  <div className="space-y-4 animate-pulse">
+                    <div className="h-32 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+                      <div className="lg:col-span-7 h-64 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
+                      <div className="lg:col-span-5 h-64 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
+                    </div>
+                  </div>
+                ) : hasDocument ? (
+                  <ManuscriptEditorWorkspace
+                    initialText={manuscriptText}
+                    initialHtml={manuscriptHtml}
+                    auditData={analysisData}
+                    documentName={documentName}
+                    onTextChange={handleTextChange}
+                    onRequestReAudit={() => runAudit()}
+                  />
+                ) : null}
+              </>
             )}
 
-            {/* Shimmer Skeleton Loader state when audit is running */}
-            {progress.visible ? (
-              <div className="space-y-4 animate-pulse">
-                <div className="h-32 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
-                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
-                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
-                  <div className="h-28 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
-                </div>
-                <div className="h-64 bg-[#ffffff] border border-[#d9cfb8] rounded-lg" />
-              </div>
-            ) : (
-              <>
-                {activePanel === "overview" && (
-                  hasDocument ? (
-                    <div className="space-y-6">
-                      <ManuscriptEditorWorkspace
-                        initialText={manuscriptText}
-                        initialHtml={manuscriptHtml}
-                        auditData={analysisData}
-                        documentName={documentName}
-                        onTextChange={handleTextChange}
-                        onRequestReAudit={() => runAudit()}
-                      />
+            {activePanel === "history" && (
+              <HistoryPanel
+                onLoadAudit={handleLoadAudit}
+                onOpenAuth={() => setAuthModalOpen(true)}
+              />
+            )}
 
-                      {/* Collapsible Macro Diagnostic Metrics */}
-                      <details className="group border border-[#d9cfb8] bg-[#faf6ec] rounded-lg overflow-hidden transition-all">
-                        <summary className="p-4 cursor-pointer font-bold text-xs uppercase tracking-wider text-[#5c5344] hover:text-[#221d16] flex items-center justify-between select-none">
-                          <span>View Macro Diagnostics & Full Metric Breakdown</span>
-                          <span className="text-[11px] font-normal text-[#948a76] group-open:rotate-180 transition-transform">▼</span>
-                        </summary>
-                        <div className="p-4 pt-0 bg-white border-t border-[#d9cfb8]">
-                          <OverviewPanel data={analysisData} mode={currentMode} />
-                        </div>
-                      </details>
-                    </div>
-                  ) : (
-                    <OverviewPanel data={analysisData} mode={currentMode} />
-                  )
-                )}
-                {activePanel === "matching" && (
-                  <MatchingPanel data={analysisData} />
-                )}
-                {activePanel === "crossref" && (
-                  <CrossrefPanel data={analysisData} />
-                )}
-                {activePanel === "style" && <StylePanel data={analysisData} />}
-                {activePanel === "claims" && <ClaimsPanel data={analysisData} />}
-                {activePanel === "recency" && <RecencyPanel data={analysisData} />}
-                {activePanel === "structure" && (
-                  <StructurePanel data={analysisData} />
-                )}
-                {activePanel === "history" && (
-                  <HistoryPanel
-                    onLoadAudit={handleLoadAudit}
-                    onOpenAuth={() => setAuthModalOpen(true)}
-                  />
-                )}
-                {activePanel === "export" && (
-                  <ExportPanel
-                    data={analysisData}
-                    manuscriptText={manuscriptText}
-                  />
-                )}
-              </>
+            {activePanel === "export" && (
+              <ExportPanel
+                data={analysisData}
+                manuscriptText={manuscriptText}
+              />
             )}
           </div>
         </main>
@@ -321,7 +277,7 @@ export default function DashboardView() {
               className="text-[#a32b21] font-extrabold text-base flex items-center gap-2"
             >
               <AlertOctagon className="w-5 h-5 text-[#a32b21]" />
-              {errorModal.title || "Audit Error"}
+              {errorModal.title || "Audit error"}
             </h2>
             <p
               tabIndex={0}

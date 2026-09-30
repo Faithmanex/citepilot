@@ -91,7 +91,7 @@ export default function Hero() {
           <span className="text-[#d9cfb8]">•</span>
           <span>No credit card required</span>
           <span className="text-[#d9cfb8]">•</span>
-          <span>GDPR &amp; FERPA compliant</span>
+          <span>Your document stays private</span>
         </div>
 
         {/* Live Interactive Demo Embedding Showcase */}
@@ -100,16 +100,16 @@ export default function Hero() {
           className="mt-12 sm:mt-16 w-full max-w-[1200px] text-left"
           data-testid="hero-demo-container"
         >
-          <div className="flex items-center justify-between px-4 py-2.5 bg-[#faf6ec] border border-b-0 border-[#d9cfb8] rounded-t-lg text-xs font-mono font-semibold text-[#5c5344]">
+          <div className="flex items-center justify-between px-4 py-2.5 bg-[#faf6ec] border border-b-0 border-[#d9cfb8] rounded-t-lg text-xs font-semibold text-[#5c5344]">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-[3px] bg-[#2c3e8c] inline-block" />
-              <span>CitePilot Live Manuscript Auditor</span>
+              <span>See CitePilot on an example document</span>
             </div>
-            <span className="text-[#948a76] hidden sm:inline">Real-Time Suggestion Engine</span>
+            <span className="text-[#948a76] hidden sm:inline">No sign-up needed</span>
           </div>
 
           <div className="border border-[#d9cfb8] rounded-b-lg bg-[#ffffff] shadow-none overflow-hidden">
-            <InteractiveDemoEditor defaultDraftId="lit-review" />
+            <InteractiveDemoEditor />
           </div>
         </div>
       </Container>

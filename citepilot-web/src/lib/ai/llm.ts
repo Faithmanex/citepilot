@@ -75,9 +75,15 @@ export async function callGemini(
   );
 }
 
-/** Extracts a JSON object from raw LLM output (direct, fenced, or embedded). */
+/**
+ * Extracts a JSON object from raw LLM output (direct, fenced, or embedded).
+ * Throws when no JSON object can be recovered — an empty or malformed model
+ * response must surface as an error, never as silently empty findings.
+ */
 export function extractJson(text: string): unknown {
-  if (!text) return {};
+  if (!text) {
+    throw new AIServiceError("Model returned an empty response.");
+  }
 
   try {
     return JSON.parse(text);
@@ -104,16 +110,20 @@ export function extractJson(text: string): unknown {
     }
   }
 
-  return {};
+  throw new AIServiceError("Model response did not contain valid JSON.");
 }
 
 /**
- * Validates raw LLM output against a zod schema. On any failure, returns the
- * schema's default instance (`schema.parse({})`), matching the Python behavior
- * of falling back to an empty model rather than throwing.
+ * Validates raw LLM output against a zod schema. Throws `AIServiceError` when
+ * the output does not match the schema, so a malformed model response is
+ * reported instead of being coerced into an empty result.
  */
 export function parseAndValidate<T>(raw: string, schema: z.ZodType<T>): T {
   const parsed = schema.safeParse(extractJson(raw));
-  if (parsed.success) return parsed.data;
-  return schema.parse({});
+  if (!parsed.success) {
+    throw new AIServiceError(
+      `Model output did not match the expected schema: ${parsed.error.message}`
+    );
+  }
+  return parsed.data;
 }

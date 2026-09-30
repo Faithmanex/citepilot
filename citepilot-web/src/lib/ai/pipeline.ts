@@ -62,11 +62,7 @@ export async function runAnalysisPipeline(
       : [];
 
   if (matches.length && isJevEnabled()) {
-    try {
-      matches = await enrichMatchesWithJev(matches);
-    } catch {
-      /* fail-open */
-    }
+    matches = await enrichMatchesWithJev(matches);
   }
 
   const styleWarnings = bodyText
@@ -147,11 +143,17 @@ async function verifyReferences(refs: ReferenceEntry[]): Promise<{
   openalexResults: JsonObject[];
   retractionResults: JsonObject[];
 }> {
+  const unavailable = (provider: string, error: unknown): JsonObject => ({
+    status: "verification_unavailable",
+    provider,
+    message: `${provider} verification failed: ${(error as Error).message}`,
+  });
+
   const crossrefSettled = await Promise.allSettled(
     refs.map((r) => validateReferenceWithCrossref(r))
   );
   const crossrefResults = crossrefSettled.map((r) =>
-    r.status === "fulfilled" ? r.value : {}
+    r.status === "fulfilled" ? r.value : unavailable("Crossref", r.reason)
   );
 
   const openalexSettled = await Promise.allSettled(
@@ -164,7 +166,7 @@ async function verifyReferences(refs: ReferenceEntry[]): Promise<{
     })
   );
   const openalexResults = openalexSettled.map((r) =>
-    r.status === "fulfilled" ? r.value : {}
+    r.status === "fulfilled" ? r.value : unavailable("OpenAlex", r.reason)
   );
 
   const retractionSettled = await Promise.allSettled(
@@ -177,7 +179,7 @@ async function verifyReferences(refs: ReferenceEntry[]): Promise<{
     )
   );
   const retractionResults = retractionSettled.map((r) =>
-    r.status === "fulfilled" ? r.value : {}
+    r.status === "fulfilled" ? r.value : unavailable("Retraction check", r.reason)
   );
 
   return { crossrefResults, openalexResults, retractionResults };

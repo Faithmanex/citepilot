@@ -1,120 +1,81 @@
 "use client";
 
 import React from "react";
-import type { RigorMetrics } from "@/lib/editor/types";
+import type { FindingsSummary } from "@/lib/editor/types";
+import { CheckCircle2, ListChecks } from "lucide-react";
 
-export interface RigorScoreWidgetProps {
-  metrics: RigorMetrics;
+export interface FindingsSummaryWidgetProps {
+  summary: FindingsSummary;
   className?: string;
 }
 
-function getStatusLabel(score: number): string {
-  if (score >= 95) return "Ready for Journal Submission";
-  if (score >= 85) return "Strong Academic Rigor";
-  if (score >= 75) return "Moderate Verification Needed";
-  return "Needs Immediate Attention";
-}
+const CATEGORY_ROWS: { key: keyof FindingsSummary["byCategory"]; label: string }[] = [
+  { key: "citation", label: "Citations" },
+  { key: "style", label: "Style" },
+  { key: "claim", label: "Uncited claims" },
+  { key: "reference", label: "References" },
+];
 
-export const RigorScoreWidget: React.FC<RigorScoreWidgetProps> = ({
-  metrics,
+/**
+ * Reports what the audit actually found. No composite score, no readiness
+ * grade — just the counts, each of which maps to a specific finding below.
+ */
+export const FindingsSummaryWidget: React.FC<FindingsSummaryWidgetProps> = ({
+  summary,
   className = "",
 }) => {
-  const {
-    overallScore,
-    totalIssues,
-    resolvedIssues,
-    citationIntegrity,
-    styleCompliance,
-    claimVerification,
-  } = metrics;
-
-  const radius = 32;
-  const circumference = 2 * Math.PI * radius; // ~201.06px
-  const clamped = Math.max(0, Math.min(100, overallScore));
-  const progressOffset = circumference - (circumference * clamped) / 100;
-  const isHighRigor = overallScore >= 85;
-  const unresolved = Math.max(0, totalIssues - resolvedIssues);
-  const statusLabel = getStatusLabel(overallScore);
-
-  const tiles: { id: string; label: string; value: number; testid: string }[] = [
-    { id: "coverage", label: "Coverage", value: citationIntegrity, testid: "metric-tile-coverage" },
-    { id: "integrity", label: "Integrity", value: claimVerification, testid: "metric-tile-claim-integrity" },
-    { id: "tone", label: "Tone", value: styleCompliance, testid: "metric-tile-scholarly-tone" },
-  ];
+  const hasFindings = summary.total > 0;
 
   return (
     <div
-      data-testid="rigor-score-widget"
+      data-testid="findings-summary"
       role="region"
-      aria-label="Citation Rigor Scorecard"
-      className={`bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 sm:p-5 shadow-none flex flex-col gap-3.5 transition-all ${className}`.trim()}
+      aria-label="Audit findings summary"
+      className={`bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 sm:p-5 shadow-none flex flex-col gap-4 transition-all ${className}`.trim()}
     >
-      {/* Top Row: Circular Gauge + Status Headline */}
-      <div className="flex items-center gap-4">
-        <div className="w-[76px] h-[76px] relative flex items-center justify-center flex-none">
-          <svg className="w-[76px] h-[76px] -rotate-90" viewBox="0 0 76 76">
-            <circle
-              cx="38"
-              cy="38"
-              r={radius}
-              className="stroke-[#d9cfb8]"
-              strokeWidth="6"
-              fill="transparent"
-            />
-            <circle
-              cx="38"
-              cy="38"
-              r={radius}
-              className={isHighRigor ? "stroke-[#2c3e8c]" : "stroke-[#14181f]"}
-              strokeWidth="6"
-              strokeDasharray={circumference}
-              strokeDashoffset={progressOffset}
-              strokeLinecap="round"
-              fill="transparent"
-              style={{ transition: "stroke-dashoffset 0.4s ease-out, stroke 0.4s ease" }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-dash font-bold text-lg sm:text-xl text-[#221d16] tracking-tight">
-              {overallScore}%
-            </span>
-          </div>
+      <div className="flex items-start gap-3">
+        <div
+          className={`w-9 h-9 rounded-lg flex items-center justify-center flex-none ${
+            hasFindings ? "bg-[#f1e4c8]" : "bg-[#e7e9f5]"
+          }`}
+        >
+          {hasFindings ? (
+            <ListChecks className="w-4 h-4 text-[#93650f]" aria-hidden="true" />
+          ) : (
+            <CheckCircle2 className="w-4 h-4 text-[#2c3e8c]" aria-hidden="true" />
+          )}
         </div>
 
-        <div className="flex-1 min-w-0">
-          <span className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#948a76]">
-            Citation Rigor
-          </span>
-          <h3 className="text-sm sm:text-[15px] font-bold text-[#14181f] font-dash truncate">
-            {statusLabel}
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-[#221d16]">
+            {hasFindings
+              ? `${summary.active} open ${summary.active === 1 ? "finding" : "findings"}`
+              : "Nothing flagged"}
           </h3>
           <p className="text-xs text-[#5c5344] mt-0.5">
-            {unresolved > 0
-              ? `${unresolved} suggested revisions pending`
-              : "All citations verified and aligned!"}
+            {hasFindings
+              ? `${summary.total} total detected${
+                  summary.resolved > 0 ? ` · ${summary.resolved} resolved` : ""
+                }`
+              : "This run found no citation or reference problems."}
           </p>
         </div>
       </div>
 
-      {/* 3 Sub-Metric Score Tiles */}
-      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[#d9cfb8]">
-        {tiles.map((tile) => (
-          <div
-            key={tile.id}
-            data-testid={tile.testid}
-            className="bg-[#faf6ec] border border-[#d9cfb8] rounded-lg p-2 text-center shadow-none"
-          >
-            <div className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#948a76] truncate">
-              {tile.label}
+      {hasFindings && (
+        <dl className="grid grid-cols-2 gap-x-4 gap-y-2 pt-3 border-t border-[#d9cfb8]">
+          {CATEGORY_ROWS.map((row) => (
+            <div key={row.key} className="flex items-baseline justify-between gap-2">
+              <dt className="text-xs text-[#5c5344]">{row.label}</dt>
+              <dd className="text-xs font-bold text-[#221d16] tabular-nums">
+                {summary.byCategory[row.key]}
+              </dd>
             </div>
-            <div className="text-xs sm:text-sm font-bold text-[#14181f] font-dash mt-0.5">
-              {tile.value}%
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </dl>
+      )}
     </div>
   );
 };
 
-export default RigorScoreWidget;
+export default FindingsSummaryWidget;

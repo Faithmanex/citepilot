@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeAuditStats, computeScore } from "../auditStats";
+import { computeAuditStats, computeMatchRate } from "../auditStats";
 import type { AuditResponse } from "../types";
 
 describe("computeAuditStats", () => {
@@ -17,7 +17,7 @@ describe("computeAuditStats", () => {
       spellingMismatches: 0,
       yearMismatches: 0,
       matchedCount: 0,
-      matchRate: 100,
+      matchRate: 0,
     });
   });
 
@@ -80,52 +80,26 @@ describe("computeAuditStats", () => {
     expect(stats.matching).toBe(2);
   });
 
-  it("returns 100 match rate when there are no citations", () => {
+  it("reports a zero match rate when there are no citations (not a perfect score)", () => {
     const stats = computeAuditStats({ references: [] });
-    expect(stats.matchRate).toBe(100);
+    expect(stats.matchRate).toBe(0);
     expect(stats.matchedCount).toBe(0);
   });
 });
 
-describe("computeScore", () => {
-  it("returns 100 for null or empty data", () => {
-    expect(computeScore(null)).toBe(100);
-    expect(computeScore({})).toBe(100);
+describe("computeMatchRate", () => {
+  it("returns 0 for null or empty data", () => {
+    expect(computeMatchRate(null)).toBe(0);
+    expect(computeMatchRate({})).toBe(0);
   });
 
-  it("applies the weighted deduction formula", () => {
+  it("returns the real matched-to-total ratio", () => {
     const data: AuditResponse = {
-      citations: [{ raw_text: "(A, 2020)", status: "no_match" }],
-      references: [
-        { raw_entry: "r1", status: "orphaned" },
-        { raw_entry: "r2", status: "retracted" },
-        {
-          raw_entry: "r3",
-          status: "cited",
-          crossref_validation: {
-            crossref_verified: true,
-            discrepancies: [{ field: "year" }, { field: "title" }],
-          },
-        },
-      ],
-      style_warnings: [{ code: "A" }, { code: "B" }, { code: "C" }],
-      uncited_claims: [{ claim_text: "x" }, { claim_text: "y" }],
-    };
-    // 1*12 + 1*8 + 1*25 + 2*5 + 3*3 + 2*5 = 74 -> score 26
-    expect(computeScore(data)).toBe(26);
-  });
-
-  it("clamps the score to 0", () => {
-    const data: AuditResponse = {
-      references: [
-        { raw_entry: "r1", status: "retracted" },
-        { raw_entry: "r2", status: "retracted" },
-        { raw_entry: "r3", status: "retracted" },
-        { raw_entry: "r4", status: "retracted" },
-        { raw_entry: "r5", status: "orphaned" },
+      citations: [
+        { raw_text: "(A, 2020)", status: "matched" },
+        { raw_text: "(B, 2021)", status: "no_match" },
       ],
     };
-    // 4*25 + 1*8 = 108 -> clamped to 0
-    expect(computeScore(data)).toBe(0);
+    expect(computeMatchRate(data)).toBe(50);
   });
 });

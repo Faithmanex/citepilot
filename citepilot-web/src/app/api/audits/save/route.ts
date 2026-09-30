@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       word_count = 0,
       citation_count = 0,
       reference_count = 0,
-      score = 100,
+      score = 0,
       results = {},
     } = body;
 

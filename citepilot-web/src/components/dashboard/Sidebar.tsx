@@ -4,15 +4,9 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BrandLogo from "../brand/BrandLogo";
 import {
-  LayoutDashboard,
-  GitCompare,
-  CheckCircle2,
-  BookOpenCheck,
-  AlertTriangle,
-  Clock,
-  FileSpreadsheet,
-  FileDown,
+  FileText,
   History,
+  FileDown,
   Sparkles,
   X,
   ArrowLeft,
@@ -21,28 +15,20 @@ import {
 interface SidebarProps {
   activePanel: string;
   onPanelChange: (panel: string) => void;
-  badges: Record<string, number>;
   isOpen?: boolean;
   onClose?: () => void;
   onOpenSubscription?: () => void;
 }
 
 const navItems = [
-  { panel: "overview",  icon: LayoutDashboard, label: "Live Editor",        badgeKey: null },
-  { panel: "matching",  icon: GitCompare,       label: "Citation Matching",  badgeKey: "matching" },
-  { panel: "crossref",  icon: CheckCircle2,     label: "Crossref Check",     badgeKey: "crossref" },
-  { panel: "style",     icon: BookOpenCheck,    label: "Style Rules",        badgeKey: "style" },
-  { panel: "claims",    icon: AlertTriangle,    label: "Uncited Claims",     badgeKey: "claims" },
-  { panel: "recency",   icon: Clock,            label: "Recency Analysis",   badgeKey: null },
-  { panel: "structure", icon: FileSpreadsheet,  label: "Document Structure", badgeKey: null },
-  { panel: "history",   icon: History,          label: "Audit History",      badgeKey: null },
-  { panel: "export",    icon: FileDown,         label: "Export Report",      badgeKey: null },
+  { panel: "editor", icon: FileText, label: "Editor" },
+  { panel: "history", icon: History, label: "History" },
+  { panel: "export", icon: FileDown, label: "Export" },
 ];
 
 export default function Sidebar({
   activePanel,
   onPanelChange,
-  badges,
   isOpen = false,
   onClose,
   onOpenSubscription,
@@ -67,12 +53,12 @@ export default function Sidebar({
             : "hidden md:flex md:sticky md:top-0 w-[240px]"
         }`}
         role="navigation"
-        aria-label="Audit Navigation"
+        aria-label="Primary"
       >
         {/* Brand Header */}
         <div className="flex items-center justify-between px-4 py-4 border-b border-[#14181f]">
           <Link href="/" aria-label="CitePilot Home">
-            <BrandLogo variant="dark" size="sm" subtitle="AUDIT" />
+            <BrandLogo variant="dark" size="sm" />
           </Link>
           {onClose && (
             <button
@@ -88,18 +74,14 @@ export default function Sidebar({
 
         {/* Nav Items */}
         <nav className="flex-1 px-3 py-4 space-y-0.5">
-          <p className="text-[10px] font-bold tracking-widest uppercase text-slate-400 px-2 pb-2 font-mono">
-            Audit Sections
-          </p>
           {navItems.map((item) => {
-            const badgeCount = item.badgeKey ? badges[item.badgeKey] ?? 0 : 0;
             const isActive = activePanel === item.panel;
             const Icon = item.icon;
 
             return (
               <button
                 key={item.panel}
-                className={`flex items-center justify-between w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-2.5 w-full text-left px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all cursor-pointer ${
                   isActive
                     ? "bg-[#2c3e8c] text-white shadow-none"
                     : "text-[#d9cfb8] hover:text-white hover:bg-white/10"
@@ -110,15 +92,8 @@ export default function Sidebar({
                 }}
                 aria-current={isActive ? "page" : undefined}
               >
-                <div className="flex items-center gap-2.5 truncate min-w-0">
-                  <Icon className={`w-4 h-4 flex-none ${isActive ? "text-white" : "text-slate-400"}`} />
-                  <span className="truncate">{item.label}</span>
-                </div>
-                {item.badgeKey && badgeCount > 0 && (
-                  <span className={`ml-2 text-[10px] font-mono font-bold px-1.5 py-0.5 rounded-[4px] flex-none ${isActive ? "bg-white/20 text-white" : "bg-[#a32b21] text-white"}`}>
-                    {badgeCount}
-                  </span>
-                )}
+                <Icon className={`w-4 h-4 flex-none ${isActive ? "text-white" : "text-slate-400"}`} />
+                <span className="truncate">{item.label}</span>
               </button>
             );
           })}

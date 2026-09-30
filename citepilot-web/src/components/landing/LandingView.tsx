@@ -3,7 +3,6 @@
 import React from "react";
 import Header from "@/components/landing/Header";
 import Hero from "@/components/landing/Hero";
-import TrustBar from "@/components/landing/TrustBar";
 import FeatureTriptych from "@/components/landing/FeatureTriptych";
 import HowItWorks from "@/components/landing/HowItWorks";
 import CitationStyles from "@/components/landing/CitationStyles";
@@ -30,9 +29,6 @@ export default function LandingView() {
       <main id="main-content" className="flex-1 w-full flex flex-col">
         {/* Editorial Hero Block with Embedded Live Demo */}
         <Hero />
-
-        {/* Institutional Trust Bar & Logo Cloud */}
-        <TrustBar />
 
         {/* Core Capabilities 3-Card Triptych Grid */}
         <FeatureTriptych />

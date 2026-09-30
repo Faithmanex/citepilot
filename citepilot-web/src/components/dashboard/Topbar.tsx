@@ -110,7 +110,7 @@ export default function Topbar({
               }`}
               onClick={() => onModeChange("full")}
             >
-              Full Manuscript
+              Whole document
             </button>
             <button
               className={`px-3 py-1 rounded-md text-xs font-bold transition-all cursor-pointer ${
@@ -120,7 +120,7 @@ export default function Topbar({
               }`}
               onClick={() => onModeChange("reference_only")}
             >
-              Reference List Only
+              References only
             </button>
           </div>
 
@@ -151,7 +151,7 @@ export default function Topbar({
             ) : (
               <Play className="w-3.5 h-3.5 fill-white" />
             )}
-            <span>{progress.visible ? "Auditing…" : "Run Audit"}</span>
+            <span>{progress.visible ? "Checking…" : "Check citations"}</span>
           </button>
 
           <div className="pl-1 border-l border-[#d9cfb8]">

@@ -1,4 +1,4 @@
-import type { EditorSuggestion, TextSegment, DocumentSection } from "./types";
+import type { EditorSuggestion, TextSegment } from "./types";
 
 /**
  * Applies a 1-click suggestion fix in-place to the manuscript string, shifting all subsequent
@@ -119,44 +119,4 @@ export function buildTextSegments(
   }
 
   return segments;
-}
-
-/**
- * Extracts academic section landmarks from manuscript text for navigation.
- */
-export function detectAcademicSections(text: string): DocumentSection[] {
-  if (!text) return [];
-
-  const headingRegex = /^(?:#+\s*([^\n\r]+)|([A-Z][A-Za-z0-9\s]{2,40}))$/gm;
-  const knownKeywords = [
-    "abstract", "introduction", "background", "literature review",
-    "methodology", "methods", "results", "discussion", "conclusion",
-    "references", "bibliography", "works cited"
-  ];
-
-  const sections: DocumentSection[] = [];
-  const lines = text.split("\n");
-  let runningIndex = 0;
-
-  lines.forEach((line, idx) => {
-    const trimmed = line.trim();
-    const isMarkdownHeading = trimmed.startsWith("#");
-    const isKnownSection = knownKeywords.includes(trimmed.toLowerCase());
-
-    if (isMarkdownHeading || (isKnownSection && trimmed.length < 50)) {
-      const cleanTitle = isMarkdownHeading ? trimmed.replace(/^#+\s*/, "") : trimmed;
-      const level = isMarkdownHeading ? (trimmed.match(/^#+/)?.[0].length || 1) : 1;
-
-      sections.push({
-        id: `sec-${idx}-${runningIndex}`,
-        title: cleanTitle,
-        level,
-        startIndex: runningIndex,
-        endIndex: runningIndex + line.length,
-      });
-    }
-    runningIndex += line.length + 1; // +1 for newline character
-  });
-
-  return sections;
 }

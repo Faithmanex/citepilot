@@ -81,22 +81,18 @@ Return JSON with structure:
   ]
 }`;
 
-  try {
-    const raw = await callGemini(prompt, UNCITED_CLAIMS_SYSTEM_PROMPT);
-    const validated = parseAndValidate(raw, UncitedClaimsResponseSchema);
+  const raw = await callGemini(prompt, UNCITED_CLAIMS_SYSTEM_PROMPT);
+  const validated = parseAndValidate(raw, UncitedClaimsResponseSchema);
 
-    return validated.uncited_claims.map((c) => ({
-      code: "UNCITED_FACTUAL_CLAIM",
-      category: "citation_needed",
-      paragraph_index: c.paragraph_index,
-      claim_text: c.claim_text,
-      message: `Uncited Claim: '${c.claim_text.slice(0, 80)}...' requires a supporting citation marker.`,
-      educational_context:
-        "Academic style manuals require backing up empirical claims, statistical data, or specific findings with an explicit in-text reference.",
-      suggestion: "Add a supporting in-text citation marker (e.g. Author, Year).",
-      severity: "warning",
-    }));
-  } catch {
-    return [];
-  }
+  return validated.uncited_claims.map((c) => ({
+    code: "UNCITED_FACTUAL_CLAIM",
+    category: "citation_needed",
+    paragraph_index: c.paragraph_index,
+    claim_text: c.claim_text,
+    message: `Uncited Claim: '${c.claim_text.slice(0, 80)}...' requires a supporting citation marker.`,
+    educational_context:
+      "Academic style manuals require backing up empirical claims, statistical data, or specific findings with an explicit in-text reference.",
+    suggestion: "Add a supporting in-text citation marker (e.g. Author, Year).",
+    severity: "warning",
+  }));
 }

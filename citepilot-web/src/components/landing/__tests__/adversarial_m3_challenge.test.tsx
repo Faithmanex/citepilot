@@ -6,9 +6,8 @@ import "@testing-library/jest-dom/vitest";
 
 import Header, { NAV_CATEGORIES } from "../Header";
 import Hero from "../Hero";
-import TrustBar, { PARTNERS, TRUST_METRICS } from "../TrustBar";
 import FeatureTriptych from "../FeatureTriptych";
-import EnterpriseBand, { ENTERPRISE_STATS } from "../EnterpriseBand";
+import EnterpriseBand from "../EnterpriseBand";
 import CookieConsent, {
   COOKIE_CONSENT_KEY,
   COOKIE_SETTINGS_KEY,
@@ -309,28 +308,6 @@ describe("Milestone 3 Empirical Adversarial Challenge: Responsive Viewport Grid 
     expect(demoContainer.className).toContain("max-w-[1200px]");
   });
 
-  it("verifies TrustBar responsive grid: 2 cols at 320px, 4 cols at 768px, 8 cols at 1024px+", () => {
-    render(<TrustBar />);
-    const logoCloud = screen.getByTestId("trustbar-logo-cloud");
-    expect(logoCloud.className).toContain("grid-cols-2");
-    expect(logoCloud.className).toContain("sm:grid-cols-4");
-    expect(logoCloud.className).toContain("lg:grid-cols-8");
-
-    // Verify all 8 logos adhere to 8px radius standard and shadow-none
-    PARTNERS.forEach((partner) => {
-      const logoCard = screen.getByTestId(`partner-logo-${partner.id}`);
-      expect(logoCard.className).toContain("rounded-[8px]");
-      expect(logoCard.className).toContain("shadow-none");
-    });
-
-    // Verify metric chips
-    TRUST_METRICS.forEach((metric) => {
-      const chip = screen.getByTestId(`trustbar-chip-${metric.id}`);
-      expect(chip.className).toContain("rounded-[8px]");
-      expect(chip.className).toContain("shadow-none");
-    });
-  });
-
   it("verifies FeatureTriptych 3-card grid: 1 col on mobile, 3 cols on lg (1024px+)", () => {
     render(<FeatureTriptych />);
     const triptych = screen.getByTestId("landing-feature-triptych");
@@ -352,24 +329,13 @@ describe("Milestone 3 Empirical Adversarial Challenge: Responsive Viewport Grid 
     });
   });
 
-  it("verifies EnterpriseBand 4-stat card responsive layout: 1 col on mobile, 2 cols on sm, 4 cols on lg", () => {
+  it("verifies EnterpriseBand keeps dual CTAs responsive and no fabricated stat grid", () => {
     render(<EnterpriseBand />);
-    const statGrid = screen.getByTestId("enterprise-stat-grid");
-    expect(statGrid.className).toContain("grid-cols-1");
-    expect(statGrid.className).toContain("sm:grid-cols-2");
-    expect(statGrid.className).toContain("lg:grid-cols-4");
 
-    // Verify all 4 stat cards have rounded-[8px] and shadow-none
-    ENTERPRISE_STATS.forEach((_, idx) => {
-      const card = screen.getByTestId(`enterprise-stat-card-${idx}`);
-      expect(card.className).toContain("rounded-[8px]");
-      expect(card.className).toContain("shadow-none");
-    });
-
-    // Dual ghost CTAs responsive stacking
     const ctas = screen.getByTestId("enterprise-ctas");
     expect(ctas.className).toContain("flex-col");
     expect(ctas.className).toContain("sm:flex-row");
+    expect(screen.queryByTestId("enterprise-stat-grid")).toBeNull();
   });
 
   it("verifies Footer responsive layout: 1 col on 320px, 2 cols on sm (640px), 3 cols on md (768px), 12 cols on lg (1024px+)", () => {
@@ -389,7 +355,6 @@ describe("Milestone 3 Empirical Adversarial Challenge: Responsive Viewport Grid 
   it("guarantees 100% absence of unauthorized drop shadow classes across all Milestone 3 owned components", () => {
     const { container: headerContainer } = render(<Header />);
     const { container: heroContainer } = render(<Hero />);
-    const { container: trustContainer } = render(<TrustBar />);
     const { container: triptychContainer } = render(<FeatureTriptych />);
     const { container: enterpriseContainer } = render(<EnterpriseBand />);
     const { container: footerContainer } = render(<Footer />);
@@ -398,7 +363,6 @@ describe("Milestone 3 Empirical Adversarial Challenge: Responsive Viewport Grid 
     const m3Containers = [
       headerContainer,
       heroContainer,
-      trustContainer,
       triptychContainer,
       enterpriseContainer,
       footerContainer,

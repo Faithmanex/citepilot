@@ -11,17 +11,37 @@ export async function checkRetractionStatus(
   crossrefWork?: JsonObject | null
 ): Promise<JsonObject> {
   if (!doi && !title && !crossrefWork) {
-    return { is_retracted: false, status: "normal", message: null, how_to_fix: null };
+    return {
+      is_retracted: false,
+      status: "unknown",
+      message: "No DOI or title was available, so retraction status could not be checked.",
+      how_to_fix: null,
+    };
   }
 
   let work: JsonObject | null = crossrefWork || null;
 
-  if (!work && doi) work = await fetchByDoi(cleanDoi(doi));
-  if (!work && title) work = await searchByQuery(title, "");
+  try {
+    if (!work && doi) work = await fetchByDoi(cleanDoi(doi));
+    if (!work && title) work = await searchByQuery(title, "");
+  } catch (error) {
+    return {
+      is_retracted: false,
+      status: "unknown",
+      message: `Retraction status could not be checked: ${(error as Error).message}`,
+      how_to_fix: null,
+    };
+  }
 
   if (work) return analyzeCrossrefRetraction(work);
 
-  return { is_retracted: false, status: "normal", message: null, how_to_fix: null };
+  return {
+    is_retracted: false,
+    status: "unknown",
+    message:
+      "No matching record was found in Crossref, so retraction status could not be confirmed.",
+    how_to_fix: null,
+  };
 }
 
 export function analyzeCrossrefRetraction(work: JsonObject): JsonObject {

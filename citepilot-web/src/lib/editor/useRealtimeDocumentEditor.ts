@@ -3,16 +3,11 @@ import type { AuditResponse } from "@/lib/types";
 import type {
   EditorSuggestion,
   EditorSuggestionCategory,
-  RigorMetrics,
+  FindingsSummary,
   TextSegment,
-  DocumentSection,
 } from "./types";
-import { adaptAuditResponseToSuggestions, computeRigorMetrics } from "./suggestionAdapter";
-import {
-  applySuggestionMutation,
-  buildTextSegments,
-  detectAcademicSections,
-} from "./documentMutation";
+import { adaptAuditResponseToSuggestions, summarizeFindings } from "./suggestionAdapter";
+import { applySuggestionMutation, buildTextSegments } from "./documentMutation";
 
 export interface UseRealtimeDocumentEditorOptions {
   initialText: string;
@@ -61,10 +56,10 @@ export function useRealtimeDocumentEditor({
     }
   }, [initialAudit, manuscriptText]);
 
-  // Compute live Rigor Metrics
-  const rigorMetrics: RigorMetrics = useMemo(() => {
-    return computeRigorMetrics(suggestions, initialAudit);
-  }, [suggestions, initialAudit]);
+  // Compute honest findings tallies
+  const findings: FindingsSummary = useMemo(() => {
+    return summarizeFindings(suggestions);
+  }, [suggestions]);
 
   // Compute text segments for highlight rendering
   const textSegments: TextSegment[] = useMemo(() => {
@@ -75,11 +70,6 @@ export function useRealtimeDocumentEditor({
       hoveredSuggestionId
     );
   }, [manuscriptText, suggestions, selectedSuggestionId, hoveredSuggestionId]);
-
-  // Detect academic sections
-  const academicSections: DocumentSection[] = useMemo(() => {
-    return detectAcademicSections(manuscriptText);
-  }, [manuscriptText]);
 
   // Filtered suggestions based on active category
   const filteredSuggestions = useMemo(() => {
@@ -192,9 +182,8 @@ export function useRealtimeDocumentEditor({
     activeCategory,
     isCustomTyping,
     isDirty,
-    rigorMetrics,
+    findings,
     textSegments,
-    academicSections,
     setActiveCategory,
     setSelectedSuggestionId,
     setHoveredSuggestionId,

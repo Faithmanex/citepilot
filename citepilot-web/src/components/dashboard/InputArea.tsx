@@ -1,16 +1,9 @@
 "use client";
 
 import { useRef, useState, useCallback } from "react";
-import { UploadCloud, FileText, Trash2, Sparkles } from "lucide-react";
+import { UploadCloud, FileText, Trash2 } from "lucide-react";
 
 const ALLOWED_EXTENSIONS = [".docx", ".pdf", ".txt", ".rtf", ".bib"];
-
-const SAMPLE_TEXT = `Abstract
-Deep learning has driven major advances across artificial intelligence research (LeCun et al., 2015). Dimensionality reduction methods such as t-SNE remain widely used for visualising high-dimensional data (van der Maaten & Hinton, 2008).
-
-References
-LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. Nature, 521(7553), 436-444. https://doi.org/10.1038/nature14539
-Van der Maaten, L., & Hinton, G. (2008). Visualizing data using t-SNE. Journal of Machine Learning Research, 9, 2579-2605.`;
 
 interface InputAreaProps {
   onFileSelect: (file: File) => void;
@@ -50,11 +43,6 @@ export default function InputArea({
     [handleFileChange]
   );
 
-  const handleLoadSample = useCallback(() => {
-    setPastedText(SAMPLE_TEXT);
-    onTextChange(SAMPLE_TEXT);
-  }, [onTextChange]);
-
   const handleClearInternal = useCallback(() => {
     setPastedText("");
     onClear();
@@ -62,19 +50,10 @@ export default function InputArea({
 
   return (
     <div className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-5 mb-6 shadow-none">
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4">
         <h2 className="text-xs font-bold text-[#14181f] uppercase tracking-wider font-mono">
-          Document Input
+          Add your document
         </h2>
-        <button
-          type="button"
-          data-testid="load-sample-btn"
-          onClick={handleLoadSample}
-          className="text-xs font-bold text-[#2c3e8c] hover:text-[#24357a] flex items-center gap-1.5 transition-colors cursor-pointer"
-        >
-          <Sparkles className="w-3.5 h-3.5" />
-          Load Sample
-        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

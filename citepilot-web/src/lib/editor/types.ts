@@ -36,14 +36,24 @@ export interface EditorSuggestion {
   };
 }
 
-export interface RigorMetrics {
-  overallScore: number;
-  totalIssues: number;
-  resolvedIssues: number;
-  citationIntegrity: number;
-  styleCompliance: number;
-  claimVerification: number;
-  referenceReliability: number;
+export interface FindingsCategoryCounts {
+  citation: number;
+  style: number;
+  claim: number;
+  reference: number;
+}
+
+/**
+ * Honest, count-based summary of an audit. Deliberately contains no composite
+ * 0-100 score: the previous score was a heuristic weighting that could report a
+ * perfect result for unverified work. These are raw tallies an author can trace
+ * back to a specific finding.
+ */
+export interface FindingsSummary {
+  total: number;
+  active: number;
+  resolved: number;
+  byCategory: FindingsCategoryCounts;
 }
 
 export interface TextSegment {

@@ -1,12 +1,14 @@
 import type { AuditResponse } from "./types";
 
 function getApiBase(): string {
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
+  const configured = process.env.NEXT_PUBLIC_API_URL;
+  if (configured) {
+    return configured.replace(/\/$/, "");
   }
+  // Same-origin Next.js Route Handlers. No external host fallback.
   return typeof window !== "undefined"
     ? `${window.location.origin}/api/v1`
-    : "http://localhost:8000/api/v1";
+    : "/api/v1";
 }
 
 async function request(

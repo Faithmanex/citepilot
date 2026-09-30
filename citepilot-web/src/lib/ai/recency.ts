@@ -36,7 +36,6 @@ export function calculatePublicationRecency(
       older_than_10_years_percent: 0.0,
       average_publication_year: null,
       average_source_age_years: null,
-      recency_compliance_status: "insufficient_data",
     };
   }
 
@@ -54,11 +53,6 @@ export function calculatePublicationRecency(
   const p10 = round1((w10 / totalParsedSources) * 100);
   const pOlder = round1((older / totalParsedSources) * 100);
 
-  let compliance: string;
-  if (p5 >= 50.0) compliance = "highly_recent";
-  else if (p10 >= 70.0) compliance = "compliant";
-  else compliance = "dated_sources_warning";
-
   return {
     total_parsed_sources: totalParsedSources,
     valid_year_sources: validCount,
@@ -72,7 +66,6 @@ export function calculatePublicationRecency(
     older_than_10_years_percent: pOlder,
     average_publication_year: avgYr,
     average_source_age_years: avgAge,
-    recency_compliance_status: compliance,
   };
 }
 

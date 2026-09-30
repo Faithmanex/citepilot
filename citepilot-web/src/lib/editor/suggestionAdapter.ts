@@ -1,5 +1,5 @@
 import type { AuditResponse, Citation, StyleWarning, UncitedClaim, Reference } from "@/lib/types";
-import type { EditorSuggestion, RigorMetrics } from "./types";
+import type { EditorSuggestion, FindingsSummary } from "./types";
 
 /**
  * Finds all non-overlapping occurrences of a needle within a haystack string.
@@ -223,55 +223,28 @@ export function adaptAuditResponseToSuggestions(
 }
 
 /**
- * Computes realistic, dynamic rigor metrics based on real suggestions and resolution states.
+ * Tallies findings exactly as reported. No score is synthesized: every number
+ * here is a count of real findings, and a document with no findings reports no
+ * findings rather than an inferred "perfect" score.
  */
-export function computeRigorMetrics(
-  totalSuggestions: EditorSuggestion[],
-  audit: AuditResponse | null
-): RigorMetrics {
-  const total = totalSuggestions.length;
-  const resolved = totalSuggestions.filter((s) => s.status !== "active").length;
+export function summarizeFindings(
+  suggestions: EditorSuggestion[]
+): FindingsSummary {
+  const byCategory = { citation: 0, style: 0, claim: 0, reference: 0 };
+  let active = 0;
+  let resolved = 0;
 
-  if (total === 0) {
-    return {
-      overallScore: 98,
-      totalIssues: 0,
-      resolvedIssues: 0,
-      citationIntegrity: 100,
-      styleCompliance: 100,
-      claimVerification: 100,
-      referenceReliability: 100,
-    };
+  for (const suggestion of suggestions) {
+    byCategory[suggestion.category] += 1;
+    if (suggestion.status === "active") active += 1;
+    else resolved += 1;
   }
 
-  // Category breakdowns
-  const categoryStats = (cat: EditorSuggestion["category"]) => {
-    const items = totalSuggestions.filter((s) => s.category === cat);
-    if (items.length === 0) return 100;
-    const catResolved = items.filter((s) => s.status !== "active").length;
-    const resolvedRatio = catResolved / items.length;
-    return Math.min(100, Math.round(60 + resolvedRatio * 40));
-  };
-
-  const citationIntegrity = categoryStats("citation");
-  const styleCompliance = categoryStats("style");
-  const claimVerification = categoryStats("claim");
-  const referenceReliability = categoryStats("reference");
-
-  // Dynamic overall score calculation
-  const resolutionRatio = resolved / total;
-  const baseScore = Math.max(45, 100 - total * 7);
-  const overallScore = Math.min(100, Math.round(baseScore + resolutionRatio * (100 - baseScore)));
-
   return {
-    overallScore,
-    totalIssues: total,
-    resolvedIssues: resolved,
-    citationIntegrity,
-    styleCompliance,
-    claimVerification,
-    referenceReliability,
+    total: suggestions.length,
+    active,
+    resolved,
+    byCategory,
   };
 }
-
 

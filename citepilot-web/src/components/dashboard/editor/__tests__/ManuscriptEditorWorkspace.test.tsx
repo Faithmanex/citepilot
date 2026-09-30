@@ -77,10 +77,10 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
 
     // Left canvas (DocumentEditorCanvas)
     expect(screen.getByTestId("document-editor-canvas")).toBeInTheDocument();
-    expect(screen.getByText(/Academic Manuscript Canvas/i)).toBeInTheDocument();
+    expect(screen.getByText(/^Manuscript$/)).toBeInTheDocument();
 
-    // Right rigor score & live suggestion feed (RigorScoreWidget & LiveSuggestionFeed)
-    expect(screen.getByTestId("rigor-score-widget")).toBeInTheDocument();
+    // Right findings summary & live suggestion feed
+    expect(screen.getByTestId("findings-summary")).toBeInTheDocument();
     expect(screen.getByTestId("live-suggestion-feed")).toBeInTheDocument();
 
     // Export suite
@@ -101,7 +101,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     expect(screen.getByTestId("document-editor-canvas")).toBeInTheDocument();
     expect(screen.getByText(/Chapter 1: Introduction/i)).toBeInTheDocument();
     expect(screen.getByText(/Word document paragraphs extracted in realtime/i)).toBeInTheDocument();
-    expect(screen.getByTestId("rigor-score-widget")).toBeInTheDocument();
+    expect(screen.getByTestId("findings-summary")).toBeInTheDocument();
     expect(screen.getByTestId("live-suggestion-feed")).toBeInTheDocument();
   });
 

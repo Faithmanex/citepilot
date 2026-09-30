@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import type { AuditMode, AuditResponse, CitationStyle } from "@/lib/types";
 import { runAudit } from "@/lib/api";
 import { checkAuditEntitlement } from "@/lib/gating";
-import { computeScore } from "@/lib/auditStats";
+import { computeMatchRate } from "@/lib/auditStats";
 
 export interface ErrorModalState {
   visible: boolean;
@@ -94,7 +94,7 @@ export function useAudit({
           wordCount: entitlement.wordCount,
           citationCount: data.citations?.length || 0,
           referenceCount: data.references?.length || 0,
-          score: computeScore(data),
+          score: computeMatchRate(data),
           results: data,
         });
       }

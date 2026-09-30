@@ -6,9 +6,8 @@ import "@testing-library/jest-dom/vitest";
 
 import Header, { NAV_CATEGORIES } from "../Header";
 import Hero from "../Hero";
-import TrustBar, { PARTNERS, TRUST_METRICS } from "../TrustBar";
 import FeatureTriptych from "../FeatureTriptych";
-import EnterpriseBand, { ENTERPRISE_STATS } from "../EnterpriseBand";
+import EnterpriseBand from "../EnterpriseBand";
 import CookieConsent, {
   COOKIE_CONSENT_KEY,
   COOKIE_SETTINGS_KEY,
@@ -154,7 +153,7 @@ describe("Milestone 3: Hero Component (Hero.tsx)", () => {
     expect(microcopy).toBeInTheDocument();
     expect(microcopy).toHaveTextContent("Free for individual researchers");
     expect(microcopy).toHaveTextContent("No credit card required");
-    expect(microcopy).toHaveTextContent("GDPR & FERPA compliant");
+    expect(microcopy).toHaveTextContent("Your document stays private");
   });
 
   it("renders dual CTAs and handles primary and demo explore actions", () => {
@@ -176,44 +175,13 @@ describe("Milestone 3: Hero Component (Hero.tsx)", () => {
     render(<Hero />);
     const demoContainer = screen.getByTestId("hero-demo-container");
     expect(demoContainer).toBeInTheDocument();
-    expect(demoContainer).toHaveTextContent("CitePilot Live Manuscript Auditor");
-    expect(demoContainer).toHaveTextContent("Real-Time Suggestion Engine");
+    expect(demoContainer).toHaveTextContent("See CitePilot on an example document");
+    expect(demoContainer).toHaveTextContent("No sign-up needed");
 
-    // Verify InteractiveDemoEditor is rendered
+    // Verify the demo reuses the production editor surface
     expect(screen.getByTestId("interactive-demo-editor")).toBeInTheDocument();
-    expect(screen.getByTestId("demo-editor-canvas")).toBeInTheDocument();
-  });
-});
-
-describe("Milestone 3: TrustBar Component (TrustBar.tsx)", () => {
-  afterEach(() => {
-    cleanup();
-  });
-
-  it("renders social proof headline and badge", () => {
-    render(<TrustBar />);
-    expect(screen.getByTestId("trustbar-badge")).toHaveTextContent("Institutional Trust & Scale");
-    expect(screen.getByTestId("trustbar-headline")).toHaveTextContent(
-      "Trusted by 250,000+ researchers across 1,200+ universities worldwide"
-    );
-  });
-
-  it("renders all 4 social proof metric chips", () => {
-    render(<TrustBar />);
-    TRUST_METRICS.forEach((metric) => {
-      const chip = screen.getByTestId(`trustbar-chip-${metric.id}`);
-      expect(chip).toBeInTheDocument();
-      expect(chip).toHaveTextContent(metric.label);
-    });
-  });
-
-  it("renders all 8 monochrome partner logos (MIT, Stanford, Oxford, Harvard, etc.)", () => {
-    render(<TrustBar />);
-    PARTNERS.forEach((partner) => {
-      const logoCard = screen.getByTestId(`partner-logo-${partner.id}`);
-      expect(logoCard).toBeInTheDocument();
-      expect(logoCard).toHaveTextContent(partner.shortName);
-    });
+    expect(screen.getByTestId("document-editor-canvas")).toBeInTheDocument();
+    expect(screen.getByTestId("findings-summary")).toBeInTheDocument();
   });
 });
 
@@ -279,38 +247,22 @@ describe("Milestone 3: EnterpriseBand Component (EnterpriseBand.tsx)", () => {
     expect(band).toHaveClass("bg-[#2c3e8c]");
     expect(band).toHaveClass("text-white");
 
-    expect(screen.getByTestId("enterprise-badge")).toHaveTextContent(
-      "Enterprise & Institutional Licensing"
-    );
+    expect(screen.getByTestId("enterprise-badge")).toHaveTextContent("For institutions");
     expect(screen.getByTestId("enterprise-headline")).toHaveTextContent(
-      "CitePilot for Universities & Research Labs"
+      "CitePilot for universities & research groups"
     );
 
     expect(screen.getByTestId("enterprise-btn-trial")).toHaveTextContent(
       "Request institutional trial"
     );
-    expect(screen.getByTestId("enterprise-btn-demo")).toHaveTextContent(
-      "Schedule enterprise demo"
-    );
+    expect(screen.getByTestId("enterprise-btn-demo")).toHaveTextContent("Talk to us");
   });
 
-  it("renders all 4 stat cards with accurate metrics and titles", () => {
-    render(<EnterpriseBand />);
-    ENTERPRISE_STATS.forEach((stat, idx) => {
-      const card = screen.getByTestId(`enterprise-stat-card-${idx}`);
-      expect(card).toBeInTheDocument();
-      expect(card).toHaveTextContent(stat.metric);
-      expect(card).toHaveTextContent(stat.title);
-      expect(card).toHaveTextContent(stat.desc);
-    });
-  });
-
-  it("renders institutional security and compliance badges (SAML, FERPA/GDPR, DPA)", () => {
-    render(<EnterpriseBand />);
-    const compliance = screen.getByTestId("enterprise-compliance-badges");
-    expect(compliance).toHaveTextContent("SAML 2.0 / Okta SSO");
-    expect(compliance).toHaveTextContent("FERPA & GDPR Compliant");
-    expect(compliance).toHaveTextContent("Custom Institutional DPA & SLA");
+  it("renders no fabricated aggregate metrics or unverifiable certification claims", () => {
+    const { container } = render(<EnterpriseBand />);
+    expect(container.querySelectorAll("[data-testid^='enterprise-stat-card-']")).toHaveLength(0);
+    expect(screen.queryByTestId("enterprise-stat-grid")).toBeNull();
+    expect(screen.queryByTestId("enterprise-compliance-badges")).toBeNull();
   });
 });
 
@@ -496,19 +448,16 @@ describe("Milestone 3: LandingView Master Page Assembly (LandingView.tsx)", () =
     expect(screen.getByTestId("landing-hero")).toBeInTheDocument();
     expect(screen.getByTestId("interactive-demo-editor")).toBeInTheDocument();
 
-    // 3. TrustBar
-    expect(screen.getByTestId("landing-trustbar")).toBeInTheDocument();
-
-    // 4. FeatureTriptych
+    // 3. FeatureTriptych
     expect(screen.getByTestId("landing-feature-triptych")).toBeInTheDocument();
 
-    // 5. EnterpriseBand
+    // 4. EnterpriseBand
     expect(screen.getByTestId("landing-enterprise-band")).toBeInTheDocument();
 
-    // 6. Footer
+    // 5. Footer
     expect(screen.getByTestId("landing-footer")).toBeInTheDocument();
 
-    // 7. CookieConsent
+    // 6. CookieConsent
     expect(screen.getByTestId("cookie-consent-banner")).toBeInTheDocument();
   });
 });

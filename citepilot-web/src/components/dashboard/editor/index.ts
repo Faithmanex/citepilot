@@ -3,9 +3,8 @@ export type {
   EditorSuggestionFixType,
   HighlightSpan as EditorHighlightSpan,
   EditorSuggestion,
-  RigorMetrics,
+  FindingsSummary,
   TextSegment,
-  DocumentSection,
 } from "@/lib/editor/types";
 
 export * from "./HighlightSpan";

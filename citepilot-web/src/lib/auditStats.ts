@@ -27,7 +27,7 @@ const EMPTY_STATS: AuditStats = {
   spellingMismatches: 0,
   yearMismatches: 0,
   matchedCount: 0,
-  matchRate: 100,
+  matchRate: 0,
 };
 
 export function computeAuditStats(data: AuditResponse | null): AuditStats {
@@ -61,7 +61,7 @@ export function computeAuditStats(data: AuditResponse | null): AuditStats {
   const matchedCount = citations.filter((c) => c.status === "matched").length;
   const matchRate = citations.length
     ? Math.round((matchedCount / citations.length) * 100)
-    : 100;
+    : 0;
 
   return {
     matching: missingRefs + uncitedRefs + spellingMismatches + yearMismatches,
@@ -80,20 +80,11 @@ export function computeAuditStats(data: AuditResponse | null): AuditStats {
 }
 
 /**
- * Single integrity-score formula (0-100) used both by the Overview panel and the
- * auto-saved audit history, so the displayed score always matches what is stored.
+ * Real share of in-text citations that resolved to a reference-list entry.
+ * This replaces the previous weighted "integrity score", which could report a
+ * high number regardless of whether anything was actually verified. It is a
+ * measured ratio, not a heuristic estimate.
  */
-export function computeScore(data: AuditResponse | null): number {
-  if (!data) return 100;
-
-  const stats = computeAuditStats(data);
-  const totalDeductions =
-    stats.missingRefs * 12 +
-    stats.uncitedRefs * 8 +
-    stats.retractedCount * 25 +
-    stats.crDiscrepancies * 5 +
-    stats.style * 3 +
-    stats.claims * 5;
-
-  return Math.max(0, Math.min(100, 100 - totalDeductions));
+export function computeMatchRate(data: AuditResponse | null): number {
+  return computeAuditStats(data).matchRate;
 }

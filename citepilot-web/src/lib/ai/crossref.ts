@@ -2,7 +2,7 @@
  * Crossref metadata verification.
  * Port of `citepilot-ai/src/citepilot_ai/services/crossref_service.py`.
  */
-import { getJson } from "./http";
+import { getJson, HttpError } from "./http";
 import type { JsonObject, ReferenceEntry } from "./types";
 
 const CROSSREF_API_BASE = "https://api.crossref.org/works";
@@ -46,8 +46,16 @@ export function fuzzyTitleMatch(t1: string, t2: string): boolean {
 
 export async function fetchByDoi(doi: string): Promise<JsonObject | null> {
   const url = `${CROSSREF_API_BASE}/${encodeURIComponent(doi)}`;
-  const data = await getJson(url);
-  const message = data?.message;
+  let data: Record<string, unknown>;
+  try {
+    data = await getJson(url);
+  } catch (error) {
+    // A 404 means the DOI does not resolve — a real "not found". Anything else
+    // (timeout, 5xx) is an outage and must not be reported as "not found".
+    if (error instanceof HttpError && error.status === 404) return null;
+    throw error;
+  }
+  const message = data.message;
   return message && typeof message === "object" ? (message as JsonObject) : null;
 }
 
@@ -59,7 +67,7 @@ export async function searchByQuery(
   const queryStr = `${cleanTitle} ${author}`.trim();
   const url = `${CROSSREF_API_BASE}?query.bibliographic=${encodeURIComponent(queryStr)}&rows=1`;
   const data = await getJson(url);
-  const message = data?.message as JsonObject | undefined;
+  const message = data.message as JsonObject | undefined;
   const items = message?.items as unknown[] | undefined;
   if (items && items.length > 0 && typeof items[0] === "object") {
     return items[0] as JsonObject;
@@ -83,15 +91,26 @@ export async function validateReferenceWithCrossref(
   const year = refEntry.parsed_year ?? null;
 
   let work: JsonObject | null = null;
-  if (doi) {
-    work = await fetchByDoi(cleanDoi(doi));
-  }
-  if (!work && title) {
-    const authorStr =
-      authors[0] && typeof authors[0] === "object"
-        ? String(authors[0].family || "")
-        : "";
-    work = await searchByQuery(title, authorStr);
+  try {
+    if (doi) {
+      work = await fetchByDoi(cleanDoi(doi));
+    }
+    if (!work && title) {
+      const authorStr =
+        authors[0] && typeof authors[0] === "object"
+          ? String(authors[0].family || "")
+          : "";
+      work = await searchByQuery(title, authorStr);
+    }
+  } catch (error) {
+    return {
+      crossref_verified: false,
+      status: "verification_unavailable",
+      message: `Crossref could not be reached to verify this reference: ${(error as Error).message}`,
+      how_to_fix:
+        "This reference was not verified because the Crossref service was unavailable. Re-run the audit to retry verification.",
+      discrepancies: [],
+    };
   }
 
   if (!work) {

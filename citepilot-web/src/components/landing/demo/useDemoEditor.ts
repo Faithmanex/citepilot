@@ -1,313 +1,169 @@
 "use client";
 
-import { useState, useMemo, useCallback, useTransition } from "react";
-import { ACADEMIC_DRAFTS } from "./sampleDrafts";
-import { calculateRigorScore } from "./rigorScoring";
-import { applySuggestionReplacement, splitTextIntoSegments } from "./spanMutation";
-import { runLiveHeuristicAudit } from "./nlpRuleEngine";
-import type {
-  AcademicDraft,
-  DemoSuggestion,
-  DraftStateRecord,
-  RigorMetrics,
-  TextSegment,
-  UseDemoEditorReturn,
-} from "./types";
+import { useState, useMemo, useCallback } from "react";
+import type { EditorSuggestion, FindingsSummary, TextSegment } from "@/lib/editor/types";
+import { applySuggestionMutation, buildTextSegments } from "@/lib/editor/documentMutation";
+import { summarizeFindings } from "@/lib/editor/suggestionAdapter";
+import { DEMO_EXAMPLES } from "./examples";
 
-export function useDemoEditor(
-  initialDraftId: AcademicDraft["id"] = "lit-review"
-): UseDemoEditorReturn {
-  const [activeDraftId, setActiveDraftId] = useState<AcademicDraft["id"]>(initialDraftId);
-  const [isPending, startTransition] = useTransition();
+interface DemoState {
+  text: string;
+  suggestions: EditorSuggestion[];
+}
 
-  // Multi-draft state store for seamless switching without state loss
-  const [draftStates, setDraftStates] = useState<Record<AcademicDraft["id"], DraftStateRecord>>({
-    "lit-review": {
-      text: ACADEMIC_DRAFTS["lit-review"].initialText,
-      acceptedIds: [],
-      dismissedIds: [],
-    },
-    intro: {
-      text: ACADEMIC_DRAFTS.intro.initialText,
-      acceptedIds: [],
-      dismissedIds: [],
-    },
-    discussion: {
-      text: ACADEMIC_DRAFTS.discussion.initialText,
-      acceptedIds: [],
-      dismissedIds: [],
-    },
-    custom: {
-      text: ACADEMIC_DRAFTS.custom.initialText,
-      acceptedIds: [],
-      dismissedIds: [],
-      customSuggestions: undefined,
-    },
-  });
+function initialState(): Record<string, DemoState> {
+  return Object.fromEntries(
+    DEMO_EXAMPLES.map((example) => [
+      example.id,
+      { text: example.text, suggestions: example.suggestions },
+    ])
+  );
+}
 
+/**
+ * Drives the landing demo using the production editor engine
+ * (`applySuggestionMutation`, `summarizeFindings`, `buildTextSegments`), so the
+ * demo behaves exactly like the real workspace. There is no client-side
+ * analysis step and no fabricated metadata.
+ */
+export function useDemoEditor(initialExampleId: string = DEMO_EXAMPLES[0].id) {
+  const [activeExampleId, setActiveExampleId] = useState(
+    DEMO_EXAMPLES.some((e) => e.id === initialExampleId) ? initialExampleId : DEMO_EXAMPLES[0].id
+  );
+  const [states, setStates] = useState<Record<string, DemoState>>(initialState);
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
   const [hoveredSuggestionId, setHoveredSuggestionId] = useState<string | null>(null);
 
-  const currentDraft = ACADEMIC_DRAFTS[activeDraftId] ?? ACADEMIC_DRAFTS["lit-review"];
+  const state = states[activeExampleId];
 
-  const currentDraftState = useMemo<DraftStateRecord>(() => {
-    return (
-      draftStates[activeDraftId] ?? {
-        text: currentDraft.initialText,
-        acceptedIds: [],
-        dismissedIds: [],
-      }
-    );
-  }, [draftStates, activeDraftId, currentDraft.initialText]);
-
-  const isCustomTyping = activeDraftId === "custom";
-
-  // Compute active suggestions with their latest status
-  const activeSuggestions = useMemo<DemoSuggestion[]>(() => {
-    const acceptedSet = new Set(currentDraftState.acceptedIds);
-    const dismissedSet = new Set(currentDraftState.dismissedIds);
-
-    if (isCustomTyping) {
-      const suggestionsList =
-        currentDraftState.customSuggestions !== undefined
-          ? currentDraftState.customSuggestions
-          : runLiveHeuristicAudit(currentDraftState.text);
-
-      return suggestionsList.map((s) => {
-        if (acceptedSet.has(s.id)) return { ...s, status: "accepted" as const };
-        if (dismissedSet.has(s.id)) return { ...s, status: "dismissed" as const };
-        return { ...s, status: "pending" as const };
-      });
-    }
-
-    return currentDraft.defaultSuggestions.map((s) => {
-      if (acceptedSet.has(s.id)) return { ...s, status: "accepted" as const };
-      if (dismissedSet.has(s.id)) return { ...s, status: "dismissed" as const };
-      return { ...s, status: "pending" as const };
-    });
-  }, [isCustomTyping, currentDraftState, currentDraft]);
-
-  // Pending subset
-  const pendingSuggestions = useMemo(
-    () => activeSuggestions.filter((s) => s.status === "pending"),
-    [activeSuggestions]
+  const findings: FindingsSummary = useMemo(
+    () => summarizeFindings(state.suggestions),
+    [state.suggestions]
   );
 
-  // Selected suggestion entity
-  const selectedSuggestion = useMemo(() => {
-    if (!selectedSuggestionId) return null;
-    return activeSuggestions.find((s) => s.id === selectedSuggestionId) ?? null;
-  }, [activeSuggestions, selectedSuggestionId]);
+  const textSegments: TextSegment[] = useMemo(
+    () =>
+      buildTextSegments(
+        state.text,
+        state.suggestions,
+        selectedSuggestionId,
+        hoveredSuggestionId
+      ),
+    [state.text, state.suggestions, selectedSuggestionId, hoveredSuggestionId]
+  );
 
-  // Word count helper
-  const wordCount = useMemo(() => {
-    return currentDraftState.text.trim().split(/\s+/).filter(Boolean).length;
-  }, [currentDraftState.text]);
+  const activeSuggestions = useMemo(
+    () => state.suggestions.filter((s) => s.status === "active"),
+    [state.suggestions]
+  );
 
-  // Dynamic Rigor Score
-  const scoreMetrics = useMemo<RigorMetrics>(() => {
-    return calculateRigorScore(
-      activeSuggestions,
-      currentDraftState.acceptedIds,
-      currentDraftState.dismissedIds,
-      currentDraft.baseScore,
-      wordCount
-    );
-  }, [activeSuggestions, currentDraftState, currentDraft.baseScore, wordCount]);
+  const selectedSuggestion = useMemo(
+    () => state.suggestions.find((s) => s.id === selectedSuggestionId) ?? null,
+    [state.suggestions, selectedSuggestionId]
+  );
 
-  // Text segments for rendering
-  const textSegments = useMemo<TextSegment[]>(() => {
-    return splitTextIntoSegments(
-      currentDraftState.text,
-      activeSuggestions,
-      selectedSuggestionId,
-      hoveredSuggestionId
-    );
-  }, [currentDraftState.text, activeSuggestions, selectedSuggestionId, hoveredSuggestionId]);
-
-  // Is dirty indicator
   const isDirty = useMemo(() => {
+    const example = DEMO_EXAMPLES.find((e) => e.id === activeExampleId);
+    if (!example) return false;
     return (
-      currentDraftState.acceptedIds.length > 0 ||
-      currentDraftState.dismissedIds.length > 0 ||
-      currentDraftState.text !== currentDraft.initialText
+      state.text !== example.text ||
+      state.suggestions.some((s) => s.status !== "active")
     );
-  }, [currentDraftState, currentDraft.initialText]);
+  }, [activeExampleId, state]);
 
-  // Switch active draft
-  const selectDraft = useCallback((draftId: AcademicDraft["id"]) => {
-    setActiveDraftId(draftId);
+  const patchState = useCallback(
+    (updater: (prev: DemoState) => DemoState) => {
+      setStates((prev) => ({ ...prev, [activeExampleId]: updater(prev[activeExampleId]) }));
+    },
+    [activeExampleId]
+  );
+
+  const selectExample = useCallback((id: string) => {
+    if (!DEMO_EXAMPLES.some((e) => e.id === id)) return;
+    setActiveExampleId(id);
     setSelectedSuggestionId(null);
     setHoveredSuggestionId(null);
   }, []);
 
-  // Update text with debounced live heuristic analysis for custom draft
-  const updateText = useCallback(
-    (newText: string) => {
-      setDraftStates((prev) => ({
-        ...prev,
-        [activeDraftId]: {
-          ...prev[activeDraftId],
-          text: newText,
-        },
-      }));
-
-      if (activeDraftId === "custom") {
-        startTransition(() => {
-          const freshSuggestions = runLiveHeuristicAudit(newText);
-          setDraftStates((prev) => ({
-            ...prev,
-            custom: {
-              ...prev.custom,
-              customSuggestions: freshSuggestions,
-            },
-          }));
-        });
-      }
-    },
-    [activeDraftId]
-  );
-
-  // Suggestion Selection
-  const selectSuggestion = useCallback((id: string | null) => {
-    setSelectedSuggestionId(id);
-  }, []);
-
-  // Suggestion Hover
-  const hoverSuggestion = useCallback((id: string | null) => {
-    setHoveredSuggestionId(id);
-  }, []);
-
-  // Accept Suggestion (Inline mutation & offset recalculation)
   const acceptSuggestion = useCallback(
-    (suggestionId: string) => {
-      const target = activeSuggestions.find((s) => s.id === suggestionId);
-      if (!target) return;
-
-      const { newText, updatedSuggestions } = applySuggestionReplacement(
-        currentDraftState.text,
-        target,
-        activeSuggestions
-      );
-
-      setDraftStates((prev) => {
-        const current = prev[activeDraftId];
-        return {
-          ...prev,
-          [activeDraftId]: {
-            ...current,
-            text: newText,
-            acceptedIds: [...current.acceptedIds, suggestionId],
-            dismissedIds: current.dismissedIds.filter((id) => id !== suggestionId),
-            ...(activeDraftId === "custom" ? { customSuggestions: updatedSuggestions } : {}),
-          },
-        };
+    (id: string) => {
+      patchState((prev) => {
+        const target = prev.suggestions.find((s) => s.id === id);
+        if (!target) return prev;
+        const { newText, updatedSuggestions } = applySuggestionMutation(
+          prev.text,
+          target,
+          prev.suggestions
+        );
+        return { text: newText, suggestions: updatedSuggestions };
       });
 
-      // Auto-advance to next pending suggestion if available
-      const remaining = pendingSuggestions.filter((s) => s.id !== suggestionId);
+      const remaining = activeSuggestions.filter((s) => s.id !== id);
       setSelectedSuggestionId(remaining.length > 0 ? remaining[0].id : null);
     },
-    [activeDraftId, activeSuggestions, currentDraftState.text, pendingSuggestions]
+    [patchState, activeSuggestions]
   );
 
-  // Dismiss Suggestion (Clear highlight without modifying text)
   const dismissSuggestion = useCallback(
-    (suggestionId: string) => {
-      setDraftStates((prev) => {
-        const current = prev[activeDraftId];
-        return {
-          ...prev,
-          [activeDraftId]: {
-            ...current,
-            dismissedIds: [...current.dismissedIds, suggestionId],
-            acceptedIds: current.acceptedIds.filter((id) => id !== suggestionId),
-          },
-        };
-      });
-
-      // Auto-advance or clear selection
-      const remaining = pendingSuggestions.filter((s) => s.id !== suggestionId);
+    (id: string) => {
+      patchState((prev) => ({
+        ...prev,
+        suggestions: prev.suggestions.map((s) =>
+          s.id === id ? { ...s, status: "dismissed" as const } : s
+        ),
+      }));
+      const remaining = activeSuggestions.filter((s) => s.id !== id);
       setSelectedSuggestionId(remaining.length > 0 ? remaining[0].id : null);
     },
-    [activeDraftId, pendingSuggestions]
+    [patchState, activeSuggestions]
   );
 
-  // Accept All Suggestions
-  const acceptAll = useCallback(() => {
-    let textAccumulator = currentDraftState.text;
-    let suggestionsAccumulator = [...activeSuggestions];
-
-    pendingSuggestions.forEach((target) => {
-      const res = applySuggestionReplacement(
-        textAccumulator,
-        target,
-        suggestionsAccumulator
-      );
-      textAccumulator = res.newText;
-      suggestionsAccumulator = res.updatedSuggestions;
+  const acceptAllStyle = useCallback(() => {
+    patchState((prev) => {
+      let text = prev.text;
+      let list = prev.suggestions;
+      for (const target of prev.suggestions.filter(
+        (s) => s.status === "active" && s.category === "style"
+      )) {
+        const live = list.find((s) => s.id === target.id);
+        if (live && live.status === "active") {
+          const res = applySuggestionMutation(text, live, list);
+          text = res.newText;
+          list = res.updatedSuggestions;
+        }
+      }
+      return { text, suggestions: list };
     });
-
-    const newAcceptedIds = [
-      ...currentDraftState.acceptedIds,
-      ...pendingSuggestions.map((s) => s.id),
-    ];
-
-    setDraftStates((prev) => ({
-      ...prev,
-      [activeDraftId]: {
-        ...prev[activeDraftId],
-        text: textAccumulator,
-        acceptedIds: newAcceptedIds,
-        dismissedIds: prev[activeDraftId].dismissedIds.filter(
-          (id) => !newAcceptedIds.includes(id)
-        ),
-        ...(activeDraftId === "custom"
-          ? { customSuggestions: suggestionsAccumulator }
-          : {}),
-      },
-    }));
-
     setSelectedSuggestionId(null);
-  }, [activeDraftId, activeSuggestions, currentDraftState.acceptedIds, currentDraftState.text, pendingSuggestions]);
+  }, [patchState]);
 
-  // Reset Draft
-  const resetDraft = useCallback(() => {
-    setDraftStates((prev) => ({
+  const reset = useCallback(() => {
+    const example = DEMO_EXAMPLES.find((e) => e.id === activeExampleId);
+    if (!example) return;
+    setStates((prev) => ({
       ...prev,
-      [activeDraftId]: {
-        text: ACADEMIC_DRAFTS[activeDraftId].initialText,
-        acceptedIds: [],
-        dismissedIds: [],
-        ...(activeDraftId === "custom" ? { customSuggestions: undefined } : {}),
-      },
+      [activeExampleId]: { text: example.text, suggestions: example.suggestions },
     }));
     setSelectedSuggestionId(null);
     setHoveredSuggestionId(null);
-  }, [activeDraftId]);
+  }, [activeExampleId]);
 
   return {
-    activeDraftId,
-    currentDraft,
-    currentText: currentDraftState.text,
+    activeExampleId,
+    examples: DEMO_EXAMPLES,
+    text: state.text,
+    suggestions: state.suggestions,
     activeSuggestions,
-    pendingSuggestions,
     selectedSuggestion,
-    selectedSuggestionId,
-    hoveredSuggestionId,
-    scoreMetrics,
+    findings,
     textSegments,
-    isCustomTyping,
-    isAnalyzing: isPending,
     isDirty,
-    selectDraft,
-    updateText,
-    selectSuggestion,
-    setSelectedSuggestionId: selectSuggestion,
-    hoverSuggestion,
+    selectExample,
     acceptSuggestion,
     dismissSuggestion,
-    acceptAll,
-    resetDraft,
+    acceptAllStyle,
+    reset,
+    selectSuggestion: setSelectedSuggestionId,
+    hoverSuggestion: setHoveredSuggestionId,
   };
 }

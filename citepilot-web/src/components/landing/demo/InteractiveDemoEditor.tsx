@@ -1,93 +1,125 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
+import { RotateCcw } from "lucide-react";
+import { DocumentEditorCanvas } from "@/components/dashboard/editor/DocumentEditorCanvas";
+import { FindingsSummaryWidget } from "@/components/dashboard/editor/RigorScoreWidget";
+import { LiveSuggestionFeed } from "@/components/dashboard/editor/LiveSuggestionFeed";
 import { useDemoEditor } from "./useDemoEditor";
-import { DemoDraftSelector } from "./DemoDraftSelector";
-import { DemoEditorSurface } from "./DemoEditorSurface";
-import { DemoScoreCounter } from "./DemoScoreCounter";
-import { DemoSuggestionCard } from "./DemoSuggestionCard";
-import type { AcademicDraft, RigorMetrics } from "./types";
 
 export interface InteractiveDemoEditorProps {
-  defaultDraftId?: AcademicDraft["id"];
+  defaultDraftId?: string;
   className?: string;
-  onScoreChange?: (metrics: RigorMetrics) => void;
-  onDraftChange?: (draftId: AcademicDraft["id"]) => void;
 }
 
+/**
+ * The landing demo is a read-only, faithful preview of the production
+ * workspace. It renders the same canvas, findings summary, and findings list
+ * the dashboard uses, driven by a worked example — never by client-side
+ * heuristics or invented citations.
+ */
 export function InteractiveDemoEditor({
-  defaultDraftId = "lit-review",
+  defaultDraftId,
   className = "",
-  onScoreChange,
-  onDraftChange,
 }: InteractiveDemoEditorProps) {
   const {
-    activeDraftId,
-    currentText,
-    textSegments,
+    activeExampleId,
+    examples,
+    text,
+    suggestions,
+    activeSuggestions,
     selectedSuggestion,
-    scoreMetrics,
-    isCustomTyping,
+    findings,
+    textSegments,
     isDirty,
-    selectDraft,
-    updateText,
-    selectSuggestion,
-    hoverSuggestion,
+    selectExample,
     acceptSuggestion,
     dismissSuggestion,
-    resetDraft,
+    acceptAllStyle,
+    reset,
+    selectSuggestion,
+    hoverSuggestion,
   } = useDemoEditor(defaultDraftId);
-
-  // Notify parent component of score and draft changes
-  useEffect(() => {
-    onScoreChange?.(scoreMetrics);
-  }, [scoreMetrics, onScoreChange]);
-
-  const handleSelectDraft = (draftId: AcademicDraft["id"]) => {
-    selectDraft(draftId);
-    onDraftChange?.(draftId);
-  };
 
   return (
     <section
       data-testid="interactive-demo-editor"
-      aria-label="CitePilot Live Interactive Citation Demo"
+      aria-label="CitePilot example audit"
       className={`w-full max-w-[1200px] mx-auto transition-all ${className}`.trim()}
     >
       <div className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-4 sm:p-6 lg:p-8 shadow-none space-y-5 sm:space-y-6">
-        {/* Top Segmented Draft Switcher & Reset Action */}
-        <DemoDraftSelector
-          activeDraftId={activeDraftId}
-          onSelectDraft={handleSelectDraft}
-          onReset={resetDraft}
-          isDirty={isDirty}
-        />
+        {/* Example switcher + reset */}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Example documents">
+            {examples.map((example) => {
+              const isActive = example.id === activeExampleId;
+              return (
+                <button
+                  key={example.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  data-testid={`demo-example-${example.id}`}
+                  onClick={() => selectExample(example.id)}
+                  className={[
+                    "h-9 px-3.5 text-xs font-bold rounded-lg border shadow-none transition-all cursor-pointer select-none",
+                    isActive
+                      ? "bg-[#ffffff] text-[#221d16] border-[#d9cfb8]"
+                      : "bg-transparent text-[#5c5344] border-transparent hover:text-[#221d16] hover:bg-[#d9cfb8]",
+                  ].join(" ")}
+                >
+                  {example.name}
+                </button>
+              );
+            })}
+          </div>
 
-        {/* Responsive Desktop 60/40 Split & Mobile Docked Layout */}
+          <button
+            type="button"
+            onClick={reset}
+            disabled={!isDirty}
+            data-testid="demo-reset-btn"
+            aria-label="Reset example"
+            className={[
+              "h-9 px-3 text-xs font-bold rounded-lg border shadow-none flex items-center gap-1.5 transition-colors select-none",
+              isDirty
+                ? "text-[#5c5344] hover:text-[#221d16] border-[#d9cfb8] bg-[#ffffff] hover:bg-[#d9cfb8] cursor-pointer"
+                : "text-[#d9cfb8] border-transparent bg-transparent cursor-not-allowed opacity-50",
+            ].join(" ")}
+          >
+            <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Reset</span>
+          </button>
+        </div>
+
+        <p className="text-xs text-[#5c5344]">
+          Example document. Click a highlight to see the fix.
+        </p>
+
+        {/* Document + findings split */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
-          {/* Left Canvas Pane (60% / col-span-7) */}
           <div className="lg:col-span-7 w-full">
-            <DemoEditorSurface
-              currentText={currentText}
+            <DocumentEditorCanvas
+              currentText={text}
               textSegments={textSegments}
-              isCustomTyping={isCustomTyping}
-              onUpdateText={updateText}
+              isCustomTyping={false}
+              onUpdateText={() => {}}
               onSelectSuggestion={selectSuggestion}
               onHoverSuggestion={hoverSuggestion}
             />
           </div>
 
-          {/* Right Inspection & Rigor Score Pane (40% / col-span-5) */}
           <div className="lg:col-span-5 w-full flex flex-col gap-5">
-            {/* Rigor Score Counter & Sub-Metrics */}
-            <DemoScoreCounter metrics={scoreMetrics} />
+            <FindingsSummaryWidget summary={findings} />
 
-            {/* Active Suggestion Diff Card */}
-            <DemoSuggestionCard
-              suggestion={selectedSuggestion}
-              onAccept={acceptSuggestion}
-              onDismiss={dismissSuggestion}
-              onClose={() => selectSuggestion(null)}
+            <LiveSuggestionFeed
+              suggestions={suggestions}
+              filteredSuggestions={activeSuggestions}
+              selectedSuggestion={selectedSuggestion}
+              onSelectSuggestion={selectSuggestion}
+              onAcceptSuggestion={acceptSuggestion}
+              onDismissSuggestion={dismissSuggestion}
+              onAcceptAllStyle={acceptAllStyle}
             />
           </div>
         </div>

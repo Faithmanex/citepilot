@@ -8,9 +8,6 @@ export * from "./Header";
 export { default as Hero } from "./Hero";
 export * from "./Hero";
 
-export { default as TrustBar } from "./TrustBar";
-export * from "./TrustBar";
-
 export { default as FeatureTriptych } from "./FeatureTriptych";
 export * from "./FeatureTriptych";
 

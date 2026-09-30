@@ -1,16 +1,11 @@
 /**
- * Public exports for the CitePilot Interactive Demo Editor & Rigor Engine.
+ * Public exports for the CitePilot landing demo.
+ *
+ * The demo is a read-only preview of the production editor and reuses the
+ * production engine (`@/lib/editor`). It intentionally has no separate scoring
+ * model, heuristic engine, or generated content.
  */
 
-export * from "./types";
-export * from "./sampleDrafts";
-export * from "./rigorScoring";
-export * from "./spanMutation";
-export * from "./nlpRuleEngine";
+export * from "./examples";
 export * from "./useDemoEditor";
-export * from "./DemoDraftSelector";
-export * from "./DemoHighlightSpan";
-export * from "./DemoEditorSurface";
-export * from "./DemoSuggestionCard";
-export * from "./DemoScoreCounter";
 export * from "./InteractiveDemoEditor";

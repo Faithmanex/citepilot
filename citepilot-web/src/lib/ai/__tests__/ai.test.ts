@@ -54,10 +54,11 @@ describe("AI service port — pure helpers", () => {
   });
 
   describe("recency.calculatePublicationRecency", () => {
-    it("returns insufficient_data for no parseable years", () => {
+    it("reports no valid years and no judged compliance tier", () => {
       const res = calculatePublicationRecency([{ parsed_year: null }]);
-      expect(res.recency_compliance_status).toBe("insufficient_data");
+      expect(res.valid_year_sources).toBe(0);
       expect(res.total_parsed_sources).toBe(1);
+      expect(res).not.toHaveProperty("recency_compliance_status");
     });
 
     it("computes distribution percentages against total references", () => {
@@ -104,7 +105,11 @@ describe("AI service port — pure helpers", () => {
       expect(extractJson('{"a":1}')).toEqual({ a: 1 });
       expect(extractJson("```json\n{\"b\":2}\n```")).toEqual({ b: 2 });
       expect(extractJson("noise {\"c\":3} trailing")).toEqual({ c: 3 });
-      expect(extractJson("not json")).toEqual({});
+    });
+
+    it("throws instead of silently returning an empty object on malformed output", () => {
+      expect(() => extractJson("not json")).toThrow();
+      expect(() => extractJson("")).toThrow();
     });
   });
 

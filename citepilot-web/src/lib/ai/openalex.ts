@@ -56,13 +56,23 @@ export async function validateReferenceWithOpenalex(
   }
 
   let work: JsonObject | null = null;
-  if (doi) work = await lookupOpenalexByDoi(doi);
-  if (!work && title) {
-    work = await lookupOpenalexByTitleAuthor(title, authorFamily, year);
+  try {
+    if (doi) work = await lookupOpenalexByDoi(doi);
+    if (!work && title) {
+      work = await lookupOpenalexByTitleAuthor(title, authorFamily, year);
+    }
+  } catch (error) {
+    return {
+      verified: false,
+      provider: "openalex",
+      status: "verification_unavailable",
+      message: `OpenAlex could not be reached to verify this reference: ${(error as Error).message}`,
+      discrepancies: [],
+    };
   }
 
   if (!work) {
-    return { verified: false, provider: "openalex", discrepancies: [] };
+    return { verified: false, provider: "openalex", status: "not_found", discrepancies: [] };
   }
 
   const canonicalTitle =

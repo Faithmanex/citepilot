@@ -6,7 +6,6 @@ import "@testing-library/jest-dom/vitest";
 
 import Header from "../Header";
 import Hero from "../Hero";
-import TrustBar from "../TrustBar";
 import FeatureTriptych from "../FeatureTriptych";
 import EnterpriseBand from "../EnterpriseBand";
 import CookieConsent from "../CookieConsent";
@@ -87,22 +86,11 @@ describe("Milestone 3 Challenger 2: Strict 8px Radius Standard & Pill Shape Audi
       expect(btn.className).not.toContain("rounded-full");
     });
 
-    // Hero
+    // Hero CTAs
     const { container: heroContainer } = render(<Hero />);
-    const heroCtas = heroContainer.querySelectorAll("button");
+    const heroCtas = heroContainer.querySelectorAll("[data-testid^='hero-btn']");
     heroCtas.forEach((btn) => {
       expect(btn.className).toContain("rounded-lg");
-    });
-
-    // TrustBar
-    const { container: trustContainer } = render(<TrustBar />);
-    const partnerCards = trustContainer.querySelectorAll("[data-testid^='partner-logo-']");
-    partnerCards.forEach((card) => {
-      expect(card.className).toContain("rounded-[8px]");
-    });
-    const trustChips = trustContainer.querySelectorAll("[data-testid^='trustbar-chip-']");
-    trustChips.forEach((chip) => {
-      expect(chip.className).toContain("rounded-[8px]");
     });
 
     // FeatureTriptych
@@ -114,10 +102,6 @@ describe("Milestone 3 Challenger 2: Strict 8px Radius Standard & Pill Shape Audi
 
     // EnterpriseBand
     const { container: entContainer } = render(<EnterpriseBand />);
-    const statCards = entContainer.querySelectorAll("[data-testid^='enterprise-stat-card-']");
-    statCards.forEach((card) => {
-      expect(card.className).toContain("rounded-[8px]");
-    });
     const entCtas = entContainer.querySelectorAll("button");
     entCtas.forEach((btn) => {
       expect(btn.className).toContain("rounded-lg");
@@ -195,8 +179,8 @@ describe("Milestone 3 Challenger 2: Flat Surface Elevation (Zero Drop Shadows) &
     });
 
     const { container: enterpriseContainer } = render(<EnterpriseBand />);
-    const statCards = enterpriseContainer.querySelectorAll("[data-testid^='enterprise-stat-card-']");
-    statCards.forEach((c) => {
+    const entButtons = enterpriseContainer.querySelectorAll("button");
+    entButtons.forEach((c) => {
       expect(c.className).toContain("shadow-none");
     });
   });
@@ -213,12 +197,6 @@ describe("Milestone 3 Challenger 2: Flat Surface Elevation (Zero Drop Shadows) &
     const hero = heroContainer.querySelector("section")!;
     expect(hero.className).toContain("border-b");
     expect(hero.className).toContain("border-[#d9cfb8]");
-
-    // TrustBar border-y border-[#d9cfb8]
-    const { container: trustContainer } = render(<TrustBar />);
-    const trust = trustContainer.querySelector("section")!;
-    expect(trust.className).toContain("border-y");
-    expect(trust.className).toContain("border-[#d9cfb8]");
 
     // FeatureTriptych border-b border-[#d9cfb8]
     const { container: triptychContainer } = render(<FeatureTriptych />);
@@ -308,10 +286,6 @@ describe("Milestone 3 Challenger 2: #2c3e8c Grammarly Teal Exclusivity & Contain
     // Check Header surface
     const header = landingContainer.querySelector("header")!;
     expect(header.className).toContain("bg-[#f1ebdc]");
-
-    // Check TrustBar surface
-    const trustBar = landingContainer.querySelector("[data-testid='landing-trustbar']")!;
-    expect(trustBar.className).toContain("bg-[#faf6ec]");
 
     // Check FeatureTriptych surface
     const triptych = landingContainer.querySelector("[data-testid='landing-feature-triptych']")!;
