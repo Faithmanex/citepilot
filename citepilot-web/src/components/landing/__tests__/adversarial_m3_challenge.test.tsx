@@ -12,7 +12,7 @@ import CookieConsent, {
   COOKIE_CONSENT_KEY,
   COOKIE_SETTINGS_KEY,
 } from "../CookieConsent";
-import Footer, { COMPLIANCE_BADGES } from "../Footer";
+import Footer from "../Footer";
 import LandingView from "../LandingView";
 
 // Mock next/navigation useRouter
@@ -250,16 +250,10 @@ describe("Milestone 3 Empirical Adversarial Challenge: Cookie Consent & Footer E
     expect(screen.queryByTestId("cookie-toggle-strictly-necessary")).toBeNull();
   });
 
-  it("verifies footer compliance badges, social media links, and external resource attributes", () => {
+  it("verifies footer social links and external resource attributes without fake certifications", () => {
     render(<Footer />);
 
-    // Verify all 4 compliance badges
-    COMPLIANCE_BADGES.forEach((b) => {
-      const badgeElem = screen.getByTestId(`badge-${b.label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`);
-      expect(badgeElem).toBeInTheDocument();
-      expect(badgeElem.className).toContain("rounded-[8px]");
-      expect(badgeElem.className).toContain("shadow-none");
-    });
+    expect(screen.queryByTestId("footer-compliance-badges")).toBeNull();
 
     // Verify external links have target="_blank" and rel="noopener noreferrer"
     const retractionLink = screen.getByText("Retraction Database").closest("a")!;

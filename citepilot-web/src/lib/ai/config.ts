@@ -11,11 +11,6 @@ function num(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function bool(value: string | undefined, fallback: boolean): boolean {
-  if (value === undefined || value === "") return fallback;
-  return value.trim().toLowerCase() !== "false";
-}
-
 export const aiConfig = {
   googleApiKey: (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim(),
   geminiModel: (process.env.GEMINI_MODEL || "gemini-2.5-flash-lite").trim(),
@@ -26,11 +21,6 @@ export const aiConfig = {
   maxUploadMb: num(process.env.MAX_UPLOAD_MB, 10),
   maxTextChars: num(process.env.MAX_TEXT_CHARS, 200_000),
   rateLimitPerMinute: num(process.env.RATE_LIMIT_PER_MINUTE, 60),
-  // Jev (TypeSafe System One) decision layer — opt-in, disabled by default.
-  typesafeApiKey: (process.env.TYPESAFE_API_KEY || "").trim(),
-  typesafeModel: (process.env.TYPESAFE_MODEL || "jev-latest").trim(),
-  typesafeEnabled: bool(process.env.TYPESAFE_ENABLED, true),
-  typesafeAutoAccept: num(process.env.TYPESAFE_AUTO_ACCEPT, 0.8),
 } as const;
 
 export const SERVICE_VERSION = "0.1.0";

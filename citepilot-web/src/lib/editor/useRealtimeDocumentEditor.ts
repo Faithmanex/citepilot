@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import type { AuditResponse } from "@/lib/types";
 import type {
   EditorSuggestion,
@@ -34,27 +34,31 @@ export function useRealtimeDocumentEditor({
 
   // Debounced re-audit timer ref (2.5s idle)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const prevAuditRef = useRef<AuditResponse | null>(initialAudit);
-  const pristineTextRef = useRef<string>(initialText);
+  const [pristineText, setPristineText] = useState(initialText);
 
-  // Sync internal text when parent initialText changes (e.g., loaded a new document)
-  useEffect(() => {
-    pristineTextRef.current = initialText;
+  // Adjust state while rendering when the parent supplies a new document or a
+  // new audit response. This is React's documented pattern for resetting state
+  // on prop change and avoids a setState-in-effect cascade.
+  const [syncedInputs, setSyncedInputs] = useState<{
+    text: string;
+    audit: AuditResponse | null;
+  }>({ text: initialText, audit: initialAudit });
+
+  if (initialText !== syncedInputs.text) {
+    setSyncedInputs({ text: initialText, audit: initialAudit });
+    setPristineText(initialText);
     if (!isDirty) {
       setManuscriptText(initialText);
       setSuggestions(adaptAuditResponseToSuggestions(initialAudit, initialText));
       setSelectedSuggestionId(null);
     }
-  }, [initialText, initialAudit, isDirty]);
-
-  // When new audit response arrives from backend
-  useEffect(() => {
-    if (initialAudit && initialAudit !== prevAuditRef.current) {
-      prevAuditRef.current = initialAudit;
+  } else if (initialAudit !== syncedInputs.audit) {
+    setSyncedInputs({ text: initialText, audit: initialAudit });
+    if (initialAudit) {
       setSuggestions(adaptAuditResponseToSuggestions(initialAudit, manuscriptText));
       setIsDirty(false);
     }
-  }, [initialAudit, manuscriptText]);
+  }
 
   // Compute honest findings tallies
   const findings: FindingsSummary = useMemo(() => {
@@ -192,11 +196,11 @@ export function useRealtimeDocumentEditor({
     dismissSuggestion,
     updateText,
     resetDraft: () => {
-      setManuscriptText(pristineTextRef.current);
-      setSuggestions(adaptAuditResponseToSuggestions(initialAudit, pristineTextRef.current));
+      setManuscriptText(pristineText);
+      setSuggestions(adaptAuditResponseToSuggestions(initialAudit, pristineText));
       setIsDirty(false);
       setSelectedSuggestionId(null);
-      onTextChange?.(pristineTextRef.current);
+      onTextChange?.(pristineText);
     },
     acceptAllInCategory,
   };

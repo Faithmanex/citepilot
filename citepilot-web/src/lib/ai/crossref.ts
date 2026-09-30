@@ -24,24 +24,26 @@ export function cleanDoi(doiStr: string | null | undefined): string {
   return result;
 }
 
-export function fuzzyTitleMatch(t1: string, t2: string): boolean {
-  const words1 = t1
-    .toLowerCase()
-    .replace(/[^\w\s]/g, "")
-    .split(/\s+/)
-    .filter((w) => w && !STOP_WORDS.has(w));
-  const words2 = t2
-    .toLowerCase()
-    .replace(/[^\w\s]/g, "")
-    .split(/\s+/)
-    .filter((w) => w && !STOP_WORDS.has(w));
-  const s1 = new Set(words1);
-  const s2 = new Set(words2);
+/**
+ * True when two titles are the same after case, punctuation, and stop-word
+ * normalization. This is an exact comparison, not a similarity threshold: a
+ * title either matches the record or it is reported as a discrepancy.
+ */
+export function titlesMatch(t1: string, t2: string): boolean {
+  const normalize = (value: string): Set<string> =>
+    new Set(
+      value
+        .toLowerCase()
+        .replace(/[^\w\s]/g, " ")
+        .split(/\s+/)
+        .filter((w) => w && !STOP_WORDS.has(w))
+    );
+  const s1 = normalize(t1);
+  const s2 = normalize(t2);
   if (s1.size === 0 || s2.size === 0) return false;
-  let intersection = 0;
-  for (const w of s1) if (s2.has(w)) intersection += 1;
-  const smaller = Math.min(s1.size, s2.size);
-  return intersection / smaller >= 0.75;
+  if (s1.size !== s2.size) return false;
+  for (const word of s1) if (!s2.has(word)) return false;
+  return true;
 }
 
 export async function fetchByDoi(doi: string): Promise<JsonObject | null> {
@@ -142,7 +144,7 @@ export async function validateReferenceWithCrossref(
     }
   }
 
-  if (title && crTitle && !fuzzyTitleMatch(title, crTitle)) {
+  if (title && crTitle && !titlesMatch(title, crTitle)) {
     discrepancies.push({
       field: "title",
       message: `Title discrepancy detected: Crossref records '${crTitle}'.`,

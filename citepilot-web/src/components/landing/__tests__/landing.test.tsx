@@ -13,7 +13,7 @@ import CookieConsent, {
   COOKIE_SETTINGS_KEY,
   OPEN_COOKIE_SETTINGS_EVENT,
 } from "../CookieConsent";
-import Footer, { COMPLIANCE_BADGES } from "../Footer";
+import Footer from "../Footer";
 import LandingView from "../LandingView";
 
 // Mock next/navigation useRouter
@@ -72,10 +72,7 @@ describe("Milestone 3: Header Component (Header.tsx)", () => {
     expect(popover).toHaveTextContent("Citation & Claim Auditor");
     expect(popover).toHaveTextContent("Retraction & Integrity Watch");
     expect(popover).toHaveTextContent("Style Engine (APA/MLA/IEEE)");
-    expect(popover).toHaveTextContent("Rigor Scorecard");
-
-    // Check badge rendering
-    expect(popover).toHaveTextContent("Live");
+    expect(popover).toHaveTextContent("Findings Summary");
   });
 
   it("renders desktop CTA buttons and triggers router navigation", () => {
@@ -190,11 +187,11 @@ describe("Milestone 3: FeatureTriptych Component (FeatureTriptych.tsx)", () => {
     cleanup();
   });
 
-  it("renders section header and 3 core capability cards", () => {
+  it("renders section header and 3 capability cards", () => {
     render(<FeatureTriptych />);
-    expect(screen.getByTestId("triptych-badge")).toHaveTextContent("Core Capabilities");
+    expect(screen.getByTestId("triptych-badge")).toHaveTextContent("What CitePilot checks");
     expect(screen.getByTestId("triptych-headline")).toHaveTextContent(
-      "Precision citation intelligence for rigorous manuscripts"
+      "Specific findings you can act on"
     );
 
     expect(screen.getByTestId("triptych-card-discovery")).toBeInTheDocument();
@@ -202,37 +199,38 @@ describe("Milestone 3: FeatureTriptych Component (FeatureTriptych.tsx)", () => {
     expect(screen.getByTestId("triptych-card-auditing")).toBeInTheDocument();
   });
 
-  it("renders Citation Discovery card with CrossRef live resolution visual mockup", () => {
+  it("describes citation checking in plain, verifiable terms", () => {
     render(<FeatureTriptych />);
     const card = screen.getByTestId("triptych-card-discovery");
-    expect(card).toHaveTextContent("01 · CITATION DISCOVERY");
-    expect(card).toHaveTextContent("Real-Time CrossRef & Semantic Scholar Resolution");
-    expect(card).toHaveTextContent("CrossRef Resolution");
-    expect(card).toHaveTextContent("38ms");
-    expect(card).toHaveTextContent("Automated Synthesis of Nanoscale Alloys");
-    expect(card).toHaveTextContent("150M+ DOIs & CrossRef metadata sync");
+    expect(card).toHaveTextContent("01 · CITATIONS");
+    expect(card).toHaveTextContent("Check every citation against your reference list");
+    expect(card).toHaveTextContent("Flags in-text citations with no matching reference");
   });
 
-  it("renders Claim Verification card with numerical claim assertion check visual mockup", () => {
+  it("describes claim detection in plain, verifiable terms", () => {
     render(<FeatureTriptych />);
     const card = screen.getByTestId("triptych-card-verification");
-    expect(card).toHaveTextContent("02 · CLAIM VERIFICATION");
-    expect(card).toHaveTextContent("Automated Numerical & Fact-Checking Validation");
-    expect(card).toHaveTextContent("42.8% reduction");
-    expect(card).toHaveTextContent("Assertion Check: Confirmed");
-    expect(card).toHaveTextContent("100% Concordance");
-    expect(card).toHaveTextContent("Numerical percentage & p-value concordance");
+    expect(card).toHaveTextContent("02 · CLAIMS");
+    expect(card).toHaveTextContent("Find claims that need a source");
+    expect(card).toHaveTextContent("Detects empirical and statistical claims without a source");
   });
 
-  it("renders Source Quality Auditing card with Retraction Watch alert visual mockup", () => {
+  it("describes reference checks in plain, verifiable terms", () => {
     render(<FeatureTriptych />);
     const card = screen.getByTestId("triptych-card-auditing");
-    expect(card).toHaveTextContent("03 · SOURCE QUALITY AUDITING");
-    expect(card).toHaveTextContent("Retraction Watch Alerts & Journal Integrity Scoring");
-    expect(card).toHaveTextContent("RETRACTION WATCH ALERT");
-    expect(card).toHaveTextContent("Retracted May 2024");
-    expect(card).toHaveTextContent("Recommended Safe Alternative:");
-    expect(card).toHaveTextContent("Live Retraction Watch database integration");
+    expect(card).toHaveTextContent("03 · REFERENCES");
+    expect(card).toHaveTextContent("Check sources for retraction and reuse");
+    expect(card).toHaveTextContent("Retraction and expression-of-concern checks via Crossref");
+  });
+
+  it("contains no fabricated metrics or database claims", () => {
+    const { container } = render(<FeatureTriptych />);
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/38ms/i);
+    expect(text).not.toMatch(/150M\+/i);
+    expect(text).not.toMatch(/100% concordance/i);
+    expect(text).not.toMatch(/retraction watch/i);
+    expect(text).not.toMatch(/semantic scholar/i);
   });
 });
 
@@ -378,16 +376,13 @@ describe("Milestone 3: Footer Component (Footer.tsx)", () => {
     );
   });
 
-  it("renders all 4 institutional compliance badges (ISO 27001, SOC-2, GDPR, FERPA)", () => {
-    render(<Footer />);
-    COMPLIANCE_BADGES.forEach((badge) => {
-      const badgeElem = screen.getByTestId(
-        `badge-${badge.label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
-      );
-      expect(badgeElem).toBeInTheDocument();
-      expect(badgeElem).toHaveTextContent(badge.label);
-      expect(badgeElem).toHaveTextContent(badge.sub);
-    });
+  it("makes no unverifiable certification claims", () => {
+    const { container } = render(<Footer />);
+    expect(screen.queryByTestId("footer-compliance-badges")).toBeNull();
+    const text = container.textContent ?? "";
+    expect(text).not.toMatch(/iso 27001/i);
+    expect(text).not.toMatch(/soc-2/i);
+    expect(text).not.toMatch(/ferpa/i);
   });
 
   it("renders Product, Solutions, Resources, and Company sections with appropriate links", () => {
@@ -404,14 +399,11 @@ describe("Milestone 3: Footer Component (Footer.tsx)", () => {
     expect(screen.getByText("Careers")).toBeInTheDocument();
   });
 
-  it("renders pulsing system status indicator and copyright", () => {
-    render(<Footer />);
-    const status = screen.getByTestId("footer-system-status");
-    expect(status).toBeInTheDocument();
-    expect(status).toHaveTextContent("All systems operational");
-
+  it("renders copyright without fabricated uptime claims", () => {
+    const { container } = render(<Footer />);
     const copyright = screen.getByTestId("footer-copyright");
     expect(copyright).toHaveTextContent("CitePilot Inc. All rights reserved.");
+    expect(container.textContent ?? "").not.toMatch(/uptime/i);
   });
 
   it("triggers open cookie settings custom event when Cookie Settings link is clicked", () => {

@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { ShieldCheck, Lock, CheckCircle2, FileCheck2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { OPEN_COOKIE_SETTINGS_EVENT } from "./CookieConsent";
 
 export interface FooterLinkItem {
@@ -63,13 +63,6 @@ export const FOOTER_SECTIONS: FooterSection[] = [
   },
 ];
 
-export const COMPLIANCE_BADGES = [
-  { label: "ISO 27001", sub: "Certified", icon: Lock },
-  { label: "SOC-2 Type II", sub: "Audited", icon: ShieldCheck },
-  { label: "GDPR Ready", sub: "Compliant", icon: CheckCircle2 },
-  { label: "FERPA", sub: "Compliant", icon: FileCheck2 },
-];
-
 export default function Footer() {
   const currentYear = new Date().getFullYear();
 
@@ -118,33 +111,6 @@ export default function Footer() {
               </p>
             </div>
 
-            {/* Institutional Compliance Badges Grid */}
-            <div className="space-y-2">
-              <div className="text-[11px] font-mono uppercase tracking-wider text-white/50">
-                Security &amp; Compliance Standards
-              </div>
-              <div
-                className="grid grid-cols-2 gap-2 max-w-xs"
-                data-testid="footer-compliance-badges"
-              >
-                {COMPLIANCE_BADGES.map((badge) => {
-                  const Icon = badge.icon;
-                  return (
-                    <div
-                      key={badge.label}
-                      data-testid={`badge-${badge.label.toLowerCase().replace(/[^a-z0-9]/g, "-")}`}
-                      className="flex items-center gap-1.5 p-2 rounded-[8px] bg-white/5 border border-white/10 text-white/90 text-[11px] font-mono shadow-none"
-                    >
-                      <Icon className="w-3.5 h-3.5 text-[#2c3e8c] flex-none" aria-hidden="true" />
-                      <div className="leading-tight truncate">
-                        <span className="font-bold block text-white">{badge.label}</span>
-                        <span className="text-[9.5px] text-white/60">{badge.sub}</span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
 
           {/* Columns 2-5: Navigation Taxonomies (lg:col-span-2 each) */}
@@ -204,19 +170,6 @@ export default function Footer() {
           {/* Copyright */}
           <div data-testid="footer-copyright">
             &copy; {currentYear} CitePilot Inc. All rights reserved.
-          </div>
-
-          {/* System Status Indicator */}
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-[8px] bg-white/5 border border-white/10"
-            data-testid="footer-system-status"
-          >
-            <span className="relative flex h-2 w-2" aria-hidden="true">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3b6647] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#dee8dd]0"></span>
-            </span>
-            <span className="text-white/90">All systems operational</span>
-            <span className="text-white/50 hidden sm:inline">(99.99% uptime)</span>
           </div>
 
           {/* Social Links */}

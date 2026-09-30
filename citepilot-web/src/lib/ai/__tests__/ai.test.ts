@@ -1,10 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { cleanDoi, fuzzyTitleMatch } from "@/lib/ai/crossref";
+import { cleanDoi, titlesMatch } from "@/lib/ai/crossref";
 import { analyzeCrossrefRetraction } from "@/lib/ai/retraction";
 import { calculatePublicationRecency } from "@/lib/ai/recency";
 import { splitBodyAndReferences, parseTxtStructured } from "@/lib/ai/document-parser";
 import { extractJson } from "@/lib/ai/llm";
-import { buildJevQuestionPayload, isJevEnabled } from "@/lib/ai/jev";
 import { CitationsResponseSchema } from "@/lib/ai/schemas";
 
 describe("AI service port — pure helpers", () => {
@@ -17,12 +16,14 @@ describe("AI service port — pure helpers", () => {
     });
   });
 
-  describe("crossref.fuzzyTitleMatch", () => {
-    it("matches titles ignoring stop words and punctuation", () => {
-      expect(fuzzyTitleMatch("Attention is all you need", "Attention Is All You Need!")).toBe(true);
+  describe("crossref.titlesMatch", () => {
+    it("matches titles that are identical after normalization, without a similarity threshold", () => {
+      expect(titlesMatch("Attention is all you need", "Attention Is All You Need!")).toBe(true);
       expect(
-        fuzzyTitleMatch("Deep learning", "Visualizing data using t-SNE")
+        titlesMatch("Deep learning", "Visualizing data using t-SNE")
       ).toBe(false);
+      // A near-miss (one differing word) is a discrepancy, not a fuzzy match.
+      expect(titlesMatch("Deep learning", "Deep learning advances")).toBe(false);
     });
   });
 
@@ -43,12 +44,12 @@ describe("AI service port — pure helpers", () => {
       expect(res.status).toBe("expression_of_concern");
     });
 
-    it("flags retracted title prefixes", () => {
+    it("does not guess retraction from title text alone", () => {
       const res = analyzeCrossrefRetraction({ title: ["Retracted: Some study"] });
-      expect(res.is_retracted).toBe(true);
+      expect(res.is_retracted).toBe(false);
     });
 
-    it("returns normal for clean works", () => {
+    it("returns normal for works with no retraction relation", () => {
       expect(analyzeCrossrefRetraction({ title: ["A normal paper"] }).is_retracted).toBe(false);
     });
   });
@@ -110,20 +111,6 @@ describe("AI service port — pure helpers", () => {
     it("throws instead of silently returning an empty object on malformed output", () => {
       expect(() => extractJson("not json")).toThrow();
       expect(() => extractJson("")).toThrow();
-    });
-  });
-
-  describe("jev (fail-open, disabled by default)", () => {
-    it("is disabled without a configured key", () => {
-      expect(isJevEnabled()).toBe(false);
-    });
-
-    it("exposes the citation_check choice payload", () => {
-      const payload = buildJevQuestionPayload() as {
-        relation: { type: string; criteria: Record<string, string> };
-      };
-      expect(payload.relation.type).toBe("choice");
-      expect(payload.relation.criteria.supports).toBeTruthy();
     });
   });
 

@@ -27,23 +27,22 @@ export const NAV_CATEGORIES: NavCategory[] = [
     items: [
       {
         title: "Citation & Claim Auditor",
-        description: "Real-time manuscript citation verification and claim-to-source matching.",
+        description: "Checks in-text citations against your reference list and flags unsupported claims.",
         href: "#features",
       },
       {
         title: "Retraction & Integrity Watch",
-        description: "Deep scanning for retracted papers, predatory journals, and dead DOIs.",
+        description: "Checks cited works for retraction and expression-of-concern notices.",
         href: "#features",
-        badge: "Live",
       },
       {
         title: "Style Engine (APA/MLA/IEEE)",
-        description: "Instant format normalization across 12+ academic reference conventions.",
+        description: "Checks your citations against the style you selected.",
         href: "#styles",
       },
       {
-        title: "Rigor Scorecard",
-        description: "Quantitative academic rigor metrics and exportable audit reports.",
+        title: "Findings Summary",
+        description: "See every citation, claim, and reference issue, and export a report.",
         href: "#how",
       },
     ],
@@ -53,24 +52,24 @@ export const NAV_CATEGORIES: NavCategory[] = [
     label: "Features",
     items: [
       {
-        title: "Automated Citation Discovery",
-        description: "Locate authoritative CrossRef & OpenAlex DOI sources for empirical claims.",
+        title: "Reference Verification",
+        description: "Checks your reference entries against Crossref and OpenAlex.",
         href: "#how",
       },
       {
-        title: "Claim Verification Engine",
-        description: "Validate statistical figures and factual assertions against literature.",
+        title: "Uncited Claim Detection",
+        description: "Flags factual and statistical claims that have no citation.",
         href: "#how",
       },
       {
-        title: "Real-time Diff Editor",
-        description: "Accept inline citation fixes and resolve formatting flaws with one click.",
+        title: "Inline Fix Editor",
+        description: "Accept a suggested fix directly in the document with one click.",
         href: "#live-demo-showcase",
       },
       {
-        title: "Collaborative Review",
-        description: "Share audited manuscripts with co-authors, PIs, and advisors.",
-        href: "#testimonials",
+        title: "Export & Revise",
+        description: "Download a clean or redlined Word copy of your manuscript.",
+        href: "#how",
       },
     ],
   },

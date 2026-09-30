@@ -97,26 +97,7 @@ export function analyzeCrossrefRetraction(work: JsonObject): JsonObject {
     }
   }
 
-  const titles = work["title"] as unknown[] | undefined;
-  if (titles && titles.length > 0 && typeof titles[0] === "string") {
-    const tLower = titles[0].toLowerCase().trim();
-    if (
-      ["retracted:", "retracted article:", "[retracted]", "retraction:"].some((p) =>
-        tLower.startsWith(p)
-      ) ||
-      tLower.includes(" [retracted]")
-    ) {
-      return {
-        is_retracted: true,
-        status: "retracted",
-        severity: "red",
-        notice_doi: String(work["DOI"] || ""),
-        message:
-          "RETRACTED PAPER: Title is prefixed as Retracted Article in publisher metadata.",
-        how_to_fix: "Remove this citation or replace it with a valid, non-retracted reference.",
-      };
-    }
-  }
-
+  // No retraction relation present. We deliberately do not guess from the title
+  // text: only explicit Crossref retraction metadata is treated as a signal.
   return { is_retracted: false, status: "normal", message: null, how_to_fix: null };
 }

@@ -11,7 +11,6 @@ import {
 import { validateReferenceWithCrossref } from "./crossref";
 import { validateReferenceWithOpenalex } from "./openalex";
 import { detectUncitedClaims } from "./uncited-claims";
-import { enrichMatchesWithJev, isJevEnabled } from "./jev";
 import { calculatePublicationRecency } from "./recency";
 import { checkRetractionStatus } from "./retraction";
 import type {
@@ -56,14 +55,10 @@ export async function runAnalysisPipeline(
   const refs = settled[1].status === "fulfilled" ? settled[1].value : [];
   const uncitedClaims = settled[2].status === "fulfilled" ? settled[2].value : [];
 
-  let matches: MatchEntry[] =
+  const matches: MatchEntry[] =
     citations.length && refs.length
       ? await matchCitationsToReferences(citations, refs)
       : [];
-
-  if (matches.length && isJevEnabled()) {
-    matches = await enrichMatchesWithJev(matches);
-  }
 
   const styleWarnings = bodyText
     ? await checkStyle(bodyText, citationStyle, citations, refs)
@@ -130,10 +125,6 @@ function buildCitationResults(
       matched_reference_index: matchedRefIdx,
       match_type: match?.match_type || "none",
       issues: match?.issues || [],
-      jev_verdict: match?.jev_verdict ?? null,
-      jev_choice: match?.jev_choice ?? null,
-      jev_confidence: match?.jev_confidence ?? null,
-      jev_auto: match?.jev_auto ?? null,
     };
   });
 }
