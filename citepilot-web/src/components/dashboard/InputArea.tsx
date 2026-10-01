@@ -94,7 +94,7 @@ export default function InputArea({
                 Drop file or click to upload
               </div>
               <div className="text-[11px] text-[#948a76] mt-0.5">
-                PDF, DOCX, BIB, TXT — max 50 MB
+                PDF, DOCX, BIB, or TXT
               </div>
             </>
           )}

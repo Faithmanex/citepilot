@@ -392,11 +392,11 @@ describe("Milestone 3: Footer Component (Footer.tsx)", () => {
     expect(screen.getByTestId("footer-section-resources")).toBeInTheDocument();
     expect(screen.getByTestId("footer-section-company")).toBeInTheDocument();
 
-    expect(screen.getByText("Citation Engine")).toBeInTheDocument();
-    expect(screen.getByText("Claim Verifier")).toBeInTheDocument();
-    expect(screen.getByText("Individual Researchers")).toBeInTheDocument();
+    expect(screen.getByText("Citation Checks")).toBeInTheDocument();
+    expect(screen.getByText("How It Works")).toBeInTheDocument();
+    expect(screen.getByText("Researchers & Students")).toBeInTheDocument();
     expect(screen.getByText("Retraction Database")).toBeInTheDocument();
-    expect(screen.getByText("Careers")).toBeInTheDocument();
+    expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
   });
 
   it("renders copyright without fabricated uptime claims", () => {

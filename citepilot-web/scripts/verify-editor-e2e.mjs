@@ -2,12 +2,6 @@ import { chromium } from "playwright-core";
 
 const BASE_URL = process.env.CITEPILOT_URL || "http://localhost:3000";
 
-const SAMPLE_TEXT = `Recent empirical benchmarks prove beyond doubt that retrieval augmented generation reduces hallucination rates (LeCun et al., 2015). Furthermore, dimensionality reduction methods such as t-SNE remain widely used for visualising high-dimensional biological data (van der Maaten & Hinton, 2008).
-
-References
-LeCun, Y., Bengio, Y., & Hinton, G. (2015). Deep learning. Nature, 521(7553), 436-444. https://doi.org/10.1038/nature14539
-Van der Maaten, L., & Hinton, G. (2008). Visualizing data using t-SNE. Journal of Machine Learning Research, 9, 2579-2605.`;
-
 let failures = 0;
 function pass(name) {
   console.log("PASS: " + name);

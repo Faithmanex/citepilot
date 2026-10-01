@@ -3,7 +3,6 @@
  * Port of `citepilot-ai/src/citepilot_ai/services/openalex_service.py`.
  */
 import { getJson } from "./http";
-import { cleanDoi } from "./crossref";
 import type { JsonObject, ReferenceEntry } from "./types";
 
 const OPENALEX_API_BASE = "https://api.openalex.org";
@@ -102,8 +101,6 @@ export async function validateReferenceWithOpenalex(
       how_to_fix: `Change citation year to ${canonicalYear}.`,
     });
   }
-
-  void cleanDoi; // parity with Python imports; DOI cleaning handled upstream
 
   return {
     verified: true,

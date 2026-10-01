@@ -22,39 +22,33 @@ export const FOOTER_SECTIONS: FooterSection[] = [
   {
     title: "Product",
     links: [
-      { label: "Citation Engine", href: "#live-demo-showcase" },
-      { label: "Claim Verifier", href: "#features" },
-      { label: "Source Quality Audit", href: "#features" },
-      { label: "Browser Extension", href: "/extension" },
-      { label: "Overleaf & LaTeX Sync", href: "/integrations/overleaf" },
-      { label: "Reference Manager Sync", href: "/integrations/reference-managers" },
+      { label: "Citation Checks", href: "#features" },
+      { label: "How It Works", href: "#how" },
+      { label: "Open the Editor", href: "/dashboard" },
+      { label: "Findings & Reports", href: "#how" },
     ],
   },
   {
     title: "Solutions",
     links: [
-      { label: "Individual Researchers", href: "/solutions/researchers" },
-      { label: "Graduate Students & PhDs", href: "/solutions/phd-students" },
-      { label: "University Labs & PIs", href: "/solutions/university-labs" },
-      { label: "Peer Reviewers & Editors", href: "/solutions/peer-reviewers" },
-      { label: "Enterprise & Institutions", href: "#enterprise" },
+      { label: "Researchers & Students", href: "#who" },
+      { label: "Research Labs & PIs", href: "#enterprise" },
+      { label: "Institutions", href: "#enterprise" },
+      { label: "Peer Reviewers & Editors", href: "#who" },
     ],
   },
   {
     title: "Resources",
     links: [
-      { label: "Documentation & API", href: "/docs" },
       { label: "Citation Style Guides", href: "#styles" },
       { label: "Retraction Database", href: "https://retractionwatch.com", external: true },
       { label: "Crossref Metadata Index", href: "https://crossref.org", external: true },
-      { label: "Research Integrity Blog", href: "/blog" },
+      { label: "FAQ", href: "#faq" },
     ],
   },
   {
     title: "Company",
     links: [
-      { label: "About CitePilot", href: "/about" },
-      { label: "Careers", href: "/careers", badge: "Hiring" },
       { label: "Privacy Policy", href: "/privacy" },
       { label: "Terms of Service", href: "/terms" },
       { label: "Cookie Policy", href: "/cookie-policy" },
