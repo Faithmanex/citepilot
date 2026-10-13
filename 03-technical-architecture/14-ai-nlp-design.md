@@ -1,145 +1,110 @@
 # AI/NLP Pipeline Design Document
 
-This document outlines the detailed design of the Artificial Intelligence (AI) and Natural Language Processing (NLP) pipeline for CitePilot. CitePilot leverages advanced language models (LLMs) and deterministic rule engines to verify citation consistency, identify style errors, check retraction status, and detect hallucinated references.
+This document describes the shipped Artificial Intelligence (AI) and Natural Language Processing (NLP) pipeline for CitePilot. The whole workload runs inside the Next.js app (`citepilot-web/src/lib/ai/`, exposed as Route Handlers): Google Gemini 2.5 Flash Lite (with same-provider fallbacks) performs extraction, matching, and explanations, while Crossref/OpenAlex verification, counting, comparison, and scoring stay in code. There are no deterministic rule engines and no hallucination detector — anything the pipeline cannot verify is reported as unverified, never guessed.
 
 ---
 
 ## 1. Pipeline Overview
 
-The CitePilot processing pipeline is **synchronous and single-pass**: one request triggers the full pipeline below and returns the complete analysis in a single response. Documents range from short essays to multi-chapter dissertations; there is no queue in the MVP (ADR-011). A streaming websocket variant (`/ws/analyse`) exists for future UX upgrades.
+The CitePilot processing pipeline is **synchronous and single-pass**: one `POST /api/v1/analyse` request triggers the full pipeline below and returns the complete analysis in a single response. Documents range from short essays to multi-chapter dissertations; there is no queue in the MVP (ADR-011). A streaming websocket variant is roadmap-only (see `12-api-specification.md` §3.5); it is not shipped.
 
 ```mermaid
 graph TD
-    A[Document Upload] --> B[Text & Structure Parser]
-    B --> C[Reference Section Detector]
-    C --> D[In-Text Citation Extractor]
-    C --> E[Reference List Segmenter]
-    D --> F[Cross-Referencing Engine]
-    E --> F
-    F --> G[Style Checker]
-    F --> H[External Validation Pipeline]
-    H --> I[Hallucination & Retraction Checker]
-    G --> J[Result Aggregator]
-    I --> J
-    J --> K[Report Generator]
-    K --> L[API Response / PDF Export]
+    A[Multipart upload: text or .docx/.pdf/.txt] --> B[Guards: API key, rate limit, style/mode, size caps]
+    B --> C[Parse: mammoth / unpdf / text + split body and references]
+    C --> D[Parallel Gemini fan-out: extract citations, parse references, detect uncited claims]
+    D --> E[Match citations to references]
+    E --> F[Style check vs requested manual]
+    F --> G[Verify references: Crossref, OpenAlex fallback, retraction check]
+    G --> H[Assemble results + recency distribution]
+    H --> I[200 JSON or mapped error: 400 / 413 / 429 / 503]
 ```
+
+Guard and error behavior lives in `src/app/api/v1/analyse/route.ts`; orchestration in `src/lib/ai/pipeline.ts`. The first exception in the fan-out aborts the run; provider outages surface as `503` without leaking internals.
 
 ---
 
 ## 2. Reference Section Detection & Extraction
 
-Unlike rule-based systems that require a strict `"References"` heading, CitePilot uses a hybrid semantic-structural approach.
+CitePilot splits body from bibliography with a TOC-safe heading match (`splitBodyAndReferences` in `src/lib/ai/document-parser.ts`): the last `References|Bibliography|Works Cited|Reference List` heading past the first 15% of long documents wins, so Tables of Contents near the top are never mistaken for the split point. `reference_only` mode skips the body entirely.
 
 ### 2.1 Detection Strategy
-1. **Structural Segmentation**: The document parser outputs structural blocks (paragraphs, lists, headings).
-2. **Semantic Classification**: An LLM-based classifier identifies sections containing lists of bibliographic metadata.
-3. **Multi-List Detection**: For multi-chapter documents, the parser identifies multiple boundary sets and links them to the corresponding chapter scopes.
-
-### 2.2 LLM Reference Detector Prompt
-```json
-{
-  "system": "You are an expert academic document parser. Identify all starting and ending indices of reference lists/bibliographies in the provided document structure.",
-  "prompt": "Analyze the following document structure and return a JSON list of objects containing the 'start_index', 'end_index', and 'type' (e.g., 'references', 'bibliography', 'works_cited') of each reference list found. Document: {document_text}"
-}
-```
+1. **Structural parse**: `.docx` via `mammoth` (heading styles preserved), `.pdf` via `unpdf` (per-page line regrouping), anything else as UTF-8 text — each producing paragraph metadata (`paragraph_index`, `style_name`, `is_heading`, `char_count`).
+2. **Heading match**: regex over `References|Bibliography|Works Cited|Reference List` (case-insensitive), scanning matches last-to-first.
+3. **No LLM classifier and no chapter-scoped multi-list linking**: multi-list documents are processed as one reference stream.
 
 ---
 
 ## 3. In-Text Citation Extraction
 
-CitePilot supports extraction across 9 major citation styles: APA 7th, APA 6th, Harvard, Vancouver, Chicago, MLA, IEEE, OSCOLA, and Turabian.
+CitePilot extracts across the styles in `ALLOWED_CITATION_STYLES` (`src/lib/ai/config.ts`): APA 7th/6th, Harvard, Vancouver, Chicago (author-date + notes), MLA 9, IEEE, OSCOLA, Turabian.
 
 ### 3.1 Extraction Pipeline
-1. **Regular Expression Pre-Filter**: Matches bracketed patterns, parentheses, and year patterns to reduce token counts.
-2. **Context-Aware LLM Extraction**: Extract in-text citation tokens with their precise document context. This prevents false positives such as identifying generic years (e.g. "the 2020 pandemic") as citations.
-
-### 3.2 AI Extraction Prompt
-```json
-{
-  "system": "You are an academic copyeditor. Extract all in-text citations from the text. For each citation, extract the exact citation string, the page/line number approximation, the context, and the matched format.",
-  "prompt": "Extract all in-text citations from this text:\n\n\"{text_context}\"\n\nReturn JSON output matching this schema:\n{\n  \"citations\": [\n    {\n      \"text\": \"Smith (2020)\",\n      \"context\": \"This was first demonstrated by Smith (2020) in his primary study.\",\n      \"authors\": [\"Smith\"],\n      \"year\": 2020,\n      \"style\": \"APA\"\n    }\n  ]\n}"
-}
-```
+1. **Paragraph chunking**: ≤30 paragraphs go in a single call; larger manuscripts are chunked (25 paragraphs + 2 overlap) and deduplicated by `(paragraph_index, normalized raw_text)`.
+2. **Context-preserving LLM extraction**: each citation is returned with exact raw text, paragraph index, character offsets, ±100-char context, type, author surnames, and year — which is what lets the UI highlight findings in place. Generic year mentions and headings are excluded by prompt, not by a regex pre-filter.
 
 ---
 
 ## 4. Reference Parsing & Segmentation
 
-Individual reference entries are extracted and parsed into structured JSON objects (authors, title, journal, volume, issue, pages, DOI, year).
+Individual reference entries are parsed into structured metadata (authors, title, journal, volume, issue, pages, DOI, year).
 
 ### 4.1 Parser Specification
-- **Input**: Raw text block of the references section.
-- **Processing**: The text is chunked and analyzed by our fine-tuned FastAPI processor using structured outputs (JSON schema enforcement).
-- **Schema**:
-```json
-{
-  "authors": ["Author 1 Initial", "Author 2 Initial"],
-  "year": 2021,
-  "title": "Title of the Scholarly Article",
-  "journal": "Journal of Academic Studies",
-  "volume": "12",
-  "issue": "3",
-  "pages": "120-135",
-  "doi": "10.1000/xyz123",
-  "type": "journal_article"
-}
-```
+- **Input**: raw reference-list text.
+- **Processing**: ≤30k chars in one Gemini call with a JSON example; larger lists split into ~20k-char chunks, deduplicated by normalized entry, positions renumbered.
+- **Validation**: every model response is validated with zod (`ReferencesResponseSchema`). A malformed response throws `AIServiceError` and fails the run loudly — it is never coerced into an empty result.
 
 ---
 
 ## 5. Matching & Consistency Algorithm
 
-Once in-text citations and reference list entries are extracted, they are matched using a multi-layered verification strategy:
+Citations are matched to references in a **single Gemini matching pass** that returns a 0-based `matched_reference_index`, a `match_type` (`exact`/`fuzzy`/`ai_verified`/`none`), confidence, and spelling/year issues per citation.
 
-| Layer | Method | Purpose |
-|---|---|---|
-| **Layer 1** | Deterministic Exact Match | Matches exact author-year or numeric tokens. |
-| **Layer 2** | Fuzzy String Distance (Levenshtein) | Handles spelling typos and variants (e.g., "Smithe" vs "Smith"). |
-| **Layer 3** | Semantic Match (LLM-based) | Checks complex matches (e.g., corporate authors, et al. variations, translations). |
+There is no Levenshtein/threshold layer: after the model proposes a match, field-level discrepancy detection in code uses exact normalized title equality (`titlesMatch` — case, punctuation, and stop-word normalized, no similarity score). A near-miss is reported as a discrepancy, never auto-accepted as a fuzzy match.
 
 ### 5.1 Verification Flowchart
 ```mermaid
 graph TD
-    A[In-Text Citation] --> B{Exact Match?}
-    B -- Yes --> C[Match Found]
-    B -- No --> D{Fuzzy Distance < Threshold?}
-    D -- Yes --> E[Fuzzy Match Candidate]
-    D -- No --> F{LLM Semantic Validation?}
-    F -- Yes --> G[Semantic Match Found]
-    F -- No --> H[Match Error Flagged]
+    A[In-Text Citation] --> B[Model proposes match index]
+    B --> C{Index resolves?}
+    C -- No --> H[no_match flagged]
+    C -- Yes --> D{Titles exactly equal<br/>after normalization?}
+    D -- No --> E[Title discrepancy reported]
+    D -- Yes --> F{Year / DOI equal?}
+    F -- No --> G[Year / DOI discrepancy reported]
+    F -- Yes --> C2[Match confirmed]
 ```
 
 ---
 
-## 6. External Validation & Hallucination Detection
+## 6. External Validation & Retraction Detection
 
-One of CitePilot's core differentiators is validating whether the cited papers actually exist in the real world.
+One of CitePilot's core differentiators is verifying whether cited papers actually exist, using explicit publisher metadata — never guesses.
 
 ### 6.1 Validation Pipeline
-1. **Metadata Construction**: Use the parsed reference schema to form search queries.
-2. **External Queries**: Search the Crossref REST API (works lookup by DOI, or title + author). DOIs are additionally resolved against DOI.org. OpenAlex and PubMed integrations are roadmap items.
-3. **Hallucination Flagging**: If no record is found in Crossref / via DOI resolution and the reference matches patterns of generative AI hallucinations (e.g., plausible-sounding journal titles with incorrect volumes or matching author/year but wrong title), it is flagged.
-4. **Retraction Checking**: Crossref retraction metadata (`is-retracted-by`) flags references to retracted papers, with a link to the retraction notice.
+1. **Metadata lookup**: Crossref by DOI, else title + author search (`src/lib/ai/crossref.ts`).
+2. **OpenAlex fallback**: when Crossref does not verify a reference that has a DOI or title, OpenAlex is queried and a successful hit is merged in as `provider: "openalex"` with canonical title/DOI/year (`src/lib/ai/openalex.ts`).
+3. **404 vs outage**: a Crossref/OpenAlex 404 is a genuine "not found"; timeouts and 5xx are outages. Timeouts (10 s) and failures never masquerade as misses — failed provider checks are recorded as `verification_unavailable` (`src/lib/ai/pipeline.ts`).
+4. **Retraction checking**: only explicit Crossref signals count — `is-retracted-by` relations, `update-to` retraction/withdrawn labels, and Expressions of Concern. Title-text prefix guessing was removed: without retraction metadata the status is `normal` (`src/lib/ai/retraction.ts`).
+5. **No hallucination detector**: the pipeline does not flag fabricated references. Unverifiable references are reported as unverified with their discrepancies, and the UI must not present them as confirmed fakes.
 
 ---
 
 ## 7. Style Checking & Explanations
 
-CitePilot runs style-specific rule engines alongside the AI layer to identify:
-- Missing commas in parenthetical citations.
-- Incorrect use of "&" vs "and" in parenthetical vs narrative citations.
-- Inconsistent capitalization of titles in references.
-- Mismatched ordering (alphabetical order issues).
-
-### 7.1 Actionable Corrections
-Instead of only flagging errors, CitePilot uses LLM synthesis to present a diff/correction showing:
-- "Current Text" vs "Suggested Correction"
-- Clear explanation of the style rule violated.
+Style checking is a single Gemini pass against the requested manual (`src/lib/ai/citation-extractor.ts` `checkStyle`): missing commas, `p.`/`pp.` indicators, `&` vs `and`, `et al.` usage, missing DOIs, title capitalization, and page ranges — each with the exact `target_text` where the violation occurs. There is no separate rule engine; the prompt carries the checklist and zod enforces the output shape.
 
 ---
 
-## 8. Performance Benchmarks
+## 8. Uncited Claims, Recency & Exports
+
+- **Uncited claims** (`src/lib/ai/uncited-claims.ts`): one Gemini pass over up to ~115k chars of body paragraphs. Own-study/methodology statements, headings, captions, anecdotes, and overviews are excluded by prompt. Detector failure returns `[]` (fail-soft) rather than failing the audit.
+- **Recency** (`src/lib/ai/recency.ts`): pure function over parsed reference years — 3/5/10-year distributions, average age. It reports counts and percentages only; there are no compliance tiers or grades.
+- **Exports** (`src/lib/ai/export.ts`, `POST /api/v1/export/{pdf,docx}`): clean/redline DOCX via `docx`, diagnostic PDF via `pdf-lib`. Redline highlights paragraphs containing flagged `target_text` and appends the warning text.
+
+---
+
+## 9. Performance Benchmarks
 
 To ensure an excellent user experience, the AI/NLP pipeline is optimized for latency and accuracy:
 
@@ -148,4 +113,4 @@ To ensure an excellent user experience, the AI/NLP pipeline is optimized for lat
   - Short documents (< 5,000 words): 5–15 seconds.
   - Medium documents (5,000–20,000 words): 15–45 seconds.
   - Thesis-length (50,000+ words): 2–3 minutes.
-- **Provider Policy**: Google Gemini 2.5 Flash is the sole LLM provider (ADR-008). If Gemini fails or is rate-limited, the audit fails openly with a retry prompt — there is no silent fallback provider in the MVP (see `06-operations/25-runbooks.md`).
+- **Provider Policy**: Google Gemini 2.5 Flash Lite is the default model (`GEMINI_MODEL`), with same-provider fallbacks (`FALLBACK_MODELS` in `src/lib/ai/config.ts`) retried with backoff on 429/503-class errors. If every candidate fails, the audit fails openly with a retry prompt (`503`) — there is no silent fallback provider and no invented empty result in the MVP (see `06-operations/25-runbooks.md`).

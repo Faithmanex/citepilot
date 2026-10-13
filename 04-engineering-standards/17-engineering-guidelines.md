@@ -625,89 +625,47 @@ export class ExternalServiceError extends AppError {
 }
 ```
 
-### 10.2 Python Error Hierarchy
-
-```python
-# src/citepilot_ai/lib/errors.py
-
-class CitePilotError(Exception):
-    """Base exception for all CitePilot errors."""
-    def __init__(self, message: str, code: str, status_code: int = 500) -> None:
-        self.message = message
-        self.code = code
-        self.status_code = status_code
-        super().__init__(message)
-
-class DocumentParsingError(CitePilotError):
-    def __init__(self, message: str, filename: str) -> None:
-        super().__init__(message, "DOCUMENT_PARSING_ERROR", 422)
-        self.filename = filename
-
-class LLMServiceError(CitePilotError):
-    def __init__(self, provider: str, original_error: Exception) -> None:
-        super().__init__(
-            f"LLM provider {provider} unavailable",
-            "LLM_SERVICE_ERROR",
-            503,
-        )
-        self.provider = provider
-        self.original_error = original_error
-
-class ExternalAPIError(CitePilotError):
-    def __init__(self, service: str, status_code: int, response_body: str) -> None:
-        super().__init__(
-            f"External API error from {service}: HTTP {status_code}",
-            "EXTERNAL_API_ERROR",
-            502,
-        )
-        self.service = service
-        self.upstream_status = status_code
-        self.response_body = response_body
-
-class QuotaExceededError(CitePilotError):
-    def __init__(self, tier: str, limit_name: str, limit_value: int) -> None:
-        super().__init__(
-            f"{limit_name} limit of {limit_value} exceeded for {tier} tier",
-            "QUOTA_EXCEEDED",
-            429,
-        )
-```
-
-### 10.3 Global Error Handling
-
-**Gateway (Express middleware):**
+### 10.2 AI Route Error Handling (Next.js Route Handlers)
 
 ```typescript
-// src/middleware/error-handler.ts
-export function errorHandler(err: Error, req: Request, res: Response, _next: NextFunction) {
-  const requestId = req.headers["x-request-id"] as string;
+// citepilot-web/src/lib/ai/llm.ts
+export class AIServiceError extends Error { /* Gemini unavailable across all fallback models */ }
 
-  if (err instanceof AppError) {
-    logger.warn("Application error", {
-      requestId,
-      code: err.code,
-      statusCode: err.statusCode,
-      message: err.message,
-      path: req.path,
-    });
-    return res.status(err.statusCode).json({
-      error: { code: err.code, message: err.message, details: err.details },
-      meta: { requestId },
-    });
+// citepilot-web/src/lib/ai/auth.ts — shared guards used by every AI route
+// checkAuth(request) -> 401 JSON when API_KEY is set and missing/wrong
+// checkRateLimit(request) -> 429 JSON on sliding-window exhaustion
+
+// citepilot-web/src/app/api/v1/analyse/route.ts
+try {
+  const results = await runAnalysisPipeline(bodyText, refText, paraMeta, style);
+  return NextResponse.json({ mode, elapsed_seconds, ...results });
+} catch (err) {
+  if (err instanceof AIServiceError) {
+    // Provider outage: generic message, full error server-side only
+    return NextResponse.json(
+      { detail: "AI Processing Service is currently unavailable. Please try again shortly." },
+      { status: 503 },
+    );
   }
-
-  // Unexpected errors — log full stack, return generic message
-  logger.error("Unhandled error", {
-    requestId,
-    error: err.message,
-    stack: err.stack,
-    path: req.path,
-  });
-  return res.status(500).json({
-    error: { code: "INTERNAL_ERROR", message: "An unexpected error occurred" },
-    meta: { requestId },
-  });
+  return NextResponse.json({ detail: "Analysis failed. Please try again shortly." }, { status: 500 });
 }
+```
+
+### 10.3 Request Middleware (Supabase Session Refresh)
+
+There is no gateway and no global error-handling middleware. The single Next.js middleware refreshes the Supabase session on each request:
+
+```typescript
+// citepilot-web/src/middleware.ts
+import { type NextRequest } from "next/server";
+import { updateSession } from "@/lib/supabase/middleware";
+
+export async function middleware(request: NextRequest) {
+  return await updateSession(request);
+}
+```
+
+API error handling lives in each Route Handler instead (see §10.2): mapped `detail` responses (`400`/`401`/`413`/`429`/`503`) with full errors logged server-side only.
 ```
 
 **AI Service (FastAPI exception handler):**
@@ -738,7 +696,7 @@ Rules:
 - Always include `requestId` in error responses for support correlation.
 - Log unexpected errors at `ERROR` level with full stack trace.
 - Log expected/handled errors at `WARN` level without stack trace.
-- Use circuit breakers (via `tenacity` in Python, custom wrapper in TypeScript) for all external API calls with exponential backoff.
+- Retry external API calls with exponential backoff: Gemini model fallbacks in `src/lib/ai/llm.ts`, 10 s timeouts plus fail-soft provider checks in `src/lib/ai/pipeline.ts`.
 
 ---
 
@@ -746,15 +704,14 @@ Rules:
 
 ### 11.1 Format
 
-All services emit **structured JSON logs** to stdout. Log aggregation is the platform-native log viewer (Vercel dashboard, Railway service logs) until an observability tool is adopted (roadmap — `04-engineering-standards/20-monitoring-observability.md`).
+The app emits **structured logs** via `console` to stdout. Log aggregation is the platform-native viewer (Vercel dashboard and Vercel logs) until an observability tool is adopted (roadmap — `04-engineering-standards/20-monitoring-observability.md`).
 
 ```json
 {
   "timestamp": "2026-07-14T17:30:00.123Z",
   "level": "info",
-  "service": "citepilot-gateway",
+  "service": "citepilot-web",
   "environment": "production",
-  "requestId": "01913a4f-6c2a-7b3e-8d1f-4a5b6c7d8e9f",
   "userId": "usr_01913a4f",
   "message": "Document upload completed",
   "data": {
@@ -778,13 +735,7 @@ All services emit **structured JSON logs** to stdout. Log aggregation is the pla
 
 ### 11.3 Correlation IDs
 
-Every incoming request receives a UUIDv7 `requestId` assigned by the API gateway. This ID is:
-
-1. Set as `x-request-id` header on the incoming request (or generated if absent).
-2. Propagated to all downstream service calls via the same header.
-3. Included in every log line emitted during that request's lifecycle.
-4. Returned to the client in the response body's `meta.requestId` field.
-5. Attached to downstream service calls (gateway proxying to the AI service) so the correlation chain survives. (The MVP is synchronous — no job queues exist; ADR-011.)
+There is no gateway and no custom `requestId` plumbing: API error responses carry only `{ detail }`, and correlation uses the platform-provided Vercel request IDs visible in the Vercel dashboard logs. Do not document or rely on `x-request-id` headers or `meta.requestId` response fields — they do not exist. (The MVP is synchronous — no job queues exist; ADR-011.)
 
 ### 11.4 What to Log / What Not to Log
 
@@ -792,7 +743,6 @@ Every incoming request receives a UUIDv7 `requestId` assigned by the API gateway
 - Request start and completion with latency
 - Authentication success/failure
 - External API calls (service, method, latency, status code)
-- Queue job enqueue, start, complete, fail
 - Business events (upload, analysis, subscription change)
 
 **Never log:**

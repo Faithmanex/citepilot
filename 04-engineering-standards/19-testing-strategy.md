@@ -24,29 +24,25 @@ CitePilot's testing strategy ensures reliability across a system that combines d
 
 ```mermaid
 graph TB
-    subgraph "Testing Pyramid"
-        E2E["E2E Tests (Playwright)<br/>~50 tests · 8 min<br/>Critical user flows"]
-        INT["Integration Tests<br/>~200 tests · 4 min<br/>API contracts, DB, Redis, S3"]
-        UNIT["Unit Tests (Vitest + pytest)<br/>~800 tests · 2 min<br/>Business logic, parsing, validation"]
+    subgraph "Testing Pyramid (as shipped)"
+        E2E["E2E script (Playwright)<br/>production verification<br/>Requires running app"]
+        UNIT["Unit + component tests (Vitest)<br/>18 files · 172 tests · ~1 min<br/>UI, editor logic, AI pure helpers"]
     end
 
-    UNIT --> INT --> E2E
+    UNIT --> E2E
 
     style UNIT fill:#22c55e,color:#000
-    style INT fill:#f59e0b,color:#000
     style E2E fill:#ef4444,color:#fff
 ```
 
-| Layer | Tool | Target Count | Max Duration | Coverage Target |
+| Layer | Tool | Shipped Count | Max Duration | Notes |
 |---|---|---|---|---|
-| Unit Tests (Node.js) | Vitest | ~400 | 90 seconds | 85%+ line coverage |
-| Unit Tests (Python) | pytest | ~400 | 90 seconds | 80%+ line coverage |
-| Integration Tests | Vitest + pytest + Testcontainers | ~200 | 4 minutes | Critical paths 100% |
-| E2E Tests | Playwright | ~50 | 8 minutes | Core user journeys |
-| AI Output Tests | pytest (golden datasets) | ~150 | 5 minutes | 95%+ accuracy on golden set |
-| Load Tests | k6 | ~10 scenarios | 10 minutes | Meet SLO targets |
-| Security Tests | `trufflehog` (secret scan) + `npm audit` + `pip-audit` | Continuous | Per CI run | Zero critical/high CVEs, no committed secrets |
-| Accessibility Tests | axe-core + Playwright | ~30 | 3 minutes | WCAG 2.1 AA compliance |
+| Unit + component tests | Vitest + Testing Library (`npm test`) | 18 files / 172 tests | ~2 min | UI, editor logic (`docxExtractor`, `documentMutation`), lib (`auditStats`, `gating`, mocked `useAudit`), AI pure helpers (`src/lib/ai/__tests__/ai.test.ts`) |
+| Typecheck + lint | `tsc --noEmit`, `eslint` | — | ~1 min | Must pass; 3 pre-existing lint errors are tracked, no new ones allowed |
+| E2E check | Playwright (`npm run test:e2e`) | 1 script | manual | Production verification against a running app, not part of `npm test` |
+| AI output evals | roadmap (§6) | — | — | No golden datasets shipped; AI behavior is pinned by unit tests on pure helpers, not by output snapshots |
+
+> **Note:** there is no pytest suite (the Python service was removed), and no k6, axe-core, trufflehog, pip-audit, or Testcontainers in the repo. Do not cite them as current tooling.
 
 ---
 
@@ -167,119 +163,48 @@ describe('matchCitationToReference', () => {
 });
 ```
 
-### 3.2 Python — pytest
+### 3.2 AI Services — Vitest (`src/lib/ai/__tests__/ai.test.ts`)
 
-**Configuration** (`pyproject.toml`):
+The Python/pytest suite was removed with the service. AI behavior is pinned by Vitest unit tests over the **pure, network-free helpers** — no live Gemini/Crossref calls in tests:
 
-```toml
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-addopts = [
-    "--strict-markers",
-    "--tb=short",
-    "-q",
-    "--cov=citepilot_ai",
-    "--cov-report=term-missing",
-    "--cov-report=xml:coverage.xml",
-    "--cov-fail-under=80",
-]
-markers = [
-    "unit: Unit tests (fast, no external dependencies)",
-    "integration: Integration tests (requires services)",
-    "ai: AI output validation tests (requires golden datasets)",
-    "slow: Tests that take > 5 seconds",
-]
-filterwarnings = ["error", "ignore::DeprecationWarning"]
+- `crossref.cleanDoi` — prefix/URL/trailing-punctuation normalization
+- `crossref.titlesMatch` — exact normalized equality (a near-miss is a discrepancy, never a fuzzy pass)
+- `retraction.analyzeCrossrefRetraction` — relation/update-to signals only; title-prefix text alone is **not** a signal
+- `recency.calculatePublicationRecency` — distributions against total references; no compliance tiers
+- `document-parser.splitBodyAndReferences` / `parseTxtStructured` — heading split incl. TOC guard
+- `llm.extractJson` — direct, fenced, and embedded JSON recovery
+- `schemas` — empty-input defaults (e.g. `{ citations: [] }`)
 
-[tool.coverage.run]
-source = ["citepilot_ai"]
-omit = ["citepilot_ai/tests/*", "citepilot_ai/migrations/*", "citepilot_ai/scripts/*"]
+**Example**:
 
-[tool.coverage.report]
-exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING:",
-    "if __name__ == .__main__.",
-]
+```typescript
+import { describe, it, expect } from "vitest";
+import { titlesMatch } from "@/lib/ai/crossref";
+import { analyzeCrossrefRetraction } from "@/lib/ai/retraction";
+
+describe("anti-guessing rules", () => {
+  it("treats a near-miss title as a discrepancy, not a match", () => {
+    expect(titlesMatch("Deep learning", "Deep learning advances")).toBe(false);
+  });
+
+  it("does not guess retraction from title text alone", () => {
+    expect(
+      analyzeCrossrefRetraction({ title: ["Retracted: Some study"] }).is_retracted
+    ).toBe(false);
+  });
+});
 ```
 
-**Example — Document Parser Unit Test**:
-
-```python
-import pytest
-from app.parsers.docx_parser import DocxParser
-from app.models.document import ParsedDocument
-
-
-class TestDocxParser:
-    """Unit tests for DOCX document parsing."""
-
-    @pytest.fixture
-    def parser(self):
-        return DocxParser()
-
-    @pytest.fixture
-    def sample_docx(self, tmp_path):
-        """Create a minimal test .docx file."""
-        from docx import Document
-        doc = Document()
-        doc.add_paragraph("This is the body text (Smith, 2023).")
-        doc.add_paragraph("Another citation (Jones & Lee, 2021).")
-        doc.add_heading("References", level=1)
-        doc.add_paragraph(
-            "Smith, A. (2023). AI in education. Journal of Tech, 15(2), 45-60."
-        )
-        doc.add_paragraph(
-            "Jones, B., & Lee, C. (2021). Machine learning. Publisher."
-        )
-        path = tmp_path / "test.docx"
-        doc.save(str(path))
-        return path
-
-    def test_parse_extracts_body_and_references(self, parser, sample_docx):
-        result: ParsedDocument = parser.parse(sample_docx)
-        assert result.body_text is not None
-        assert "Smith, 2023" in result.body_text
-        assert len(result.reference_sections) == 1
-        assert len(result.reference_sections[0].entries) == 2
-
-    def test_parse_identifies_reference_heading(self, parser, sample_docx):
-        result = parser.parse(sample_docx)
-        assert result.reference_sections[0].heading == "References"
-
-    def test_parse_rejects_empty_document(self, parser, tmp_path):
-        from docx import Document
-        doc = Document()
-        path = tmp_path / "empty.docx"
-        doc.save(str(path))
-        result = parser.parse(path)
-        assert result.body_text == ""
-        assert len(result.reference_sections) == 0
-
-    def test_parse_handles_missing_reference_section(self, parser, tmp_path):
-        from docx import Document
-        doc = Document()
-        doc.add_paragraph("Body text only, no references section.")
-        path = tmp_path / "no_refs.docx"
-        doc.save(str(path))
-        result = parser.parse(path)
-        assert result.body_text is not None
-        assert len(result.reference_sections) == 0
-        assert result.warnings == ["No reference section detected"]
-```
+Rules: AI unit tests must never hit the network; anything requiring Gemini, Crossref, or OpenAlex belongs in manual smoke tests, not `npm test`.
 
 ### 3.3 Coverage Enforcement
 
 | Codebase | Tool | Line Coverage | Branch Coverage | Enforcement |
 |---|---|---|---|---|
-| Node.js (API Gateway) | Vitest + v8 | 85% | 75% | CI fails below threshold |
-| Python (AI Processing) | pytest-cov | 80% | 70% | CI fails below threshold |
+| App + AI routes (Vitest) | Vitest + v8 | 85% | 75% | CI fails below threshold |
 | React Components | Vitest + React Testing Library | 80% | 70% | CI fails below threshold |
 
-Coverage reports are uploaded to Codecov on every PR. PRs that decrease coverage by more than 2% are flagged for review.
+Coverage reports are uploaded to Codecov on every PR. PRs that decrease coverage by more than 2% are flagged for review. (The former Python/pytest gate was removed with the service.)
 
 ---
 
@@ -293,14 +218,14 @@ Integration tests validate interactions between components using real service in
 
 | Dependency | Test Approach | Configuration |
 |---|---|---|
-| PostgreSQL | GitHub Actions service container (`postgres:16-alpine`) or Testcontainers | Test database with migrations applied |
-| FastAPI app | `httpx.AsyncClient(transport=ASGITransport(app))` with SQLite/Postgres per test | In-process, deterministic |
-| Gemini API | Recorded HTTP fixtures + injected mock client | Deterministic responses, no real API calls in CI |
-| Crossref API | Recorded HTTP fixtures (VCR pattern) | Real response snapshots |
+| PostgreSQL | Local Postgres or CI service container, migrations applied | `supabase/migrations/*.sql` in order; used to validate migration SQL |
+| Next.js Route Handlers | Manual smoke tests against dev server (`/health`, `/api/v1/*`) | No route-level test harness shipped; never hit real Gemini/Crossref from `npm test` |
+| Gemini API | No recorded fixtures shipped; unit tests cover pure helpers only | Live calls verified manually with `GOOGLE_API_KEY` set |
+| Crossref API | Same as Gemini — manual smoke only | Real response snapshots are roadmap, not shipped |
 
 ### 4.3 Example — API Integration Test
 
-The MVP is sessionless and **synchronous** (ADR-011): `POST /api/v1/analyse` returns the full `AuditResponse` in one response — there are no job IDs, no polling, and no auth headers.
+The MVP is sessionless and **synchronous** (ADR-011): `POST /api/v1/analyse` returns the full `AuditResponse` in one response — there are no job IDs and no polling. Auth headers (`X-API-Key` / `Bearer`) apply only when `API_KEY` is set. The example below is illustrative (it needs a live backend) and is not part of `npm test`.
 
 ```typescript
 import { describe, it, expect } from 'vitest';

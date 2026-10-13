@@ -41,7 +41,7 @@ The AI pipeline lives in `citepilot-web/src/lib/ai/` and is exposed as Next.js R
 | `POST /api/v1/export/docx` | Clean / redline DOCX export (docx) |
 | `GET /api/health` and `GET /health` | Liveness + `ai_engine_ready` / `model` |
 
-Key modules: `config.ts`, `llm.ts` (Gemini), `schemas.ts` (zod), `citation-extractor.ts`, `crossref.ts`, `openalex.ts`, `retraction.ts`, `recency.ts`, `uncited-claims.ts`, `document-parser.ts` (mammoth/unpdf), `export.ts`, `pipeline.ts`, `jev.ts` (opt-in, no-op by default). The client (`src/lib/api.ts`) calls same-origin `/api/v1` when `NEXT_PUBLIC_API_URL` is unset — there is **no** external rewrite.
+Key modules: `config.ts`, `llm.ts` (Gemini), `schemas.ts` (zod), `citation-extractor.ts`, `crossref.ts`, `openalex.ts`, `retraction.ts`, `recency.ts`, `uncited-claims.ts`, `document-parser.ts` (mammoth/unpdf), `export.ts`, `pipeline.ts`. There is no Jev/TypeSafe layer — it was removed; verification is Crossref/OpenAlex metadata only, never guessed. The client (`src/lib/api.ts`) calls same-origin `/api/v1` when `NEXT_PUBLIC_API_URL` is unset — there is **no** external rewrite.
 
 ## Key architecture docs
 
@@ -64,4 +64,4 @@ For system understanding, read in this order:
 - **Always set missing env vars** — when a deployment error points to a missing or incorrect environment variable, set it immediately via CLI (e.g., `vercel env add`, Railway dashboard). Do not leave it for later.
 - **Always redeploy after env changes** — after setting or updating environment variables, trigger a redeploy immediately. For Vercel: `npx vercel --prod` **from the monorepo root** (Vercel Root Directory is set to `citepilot-web/` — do NOT `cd` into it, per `LEARNING.md`). Railway is no longer used (the Python service is retired).
 - **No cross-origin CORS needed** — the AI routes are same-origin Next.js Route Handlers inside the web app. If you ever point `NEXT_PUBLIC_API_URL` at an external service, add that service's origin to its own CORS allowlist.
-- **AI secrets live in Vercel** — set `GOOGLE_API_KEY`, `GEMINI_MODEL`, `CROSSREF_MAILTO`, and the optional limit/`API_KEY`/`TYPESAFE_*` variables in the Vercel project (see `citepilot-web/.env.example`).
+- **AI secrets live in Vercel** — set `GOOGLE_API_KEY`, `GEMINI_MODEL`, `CROSSREF_MAILTO`, and the optional limit/`API_KEY` variables in the Vercel project (see `citepilot-web/.env.example`).

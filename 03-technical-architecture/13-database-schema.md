@@ -1,13 +1,13 @@
 # CitePilot — Database Schema
 
 > **Document ID:** CP-ARCH-013  
-> **Version:** 1.1.0  
-> **Last Updated:** 2026-08-11  
+> **Version:** 1.2.0  
+> **Last Updated:** 2026-10-12  
 > **Status:** Approved  
 > **Owner:** Engineering — Data Team  
 > **Classification:** Internal
 
-> **Scope note:** The schema below is the design source of truth; the executable implementation lives in `supabase/migrations/` (12 SQL files). The two are structurally aligned (users, organisations, documents, citations, references, results, style_warnings, external_validations, subscriptions, usage_logs, sessions). Where deployment lags design — e.g. Stripe-typed subscription columns (see ADR-010, PayPal supersedes Stripe) — the shipped migration is authoritative and this document notes the gap.
+> **Scope note:** The schema below is the design source of truth; the executable implementation lives in `supabase/migrations/` (15 SQL files). The two are structurally aligned (users, organisations, organisation_members, documents, citations, references, citation_results, reference_results, style_warnings, external_validations, subscriptions, usage_logs, sessions, audits, plus the §3 materialised views). The programmatic `api_keys` integration was removed in v1.2.0. Where a roadmap item is not yet shipped (e.g. table partitioning), the shipped migration is authoritative and this document notes the gap.
 
 ---
 
@@ -18,7 +18,8 @@ erDiagram
     users ||--o{ documents : uploads
     users ||--o| subscriptions : has
     users ||--o{ usage_logs : generates
-    users ||--o{ api_keys : owns
+    users ||--o{ audits : saves
+    users ||--o{ sessions : owns
     users }o--o| organisations : "belongs to"
     organisations ||--o{ organisation_members : contains
     users ||--o{ organisation_members : "member of"
@@ -32,9 +33,12 @@ erDiagram
     references ||--o{ external_validations : validated_by
 
     citations }o--o| references : "matched to"
-
-    subscriptions ||--|| users : "belongs to"
+    style_warnings }o--o| citations : "flags (optional)"
+    style_warnings }o--o| references : "flags (optional)"
+    usage_logs }o--o| documents : "links (optional)"
 ```
+
+> **Note:** the fully attributed version of this diagram (columns, keys, types) lives in `diagrams/backend-erd.mmd` — paste it into any Mermaid renderer. Solid edges are required foreign keys; the `(optional)` edges are nullable.
 
 ---
 
@@ -139,7 +143,9 @@ CREATE INDEX idx_org_members_status ON organisation_members (organisation_id, st
 
 ### 2.4 `documents`
 
-Uploaded documents undergoing citation analysis. Partitioned by `created_at` (monthly range).
+Uploaded documents undergoing citation analysis.
+
+> **Note:** Monthly range partitioning of `documents` via pg_partman is a scaling roadmap item — the shipped table (`004_create_documents.sql`) is currently unpartitioned.
 
 | Column | Type | Nullable | Default | Description |
 |---|---|---|---|---|
@@ -184,19 +190,9 @@ ALTER TABLE documents ADD CONSTRAINT chk_documents_style CHECK (
 ALTER TABLE documents ADD CONSTRAINT chk_documents_progress CHECK (progress BETWEEN 0 AND 100);
 ```
 
-**Partitioning:**
+**Partitioning (roadmap, not shipped):**
 
-```sql
-CREATE TABLE documents (
-  -- columns as above
-) PARTITION BY RANGE (created_at);
-
-CREATE TABLE documents_2026_07 PARTITION OF documents
-  FOR VALUES FROM ('2026-07-01') TO ('2026-08-01');
-CREATE TABLE documents_2026_08 PARTITION OF documents
-  FOR VALUES FROM ('2026-08-01') TO ('2026-09-01');
--- Partitions created automatically by pg_partman extension
-```
+Monthly range partitioning of `documents` on `created_at` (e.g. `documents_2026_07`, `documents_2026_08`) via the pg_partman extension remains a future scaling step. The shipped table is unpartitioned; do not apply partition DDL until the pg_partman rollout migration lands.
 
 ---
 
@@ -450,7 +446,7 @@ CREATE INDEX idx_external_validations_source ON external_validations (source, st
 
 User subscription records linked to Stripe.
 
-> **Note (ADR-010):** The shipped migration types these columns `stripe_*`, but production billing uses **PayPal Subscriptions** (web SDK, plan `P-00697875B1151583ANJV3VOY`). A migration renaming/adding PayPal identifiers is pending; the columns here are retained as the store for subscription state mirrors.
+> **Note (ADR-010):** The base table carries legacy `stripe_*` columns, but production billing uses **PayPal Subscriptions**, and migration `013_supabase_auth_sync_and_rls.sql` added `paypal_subscription_id`, `paypal_payer_id`, and `paypal_plan_id` (with a unique index on `paypal_subscription_id`). Use the `paypal_*` columns for all new billing logic.
 
 | Column | Type | Nullable | Default | Description |
 |---|---|---|---|---|
@@ -517,43 +513,37 @@ CREATE INDEX idx_usage_logs_org ON usage_logs (organisation_id, logged_at DESC) 
 | `external.validate` | External validation triggered |
 | `auth.login` | User logged in |
 | `auth.register` | User registered |
-| `api_key.used` | API key was used |
 
-**Partitioning:**
-
-```sql
-CREATE TABLE usage_logs (
-  -- columns as above
-) PARTITION BY RANGE (logged_at);
--- Partitions managed by pg_partman
-```
+> **Note:** Range partitioning of `usage_logs` via pg_partman is a scaling roadmap item — the shipped table (`010_create_subscriptions_sessions.sql`) is currently unpartitioned.
 
 ---
 
-### 2.13 `api_keys`
+### 2.13 `audits`
 
-API keys for programmatic access (Professional and Institutional tiers).
+Saved analysis snapshots powering the dashboard **Audit History** feature (shipped in `013_supabase_auth_sync_and_rls.sql`).
 
 | Column | Type | Nullable | Default | Description |
 |---|---|---|---|---|
-| `id` | `TEXT` | NO | `'key_' \|\| nanoid(16)` | Primary key |
-| `user_id` | `TEXT` | NO | — | FK → users.id |
-| `name` | `VARCHAR(100)` | NO | — | User-assigned key name |
-| `key_hash` | `TEXT` | NO | — | SHA-256 hash of the full API key |
-| `key_prefix` | `VARCHAR(20)` | NO | — | First 12 characters for identification (e.g., `cp_live_a1b2`) |
-| `last_used_at` | `TIMESTAMPTZ` | YES | `NULL` | Last time this key was used |
-| `expires_at` | `TIMESTAMPTZ` | NO | — | Key expiration date |
-| `revoked_at` | `TIMESTAMPTZ` | YES | `NULL` | Revocation timestamp |
+| `id` | `TEXT` | NO | `'aud_' \|\| encode(gen_random_bytes(12), 'hex')` | Primary key |
+| `user_id` | `TEXT` | YES | `NULL` | FK → users.id (`ON DELETE CASCADE`) |
+| `document_name` | `VARCHAR(255)` | NO | `'Untitled Document'` | Display name for the history list |
+| `citation_style` | `VARCHAR(50)` | NO | `'apa7'` | Style used for the audit |
+| `audit_mode` | `VARCHAR(50)` | NO | `'full'` | `full` or `reference_only` |
+| `word_count` | `INTEGER` | NO | `0` | Manuscript word count |
+| `citation_count` | `INTEGER` | NO | `0` | Citations found |
+| `reference_count` | `INTEGER` | NO | `0` | References parsed |
+| `score` | `INTEGER` | NO | `100` | Rigor score snapshot |
+| `results` | `JSONB` | NO | `'{}'` | Full analysis payload snapshot |
 | `created_at` | `TIMESTAMPTZ` | NO | `NOW()` | |
+| `updated_at` | `TIMESTAMPTZ` | NO | `NOW()` | |
 
 **Indexes:**
 
 ```sql
-CREATE INDEX idx_api_keys_user ON api_keys (user_id);
-CREATE UNIQUE INDEX idx_api_keys_hash ON api_keys (key_hash) WHERE revoked_at IS NULL;
-CREATE INDEX idx_api_keys_prefix ON api_keys (key_prefix);
-CREATE INDEX idx_api_keys_expires ON api_keys (expires_at) WHERE revoked_at IS NULL;
+CREATE INDEX idx_audits_user_created ON audits (user_id, created_at DESC);
 ```
+
+> **Note:** The programmatic `api_keys` integration was removed from the product and this specification (v1.2.0). Service-level auth uses the `API_KEY` shared secret on the API routes instead.
 
 ---
 
@@ -621,12 +611,18 @@ CREATE UNIQUE INDEX idx_mv_doc_summary_id ON mv_document_summary (document_id);
 CREATE INDEX idx_mv_doc_summary_user ON mv_document_summary (user_id, created_at DESC);
 ```
 
-**Refresh Strategy:**
+**Refresh Strategy (shipped in `015_create_materialised_views.sql`):**
+
+Both views refresh with `REFRESH MATERIALIZED VIEW CONCURRENTLY` (non-blocking reads; requires the unique indexes above). Schedules are idempotent (unschedule-then-schedule by job name). On servers without the `pg_cron` extension the migration still applies cleanly — views and indexes land, only the schedules are skipped with a notice:
 
 ```sql
--- Refreshed concurrently (non-blocking) every 30 seconds via pg_cron
-SELECT cron.schedule('refresh-doc-summary', '*/1 * * * *',
+SELECT cron.unschedule('refresh-doc-summary');
+SELECT cron.schedule('refresh-doc-summary', '*/5 * * * *',
   'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_document_summary');
+
+SELECT cron.unschedule('refresh-org-analytics');
+SELECT cron.schedule('refresh-org-analytics', '*/15 * * * *',
+  'REFRESH MATERIALIZED VIEW CONCURRENTLY mv_organisation_analytics');
 ```
 
 ### 3.2 `mv_organisation_analytics`
@@ -751,39 +747,38 @@ graph LR
 5. **Migration files are immutable.** Once merged to `main`, a migration is never edited — only new migrations are added.
 6. **Rollback migrations** are created alongside forward migrations for every schema change.
 
-### 5.4 Initial Migration Order
+### 5.4 Migration Order (as shipped)
 
 ```
 001_create_extensions.sql
 002_create_users.sql
 003_create_organisations.sql
-004_create_organisation_members.sql
-005_create_documents.sql
-006_create_citations.sql
-007_create_references.sql
-008_create_citation_results.sql
-009_create_reference_results.sql
-010_create_style_warnings.sql
-011_create_external_validations.sql
-012_create_subscriptions.sql
-013_create_usage_logs.sql
-014_create_api_keys.sql
-015_create_sessions.sql
-016_create_materialised_views.sql
-017_create_triggers.sql
-018_seed_initial_data.sql
+004_create_documents.sql
+005_create_citations.sql
+006_create_references.sql
+007_create_results.sql
+008_create_style_warnings.sql
+009_create_external_validations.sql
+010_create_subscriptions_sessions.sql
+011_create_triggers.sql
+012_fix_citation_count_trigger.sql
+013_supabase_auth_sync_and_rls.sql
+014_fix_rls_and_hardening.sql
+015_create_materialised_views.sql
 ```
 
-### 5.5 Extensions Required
+### 5.5 Extensions
+
+Shipped in `001_create_extensions.sql` plus `015_create_materialised_views.sql`:
 
 ```sql
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";        -- UUID generation (fallback)
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";          -- Encryption functions
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";           -- Trigram similarity for fuzzy matching
-CREATE EXTENSION IF NOT EXISTS "pg_partman";        -- Automatic partition management
-CREATE EXTENSION IF NOT EXISTS "pg_cron";           -- Scheduled jobs (materialized view refresh)
-CREATE EXTENSION IF NOT EXISTS "pg_stat_statements"; -- Query performance analysis
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";          -- Encryption functions (001)
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";           -- Trigram similarity for fuzzy matching (001)
+CREATE EXTENSION IF NOT EXISTS "pg_stat_statements"; -- Query performance analysis (001)
+CREATE EXTENSION IF NOT EXISTS "pg_cron";           -- Scheduled jobs: MV concurrent refresh (015)
 ```
+
+Roadmap (not installed): `pg_partman` (automatic partition management, once the §2.4/§2.12 partitioning rollout lands).
 
 ---
 

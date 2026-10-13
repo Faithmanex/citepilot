@@ -1,0 +1,123 @@
+erDiagram
+    users ||--o{ documents : uploads
+    users ||--o| subscriptions : has
+    users ||--o{ usage_logs : generates
+    users ||--o{ sessions : owns
+    users ||--o{ audits : saves
+    users }o--o| organisations : "belongs to"
+    organisations ||--o{ organisation_members : contains
+    users ||--o{ organisation_members : "member of"
+    documents ||--o{ citations : contains
+    documents ||--o{ references : contains
+    documents ||--o{ style_warnings : has
+    citations ||--o{ citation_results : produces
+    references ||--o{ reference_results : produces
+    references ||--o{ external_validations : validated_by
+    citations }o--o| references : "matched to"
+    style_warnings }o--o| citations : "flags (optional)"
+    style_warnings }o--o| references : "flags (optional)"
+    usage_logs }o--o| documents : "links (optional)"
+
+    users {
+        TEXT id PK
+        VARCHAR email UK
+        TEXT organisation_id FK "nullable"
+        VARCHAR tier
+        VARCHAR role
+        JSONB preferences
+    }
+    organisations {
+        TEXT id PK
+        VARCHAR slug UK
+        VARCHAR domain
+        INT max_seats
+    }
+    organisation_members {
+        TEXT id PK
+        TEXT organisation_id FK
+        TEXT user_id FK
+        VARCHAR role
+        VARCHAR status
+    }
+    subscriptions {
+        TEXT id PK
+        TEXT user_id FK "UNIQUE, 1:1"
+        VARCHAR tier
+        VARCHAR status
+        VARCHAR paypal_subscription_id
+    }
+    sessions {
+        TEXT id PK
+        TEXT user_id FK
+        TEXT family_id
+        TIMESTAMPTZ expires_at
+    }
+    usage_logs {
+        BIGINT id PK
+        TEXT user_id FK
+        VARCHAR action
+        TEXT document_id FK "nullable"
+        TIMESTAMPTZ logged_at
+    }
+    audits {
+        TEXT id PK
+        TEXT user_id FK "nullable"
+        VARCHAR document_name
+        VARCHAR citation_style
+        INT score
+        JSONB results
+    }
+    documents {
+        TEXT id PK
+        TEXT user_id FK
+        VARCHAR filename
+        VARCHAR citation_style
+        VARCHAR status
+        TIMESTAMPTZ expires_at "36h TTL"
+    }
+    citations {
+        TEXT id PK
+        TEXT document_id FK
+        TEXT raw_text
+        TEXT matched_reference_id FK "nullable"
+        VARCHAR status
+        REAL confidence
+    }
+    references {
+        TEXT id PK
+        TEXT document_id FK
+        SMALLINT position
+        VARCHAR parsed_doi
+        VARCHAR status
+        JSONB parsed_authors
+    }
+    style_warnings {
+        TEXT id PK
+        TEXT document_id FK
+        TEXT citation_id FK "nullable"
+        TEXT reference_id FK "nullable"
+        VARCHAR code
+        VARCHAR severity
+    }
+    citation_results {
+        TEXT id PK
+        TEXT citation_id FK "UNIQUE"
+        VARCHAR match_type
+        REAL match_score
+        JSONB issues
+    }
+    reference_results {
+        TEXT id PK
+        TEXT reference_id FK "UNIQUE"
+        BOOLEAN is_retracted
+        BOOLEAN is_hallucinated
+        JSONB issues
+    }
+    external_validations {
+        TEXT id PK
+        TEXT reference_id FK
+        VARCHAR source
+        VARCHAR status
+        BOOLEAN verified
+        JSONB discrepancies
+    }

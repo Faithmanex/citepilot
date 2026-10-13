@@ -1,0 +1,33 @@
+sequenceDiagram
+    participant Client
+    participant Route as analyse route
+    participant Parser as document-parser
+    participant Pipe as pipeline
+    participant AI as Gemini LLM
+    participant VER as Crossref + OpenAlex
+    Client->>Route: POST /api/v1/analyse (multipart)
+    alt guard fails
+        Route->>Client: 401 / 429 / 400 / 413
+    end
+    Route->>Parser: parseDocument
+    Parser->>Parser: mammoth / unpdf / split
+    Parser->>Route: bodyText, refText, paraMeta
+    Route->>Pipe: runAnalysisPipeline
+    par 3 parallel Gemini calls
+        Pipe->>AI: extractCitations (chunked)
+        Pipe->>AI: parseReferences (chunked)
+        Pipe->>AI: detectUncitedClaims (fail-soft)
+    end
+    Pipe->>AI: matchCitationsToReferences
+    Pipe->>AI: checkStyle (skip if no body)
+    Pipe->>Pipe: build citation results
+    loop per reference
+        Pipe->>VER: Crossref validate
+        alt unverified + DOI/title
+            Pipe->>VER: OpenAlex fallback (merged)
+        end
+        Pipe->>VER: retraction check (reuses work)
+    end
+    Pipe->>Pipe: assemble + recency (counts only)
+    Pipe->>Route: PipelineResult
+    Route->>Client: 200 JSON (full payload)

@@ -10,7 +10,7 @@ The AI analysis service was ported from Python/FastAPI (`citepilot-ai/`, Railway
 - **Endpoints**: `POST /api/v1/analyse`, `POST /api/v1/export/pdf`, `POST /api/v1/export/docx`, `GET /api/health`, `GET /health`.
 - **No rewrite**: `next.config.ts` no longer proxies `/api/v1/*` to Railway. The client (`src/lib/api.ts`) calls same-origin `/api/v1` when `NEXT_PUBLIC_API_URL` is unset.
 - **Library swaps**: Gemini via `@google/genai`; schemas via `zod`; DOCX parse via `mammoth`; PDF parse via `unpdf`; DOCX export via `docx`; PDF export via `pdf-lib`.
-- **Jev (TypeSafe)**: the Python SDK has no Node equivalent, so `src/lib/ai/jev.ts` is a **fail-open no-op** (default disabled). No behavior change unless `TYPESAFE_API_KEY` is set.
+- **Jev (TypeSafe) removed**: the opt-in decision layer (`src/lib/ai/jev.ts`, ADR-012) was deleted — verification is Crossref/OpenAlex metadata only, and retraction needs explicit Crossref signals (no title-prefix guessing). Do not reintroduce `TYPESAFE_*` variables.
 - **Gotcha**: the route handlers use the Node runtime (`export const runtime = "nodejs"`). Do not switch them to Edge — `Buffer`, `mammoth`, and `unpdf` require Node.
 
 ## TOML: dependencies must be under `[project]`

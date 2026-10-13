@@ -377,9 +377,11 @@ Process audits **synchronously** in a single pass: `POST /api/v1/analyse` return
 
 ## ADR-012: Jev (TypeSafe System One) as Opt-In Decision Layer
 
+> **Superseded 2026-10-12 (see ADR-013):** the Jev layer (`src/lib/ai/jev.ts`, `TYPESAFE_*` config) was removed entirely during the anti-fabrication hardening. Verification is Crossref/OpenAlex metadata only; retraction requires explicit Crossref signals. The record below is preserved for history.
+
 | Field | Value |
 |---|---|
-| **Status** | Accepted (spike scope; promotion criteria below) |
+| **Status** | Superseded (removed 2026-10-12) |
 | **Date** | 2026-09-21 |
 | **Deciders** | CTO, AI Lead |
 
@@ -411,11 +413,35 @@ Add Jev as an **opt-in, fail-open verification layer** behind `TYPESAFE_API_KEY`
 
 ---
 
+## ADR-013: AI Service Co-located in Next.js (Node)
+
+| Field | Value |
+|---|---|
+| **Status** | Accepted |
+| **Date** | 2026-10-12 |
+| **Deciders** | CTO, AI Lead |
+
+### Context
+
+The AI service ran as a separate Python/FastAPI deployment on Railway (`citepilot-ai/`, ADR-001/ADR-009) while the web app deployed to Vercel. Every audit crossed a network and vendor boundary, doubling deploy targets, env surfaces, and failure modes for a single-product MVP.
+
+### Decision
+
+Port the pipeline to TypeScript and serve it from the web app itself as Next.js Route Handlers (`citepilot-web/src/lib/ai/*`, `POST /api/v1/analyse`, `POST /api/v1/export/{pdf,docx}`, `GET /api/health`): Gemini via `@google/genai`, schemas via `zod`, DOCX parse via `mammoth`, PDF parse via `unpdf`, DOCX export via `docx`, PDF export via `pdf-lib`. Remove the Python service, the Railway deploy, and the `next.config.ts` rewrite. This decision also retires ADR-001 (FastAPI), the Railway half of ADR-009, and ADR-012 (Jev — no Node SDK, and the hardening pass removed the layer rather than porting it).
+
+### Consequences
+
+**Positive:** one Vercel project, same-origin API (no CORS hop), one toolchain, one test suite (`vitest`).
+**Negative:** route functions are bound by serverless time/memory limits (`maxDuration = 60`); very large theses must stay within chunking caps.
+**Neutral:** `citepilot-ai/` remains in git history for reference.
+
+---
+
 ## ADR Register
 
 | ADR | Title | Status | Date |
 |---|---|---|---|
-| ADR-001 | FastAPI for AI Service | Accepted | 2026-05-12 |
+| ADR-001 | FastAPI for AI Service | Superseded by ADR-013 (Node co-location) | 2026-05-12 |
 | ADR-002 | Next.js App Router Frontend | Accepted | 2026-05-10 |
 | ADR-003 | PostgreSQL 16 / Vercel Postgres / Drizzle | Accepted | 2026-05-08 |
 | ADR-004 | Crossref Primary Validation Source | Accepted | 2026-05-25 |
@@ -423,9 +449,10 @@ Add Jev as an **opt-in, fail-open verification layer** behind `TYPESAFE_API_KEY`
 | ADR-006 | Polyrepo Architecture | Accepted | 2026-05-08 |
 | ADR-007 | Vercel Postgres over Supabase | Accepted | 2026-06-20 |
 | ADR-008 | Gemini 2.5 Flash Sole LLM Provider | Accepted | 2026-06-02 |
-| ADR-009 | Vercel + Railway Hosting | Accepted (supersedes AWS design) | 2026-06-18 |
+| ADR-009 | Vercel + Railway Hosting | Partially superseded by ADR-013 (Vercel-only) | 2026-06-18 |
 | ADR-010 | PayPal Subscriptions | Accepted (supersedes Stripe design) | 2026-06-25 |
 | ADR-011 | Synchronous MVP | Accepted (supersedes queue design) | 2026-06-20 |
-| ADR-012 | Jev Opt-In Decision Layer | Accepted (spike scope) | 2026-09-21 |
+| ADR-012 | Jev Opt-In Decision Layer | Superseded (removed 2026-10-12, see ADR-013) | 2026-09-21 |
+| ADR-013 | AI Service Co-located in Next.js (Node) | Accepted | 2026-10-12 |
 
 **Removed from registration (never shipped):** OpenAI GPT-4o (old ADR-004), queue-based processing (old ADR-005), AWS hosting (old ADR-007), Stripe (old ADR-008), NextAuth (old ADR-011), Datadog monitoring (old ADR-012 — monitoring remains roadmap-only per `04-engineering-standards/20-monitoring-observability.md`).
