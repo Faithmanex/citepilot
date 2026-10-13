@@ -30,6 +30,37 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Runs async tasks with at most `limit` in flight, collecting settled
+ * results in input order. Used to cap Gemini burst concurrency on large
+ * documents so chunk fan-outs don't self-inflict 429 quota errors.
+ */
+export async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  fn: (item: T, index: number) => Promise<R>
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = new Array(items.length);
+  let next = 0;
+  async function worker(): Promise<void> {
+    while (next < items.length) {
+      const i = next;
+      next += 1;
+      try {
+        results[i] = { status: "fulfilled", value: await fn(items[i], i) };
+      } catch (reason) {
+        results[i] = { status: "rejected", reason };
+      }
+    }
+  }
+  const workers = Array.from(
+    { length: Math.max(1, Math.min(limit, items.length)) },
+    () => worker()
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 const RETRYABLE = /503|UNAVAILABLE|429|RESOURCE_EXHAUSTED/;
 
 /**
@@ -125,4 +156,60 @@ export function parseAndValidate<T>(raw: string, schema: z.ZodType<T>): T {
     );
   }
   return parsed.data;
+}
+
+export interface ValidatedCallOptions {
+  /** Extra attempts after the first try (default 2). */
+  retries?: number;
+  /**
+   * When set and `inputChars` exceeds `threshold` (default 1000), a result
+   * whose listed arrays are ALL empty is treated as a degraded model response
+   * and retried — a substantial input almost never yields legitimately zero
+   * findings. Omit for calls where empty is a common legitimate outcome
+   * (e.g. style warnings, uncited claims on clean text).
+   */
+  nonEmptyIfInputOver?: {
+    keys: string[];
+    inputChars: number;
+    threshold?: number;
+  };
+}
+
+/**
+ * Calls Gemini and validates the response, retrying transient degradations:
+ * malformed JSON/schema mismatches, and (when configured) suspiciously empty
+ * results for substantial inputs. Throws the last `AIServiceError` when every
+ * attempt is exhausted, so persistent failures still surface loudly.
+ */
+export async function callGeminiValidated<T extends Record<string, unknown>>(
+  prompt: string,
+  systemInstruction: string | undefined,
+  schema: z.ZodType<T>,
+  opts: ValidatedCallOptions = {}
+): Promise<T> {
+  const retries = opts.retries ?? 2;
+  let lastError: unknown = new AIServiceError("Model returned no usable result.");
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      const raw = await callGemini(prompt, systemInstruction);
+      const parsed = parseAndValidate(raw, schema);
+      const rule = opts.nonEmptyIfInputOver;
+      if (rule && rule.inputChars > (rule.threshold ?? 1000)) {
+        const allEmpty = rule.keys.every((k) => {
+          const v = (parsed as Record<string, unknown>)[k];
+          return !Array.isArray(v) || v.length === 0;
+        });
+        if (allEmpty) {
+          throw new AIServiceError(
+            "Model returned an empty result for substantial input."
+          );
+        }
+      }
+      return parsed;
+    } catch (err) {
+      lastError = err;
+      if (attempt < retries) await sleep(1500 * (attempt + 1));
+    }
+  }
+  throw lastError;
 }

@@ -1,7 +1,7 @@
 /**
  * Uncited factual/statistical claim detection.
  */
-import { callGemini, parseAndValidate } from "./llm";
+import { callGeminiValidated } from "./llm";
 import { UncitedClaimsResponseSchema } from "./schemas";
 import type { JsonObject, ParagraphMeta } from "./types";
 
@@ -80,8 +80,8 @@ Return JSON with structure:
   ]
 }`;
 
-  const raw = await callGemini(prompt, UNCITED_CLAIMS_SYSTEM_PROMPT);
-  const validated = parseAndValidate(raw, UncitedClaimsResponseSchema);
+    // No non-empty guard: text without unattributed claims legitimately yields zero.
+    const validated = await callGeminiValidated(prompt, UNCITED_CLAIMS_SYSTEM_PROMPT, UncitedClaimsResponseSchema);
 
   return validated.uncited_claims.map((c) => ({
     code: "UNCITED_FACTUAL_CLAIM",

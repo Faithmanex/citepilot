@@ -1,7 +1,7 @@
 /**
  * AI citation extraction, reference parsing, matching, and style checking.
  */
-import { callGemini, parseAndValidate } from "./llm";
+import { callGeminiValidated, mapWithConcurrency } from "./llm";
 import {
   CitationsResponseSchema,
   MatchesResponseSchema,
@@ -42,8 +42,12 @@ Return a JSON object with this structure:
   ]
 }`;
 
-  const raw = await callGemini(prompt, CITATION_EXTRACTION_SYSTEM_PROMPT);
-  const validated = parseAndValidate(raw, CitationsResponseSchema);
+  const validated = await callGeminiValidated(
+    prompt,
+    CITATION_EXTRACTION_SYSTEM_PROMPT,
+    CitationsResponseSchema,
+    { nonEmptyIfInputOver: { keys: ["citations"], inputChars: payload.length } }
+  );
   return validated.citations as CitationEntry[];
 }
 
@@ -75,8 +79,10 @@ export async function extractCitations(
     if (startIdx + chunkSize >= docStructure.length) break;
   }
 
-  const results = await Promise.allSettled(
-    batches.map((batch) => extractCitationsSingleBatch(batch, citationStyle))
+  const results = await mapWithConcurrency(
+    batches,
+    3,
+    (batch) => extractCitationsSingleBatch(batch, citationStyle)
   );
 
   const all: CitationEntry[] = [];
@@ -145,8 +151,12 @@ ${chunkText}
 Return a JSON object with this structure:
 ${schemaExample}`;
 
-  const raw = await callGemini(prompt, REFERENCE_PARSING_SYSTEM_PROMPT);
-  const validated = parseAndValidate(raw, ReferencesResponseSchema);
+  const validated = await callGeminiValidated(
+    prompt,
+    REFERENCE_PARSING_SYSTEM_PROMPT,
+    ReferencesResponseSchema,
+    { nonEmptyIfInputOver: { keys: ["references"], inputChars: chunkText.length } }
+  );
   return validated.references as ReferenceEntry[];
 }
 
@@ -173,8 +183,10 @@ export async function parseReferences(referenceText: string): Promise<ReferenceE
   }
   if (curr.length > 0) chunks.push(curr.join("\n"));
 
-  const results = await Promise.allSettled(
-    chunks.map((c) => parseReferencesSingleBatch(c, 1))
+  const results = await mapWithConcurrency(
+    chunks,
+    3,
+    (c) => parseReferencesSingleBatch(c, 1)
   );
 
   const all: ReferenceEntry[] = [];
@@ -256,8 +268,12 @@ For each citation, determine:
 Return a JSON object:
 ${schemaExample}`;
 
-  const raw = await callGemini(prompt, MATCHING_SYSTEM_PROMPT);
-  const validated = parseAndValidate(raw, MatchesResponseSchema);
+  const validated = await callGeminiValidated(prompt, MATCHING_SYSTEM_PROMPT, MatchesResponseSchema, {
+    nonEmptyIfInputOver: {
+      keys: ["matches"],
+      inputChars: JSON.stringify(citations).length + JSON.stringify(references).length,
+    },
+  });
   return validated.matches as MatchEntry[];
 }
 
@@ -308,7 +324,7 @@ For every style issue found, include the exact target_text where the issue occur
 Return a JSON object:
 ${schemaExample}`;
 
-  const raw = await callGemini(prompt, STYLE_CHECK_SYSTEM_PROMPT);
-  const validated = parseAndValidate(raw, StyleWarningsResponseSchema);
+  // No non-empty guard: a clean document legitimately yields zero warnings.
+  const validated = await callGeminiValidated(prompt, STYLE_CHECK_SYSTEM_PROMPT, StyleWarningsResponseSchema);
   return validated.style_warnings as JsonObject[];
 }

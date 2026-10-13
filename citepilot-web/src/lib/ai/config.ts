@@ -37,15 +37,20 @@ export const ALLOWED_CITATION_STYLES = new Set([
   "turabian",
 ]);
 
-/** Gemini candidate models, tried in order (deduped, preserving order). */
+/**
+ * Gemini candidate models, tried in order (deduped, preserving order).
+ * Verified against the live models list — the retired 2.0 family 404s and
+ * must not be listed here.
+ */
 export const FALLBACK_MODELS: string[] = Array.from(
   new Set(
     [
       aiConfig.geminiModel,
       "gemini-2.5-flash-lite",
-      "gemini-2.0-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3.5-flash-lite",
       "gemini-2.5-flash",
-      "gemini-2.0-flash",
+      "gemini-flash-latest",
     ].filter((m): m is string => Boolean(m))
   )
 );
