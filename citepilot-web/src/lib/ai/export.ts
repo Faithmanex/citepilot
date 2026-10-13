@@ -1,6 +1,5 @@
 /**
  * Document export: clean/redline DOCX and diagnostic PDF reports.
- * Port of `citepilot-ai/src/citepilot_ai/services/export_service.py`.
  *
  * Python used python-docx + reportlab; here we use `docx` + `pdf-lib` (pure JS,
  * serverless-friendly).

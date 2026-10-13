@@ -1,7 +1,6 @@
 /**
  * Document parsing (.docx / .pdf / text) into body text, reference text, and
  * paragraph metadata.
- * Port of `citepilot-ai/src/citepilot_ai/services/document_parser.py`.
  */
 import mammoth from "mammoth";
 import { extractText, getDocumentProxy } from "unpdf";

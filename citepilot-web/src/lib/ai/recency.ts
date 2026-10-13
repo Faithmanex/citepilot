@@ -1,6 +1,5 @@
 /**
  * Publication recency distribution.
- * Port of `citepilot-ai/src/citepilot_ai/services/recency_service.py`.
  */
 import type { JsonObject } from "./types";
 

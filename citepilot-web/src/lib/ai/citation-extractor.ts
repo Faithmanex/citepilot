@@ -1,6 +1,5 @@
 /**
  * AI citation extraction, reference parsing, matching, and style checking.
- * Port of `citepilot-ai/src/citepilot_ai/services/citation_extractor.py`.
  */
 import { callGemini, parseAndValidate } from "./llm";
 import {

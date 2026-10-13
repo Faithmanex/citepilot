@@ -1,5 +1,4 @@
 /**
- * Zod schemas mirroring `citepilot-ai/src/citepilot_ai/models/schemas.py`.
  *
  * The web client (`citepilot-web/src/lib/types.ts`) consumes the snake_case API
  * shapes, so these schemas deliberately keep Python field names.

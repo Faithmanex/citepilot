@@ -1,6 +1,5 @@
 /**
  * Retraction / Expression-of-Concern detection via Crossref/Retraction Watch.
- * Port of `citepilot-ai/src/citepilot_ai/services/retraction_service.py`.
  */
 import { cleanDoi, fetchByDoi, searchByQuery } from "./crossref";
 import type { JsonObject } from "./types";

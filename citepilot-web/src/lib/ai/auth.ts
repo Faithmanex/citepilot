@@ -1,7 +1,6 @@
 /**
  * API-key auth + in-memory sliding-window rate limiting.
  * Port of the FastAPI dependencies in
- * `citepilot-ai/src/citepilot_ai/api/v1/endpoints.py`.
  *
  * Note: in-memory buckets are best-effort per serverless instance (parity with
  * the Python single-process limiter).

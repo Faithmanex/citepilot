@@ -1,7 +1,6 @@
 /**
  * Runtime configuration for the CitePilot AI service.
  *
- * This is the Node/TypeScript port of `citepilot-ai/src/citepilot_ai/config.py`.
  * All values are read from server-side environment variables (Vercel project env).
  */
 

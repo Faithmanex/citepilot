@@ -1,6 +1,5 @@
 /**
  * Shared document-analysis orchestration.
- * Port of `citepilot-ai/src/citepilot_ai/services/analysis_pipeline.py`.
  */
 import {
   checkStyle,

@@ -1,6 +1,5 @@
 /**
  * OpenAlex metadata verification (multi-provider fallback).
- * Port of `citepilot-ai/src/citepilot_ai/services/openalex_service.py`.
  */
 import { getJson } from "./http";
 import type { JsonObject, ReferenceEntry } from "./types";

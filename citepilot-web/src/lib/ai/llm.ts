@@ -1,6 +1,5 @@
 /**
  * Gemini client with exponential-backoff retries and fallback models.
- * Node port of `citepilot-ai/src/citepilot_ai/services/llm.py`.
  */
 import { GoogleGenAI } from "@google/genai";
 import type { z } from "zod";

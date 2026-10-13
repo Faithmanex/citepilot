@@ -1,6 +1,5 @@
 /**
  * Crossref metadata verification.
- * Port of `citepilot-ai/src/citepilot_ai/services/crossref_service.py`.
  */
 import { getJson, HttpError } from "./http";
 import type { JsonObject, ReferenceEntry } from "./types";

@@ -1,6 +1,5 @@
 /**
  * Shared HTTP helpers for external bibliographic APIs.
- * Port of `citepilot-ai/src/citepilot_ai/services/http_client.py` using fetch.
  */
 import { aiConfig } from "./config";
 

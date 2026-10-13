@@ -1,6 +1,5 @@
 /**
  * Uncited factual/statistical claim detection.
- * Port of `citepilot-ai/src/citepilot_ai/services/uncited_claims_detector.py`.
  */
 import { callGemini, parseAndValidate } from "./llm";
 import { UncitedClaimsResponseSchema } from "./schemas";
