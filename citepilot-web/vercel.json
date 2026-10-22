@@ -2,12 +2,6 @@
   "framework": "nextjs",
   "buildCommand": "next build",
   "outputDirectory": ".next",
-  "rewrites": [
-    {
-      "source": "/api/v1/:path*",
-      "destination": "https://citepilot-ai-production.up.railway.app/api/v1/:path*"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",

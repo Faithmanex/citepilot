@@ -34,7 +34,8 @@ Flag ONLY specific third-party empirical claims, external statistical data/perce
 
 export async function detectUncitedClaims(
   bodyText: string,
-  paragraphsMeta: ParagraphMeta[]
+  paragraphsMeta: ParagraphMeta[],
+  deadline?: number
 ): Promise<JsonObject[]> {
   if (!bodyText || !bodyText.trim()) return [];
 
@@ -81,7 +82,12 @@ Return JSON with structure:
 }`;
 
     // No non-empty guard: text without unattributed claims legitimately yields zero.
-    const validated = await callGeminiValidated(prompt, UNCITED_CLAIMS_SYSTEM_PROMPT, UncitedClaimsResponseSchema);
+    const validated = await callGeminiValidated(
+      prompt,
+      UNCITED_CLAIMS_SYSTEM_PROMPT,
+      UncitedClaimsResponseSchema,
+      { deadline }
+    );
 
   return validated.uncited_claims.map((c) => ({
     code: "UNCITED_FACTUAL_CLAIM",

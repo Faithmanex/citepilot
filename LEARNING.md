@@ -13,6 +13,13 @@ The AI analysis service was ported from Python/FastAPI (`citepilot-ai/`, Railway
 - **Jev (TypeSafe) removed**: the opt-in decision layer (`src/lib/ai/jev.ts`, ADR-012) was deleted — verification is Crossref/OpenAlex metadata only, and retraction needs explicit Crossref signals (no title-prefix guessing). Do not reintroduce `TYPESAFE_*` variables.
 - **Gotcha**: the route handlers use the Node runtime (`export const runtime = "nodejs"`). Do not switch them to Edge — `Buffer`, `mammoth`, and `unpdf` require Node.
 
+## `FUNCTION_INVOCATION_TIMEOUT` on `/api/v1/*`
+
+Two independent causes, both fixed 2026-10-22:
+
+1. **Stale Railway rewrite.** `citepilot-web/vercel.json` still proxied `/api/v1/:path*` to `citepilot-ai-production.up.railway.app` (the retired Python service). Every API call went to a dead origin and hung until the platform timeout. There must be **no** rewrite — the route handlers live in this app. If you see a Railway URL in `vercel.json`, delete it.
+2. **Unbounded pipeline work.** `maxDuration = 60` is the function cap, but the pipeline (Gemini extraction → matching → style → Crossref/OpenAlex/retraction fan-out) had no internal budget and no concurrency cap, so large manuscripts/reference lists overran it. `runAnalysisPipeline` now takes a deadline from `ANALYSIS_BUDGET_MS` (default 50s), Gemini calls get `GEMINI_TIMEOUT_MS`, and provider verification uses `VERIFY_CONCURRENCY`. Past the deadline, stages are skipped and reported as `verification_unavailable` rather than being killed mid-response.
+
 ## TOML: dependencies must be under `[project]`
 
 In `pyproject.toml`, runtime dependencies must be placed directly under the `[project]` table per [PEP 621](https://peps.python.org/pep-0621/). If they end up under `[build-system]` (e.g. after a mis-edit), `uv` and `pip` silently ignore them — no error, no install.

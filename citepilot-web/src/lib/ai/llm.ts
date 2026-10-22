@@ -64,20 +64,39 @@ export async function mapWithConcurrency<T, R>(
 const RETRYABLE = /503|UNAVAILABLE|429|RESOURCE_EXHAUSTED/;
 
 /**
+ * Milliseconds left before `deadline` (an epoch timestamp). `Infinity` when no
+ * deadline was supplied.
+ */
+function remainingMs(deadline?: number): number {
+  if (!deadline) return Number.POSITIVE_INFINITY;
+  return deadline - Date.now();
+}
+
+/**
  * Calls the configured Gemini model with retries on transient errors.
  * Returns raw text. Throws `AIServiceError` when every attempt fails.
  * There are intentionally no fallback models: one model (`GEMINI_MODEL`),
  * retried with backoff.
+ *
+ * `deadline` is an epoch timestamp: once it passes, no further attempt (or
+ * backoff sleep) is started, so a slow document can't run the function past
+ * the platform timeout.
  */
 export async function callGemini(
   prompt: string,
-  systemInstruction?: string
+  systemInstruction?: string,
+  deadline?: number
 ): Promise<string> {
   const ai = getClient();
   const model = aiConfig.geminiModel;
   let lastError: unknown = null;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
+    if (remainingMs(deadline) <= 0) {
+      throw new AIServiceError(
+        `Analysis time budget exhausted before calling ${model}.`
+      );
+    }
     try {
       const response = await ai.models.generateContent({
         model,
@@ -86,6 +105,7 @@ export async function callGemini(
           temperature: 0.1,
           topP: 0.95,
           responseMimeType: "application/json",
+          httpOptions: { timeout: Math.min(aiConfig.geminiTimeoutMs, Math.max(1, remainingMs(deadline))) },
           ...(systemInstruction ? { systemInstruction } : {}),
         },
       });
@@ -94,7 +114,9 @@ export async function callGemini(
     } catch (error) {
       lastError = error;
       if (RETRYABLE.test(String(error))) {
-        await sleep(2 ** attempt * 1000 + 500);
+        const backoff = 2 ** attempt * 1000 + 500;
+        if (remainingMs(deadline) <= backoff) break;
+        await sleep(backoff);
       } else {
         break;
       }
@@ -169,11 +191,13 @@ export interface ValidatedCallOptions {
    * findings. Omit for calls where empty is a common legitimate outcome
    * (e.g. style warnings, uncited claims on clean text).
    */
-  nonEmptyIfInputOver?: {
+   nonEmptyIfInputOver?: {
     keys: string[];
     inputChars: number;
     threshold?: number;
   };
+  /** Epoch timestamp after which no further attempt is started. */
+  deadline?: number;
 }
 
 /**
@@ -191,8 +215,9 @@ export async function callGeminiValidated<T extends Record<string, unknown>>(
   const retries = opts.retries ?? 2;
   let lastError: unknown = new AIServiceError("Model returned no usable result.");
   for (let attempt = 0; attempt <= retries; attempt += 1) {
+    if (remainingMs(opts.deadline) <= 0) break;
     try {
-      const raw = await callGemini(prompt, systemInstruction);
+      const raw = await callGemini(prompt, systemInstruction, opts.deadline);
       const parsed = parseAndValidate(raw, schema);
       const rule = opts.nonEmptyIfInputOver;
       if (rule && rule.inputChars > (rule.threshold ?? 1000)) {
@@ -209,7 +234,11 @@ export async function callGeminiValidated<T extends Record<string, unknown>>(
       return parsed;
     } catch (err) {
       lastError = err;
-      if (attempt < retries) await sleep(1500 * (attempt + 1));
+      if (attempt < retries) {
+        const backoff = 1500 * (attempt + 1);
+        if (remainingMs(opts.deadline) <= backoff) break;
+        await sleep(backoff);
+      }
     }
   }
   throw lastError;

@@ -1,12 +1,14 @@
 /**
  * Shared document-analysis orchestration.
  */
+import { aiConfig } from "./config";
 import {
   checkStyle,
   extractCitations,
   matchCitationsToReferences,
   parseReferences,
 } from "./citation-extractor";
+import { mapWithConcurrency } from "./llm";
 import { validateReferenceWithCrossref } from "./crossref";
 import { validateReferenceWithOpenalex } from "./openalex";
 import { detectUncitedClaims } from "./uncited-claims";
@@ -39,10 +41,18 @@ export async function runAnalysisPipeline(
   paraMeta: ParagraphMeta[],
   citationStyle: string
 ): Promise<PipelineResult> {
+  // Hard internal budget: the Vercel function is killed at `maxDuration`, so
+  // every stage below checks this deadline and degrades instead of overrunning.
+  const deadline = Date.now() + aiConfig.analysisBudgetMs;
+
   const settled = await Promise.allSettled([
-    bodyText ? extractCitations(bodyText, citationStyle) : Promise.resolve([]),
-    refText ? parseReferences(refText) : Promise.resolve([]),
-    bodyText ? detectUncitedClaims(bodyText, paraMeta) : Promise.resolve([]),
+    bodyText
+      ? extractCitations(bodyText, citationStyle, deadline)
+      : Promise.resolve([]),
+    refText ? parseReferences(refText, deadline) : Promise.resolve([]),
+    bodyText
+      ? detectUncitedClaims(bodyText, paraMeta, deadline)
+      : Promise.resolve([]),
   ]);
 
   const firstRejection = settled.find((r) => r.status === "rejected");
@@ -56,16 +66,19 @@ export async function runAnalysisPipeline(
 
   const matches: MatchEntry[] =
     citations.length && refs.length
-      ? await matchCitationsToReferences(citations, refs)
+      ? await matchCitationsToReferences(citations, refs, deadline)
       : [];
 
-  const styleWarnings = bodyText
-    ? await checkStyle(bodyText, citationStyle, citations, refs)
-    : [];
+  // Style checking is the least critical stage: skip it when the budget is
+  // already spent rather than eating into metadata verification.
+  const styleWarnings =
+    bodyText && Date.now() < deadline
+      ? await checkStyle(bodyText, citationStyle, citations, refs, deadline)
+      : [];
 
   const citationResults = buildCitationResults(citations, matches);
   const { crossrefResults, openalexResults, retractionResults } =
-    await verifyReferences(refs);
+    await verifyReferences(refs, deadline);
   const refResults = buildReferenceResults(
     refs,
     citationResults,
@@ -128,7 +141,10 @@ function buildCitationResults(
   });
 }
 
-async function verifyReferences(refs: ReferenceEntry[]): Promise<{
+async function verifyReferences(
+  refs: ReferenceEntry[],
+  deadline: number
+): Promise<{
   crossrefResults: JsonObject[];
   openalexResults: JsonObject[];
   retractionResults: JsonObject[];
@@ -139,36 +155,47 @@ async function verifyReferences(refs: ReferenceEntry[]): Promise<{
     message: `${provider} verification failed: ${(error as Error).message}`,
   });
 
-  const crossrefSettled = await Promise.allSettled(
-    refs.map((r) => validateReferenceWithCrossref(r))
+  const outOfTime = (provider: string): JsonObject => ({
+    status: "verification_unavailable",
+    provider,
+    message: `${provider} verification was skipped because the analysis time budget ran out.`,
+    how_to_fix:
+      "Re-run the audit on a shorter reference list so every entry can be verified, or check these references manually.",
+  });
+
+  const expired = (): boolean => Date.now() >= deadline;
+  // Reference lists can be long; unbounded fan-out both trips provider rate
+  // limits and burns the function's time budget waiting on the slowest tail.
+  const limit = Math.max(1, aiConfig.verifyConcurrency);
+
+  const crossrefSettled = await mapWithConcurrency(refs, limit, (r) =>
+    expired() ? Promise.resolve(outOfTime("Crossref")) : validateReferenceWithCrossref(r)
   );
-  const crossrefResults = crossrefSettled.map((r) =>
+  const crossrefResults: JsonObject[] = crossrefSettled.map((r) =>
     r.status === "fulfilled" ? r.value : unavailable("Crossref", r.reason)
   );
 
-  const openalexSettled = await Promise.allSettled(
-    refs.map((r, i) => {
-      const cr = crossrefResults[i];
-      if (!cr["crossref_verified"] && (r.parsed_doi || r.parsed_title)) {
-        return validateReferenceWithOpenalex(r);
-      }
-      return Promise.resolve({});
-    })
-  );
-  const openalexResults = openalexSettled.map((r) =>
+  const openalexSettled = await mapWithConcurrency(refs, limit, (r, i) => {
+    const cr = crossrefResults[i];
+    if (expired()) return Promise.resolve(outOfTime("OpenAlex"));
+    if (!cr["crossref_verified"] && (r.parsed_doi || r.parsed_title)) {
+      return validateReferenceWithOpenalex(r);
+    }
+    return Promise.resolve({});
+  });
+  const openalexResults: JsonObject[] = openalexSettled.map((r) =>
     r.status === "fulfilled" ? r.value : unavailable("OpenAlex", r.reason)
   );
 
-  const retractionSettled = await Promise.allSettled(
-    refs.map((r, i) =>
-      checkRetractionStatus(
-        r.parsed_doi,
-        r.parsed_title,
-        (crossrefResults[i]["raw_work"] as JsonObject | undefined) || null
-      )
-    )
-  );
-  const retractionResults = retractionSettled.map((r) =>
+  const retractionSettled = await mapWithConcurrency(refs, limit, (r, i) => {
+    if (expired()) return Promise.resolve(outOfTime("Retraction check"));
+    return checkRetractionStatus(
+      r.parsed_doi,
+      r.parsed_title,
+      (crossrefResults[i]["raw_work"] as JsonObject | undefined) || null
+    );
+  });
+  const retractionResults: JsonObject[] = retractionSettled.map((r) =>
     r.status === "fulfilled" ? r.value : unavailable("Retraction check", r.reason)
   );
 

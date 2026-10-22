@@ -16,7 +16,8 @@ Extract parenthetical citations, narrative citations, numeric citations, and foo
 
 async function extractCitationsSingleBatch(
   paragraphsBatch: Array<{ paragraph_index: number; text: string }>,
-  citationStyle: string
+  citationStyle: string,
+  deadline?: number
 ): Promise<CitationEntry[]> {
   const payload = JSON.stringify(paragraphsBatch);
   const prompt = `Analyze the following document paragraphs and extract all in-text citations.
@@ -46,14 +47,18 @@ Return a JSON object with this structure:
     prompt,
     CITATION_EXTRACTION_SYSTEM_PROMPT,
     CitationsResponseSchema,
-    { nonEmptyIfInputOver: { keys: ["citations"], inputChars: payload.length } }
+    {
+      nonEmptyIfInputOver: { keys: ["citations"], inputChars: payload.length },
+      deadline,
+    }
   );
   return validated.citations as CitationEntry[];
 }
 
 export async function extractCitations(
   text: string,
-  citationStyle: string
+  citationStyle: string,
+  deadline?: number
 ): Promise<CitationEntry[]> {
   const paragraphs = text.split("\n\n");
   const docStructure: Array<{ paragraph_index: number; text: string }> = [];
@@ -65,7 +70,7 @@ export async function extractCitations(
   if (docStructure.length === 0) return [];
 
   if (docStructure.length <= 30) {
-    return extractCitationsSingleBatch(docStructure, citationStyle);
+    return extractCitationsSingleBatch(docStructure, citationStyle, deadline);
   }
 
   const chunkSize = 25;
@@ -82,7 +87,7 @@ export async function extractCitations(
   const results = await mapWithConcurrency(
     batches,
     3,
-    (batch) => extractCitationsSingleBatch(batch, citationStyle)
+    (batch) => extractCitationsSingleBatch(batch, citationStyle, deadline)
   );
 
   const all: CitationEntry[] = [];
@@ -117,7 +122,8 @@ ABSOLUTE EXCLUSIONS — DO NOT EXTRACT: Table of Contents lines & section titles
 
 async function parseReferencesSingleBatch(
   chunkText: string,
-  startingPos = 1
+  startingPos = 1,
+  deadline?: number
 ): Promise<ReferenceEntry[]> {
   const schemaExample = JSON.stringify(
     {
@@ -155,17 +161,23 @@ ${schemaExample}`;
     prompt,
     REFERENCE_PARSING_SYSTEM_PROMPT,
     ReferencesResponseSchema,
-    { nonEmptyIfInputOver: { keys: ["references"], inputChars: chunkText.length } }
+    {
+      nonEmptyIfInputOver: { keys: ["references"], inputChars: chunkText.length },
+      deadline,
+    }
   );
   return validated.references as ReferenceEntry[];
 }
 
-export async function parseReferences(referenceText: string): Promise<ReferenceEntry[]> {
+export async function parseReferences(
+  referenceText: string,
+  deadline?: number
+): Promise<ReferenceEntry[]> {
   if (!referenceText || !referenceText.trim()) return [];
 
   const cleanText = referenceText.trim();
   if (cleanText.length <= 30000) {
-    return parseReferencesSingleBatch(cleanText, 1);
+    return parseReferencesSingleBatch(cleanText, 1, deadline);
   }
 
   const lines = cleanText.split("\n");
@@ -186,7 +198,7 @@ export async function parseReferences(referenceText: string): Promise<ReferenceE
   const results = await mapWithConcurrency(
     chunks,
     3,
-    (c) => parseReferencesSingleBatch(c, 1)
+    (c) => parseReferencesSingleBatch(c, 1, deadline)
   );
 
   const all: ReferenceEntry[] = [];
@@ -221,7 +233,8 @@ Rules:
 
 export async function matchCitationsToReferences(
   citations: CitationEntry[],
-  references: ReferenceEntry[]
+  references: ReferenceEntry[],
+  deadline?: number
 ): Promise<MatchEntry[]> {
   if (!citations.length || !references.length) return [];
 
@@ -273,6 +286,7 @@ ${schemaExample}`;
       keys: ["matches"],
       inputChars: JSON.stringify(citations).length + JSON.stringify(references).length,
     },
+    deadline,
   });
   return validated.matches as MatchEntry[];
 }
@@ -288,7 +302,8 @@ export async function checkStyle(
   text: string,
   citationStyle: string,
   citations: CitationEntry[],
-  references: ReferenceEntry[]
+  references: ReferenceEntry[],
+  deadline?: number
 ): Promise<JsonObject[]> {
   const schemaExample = JSON.stringify(
     {
@@ -325,6 +340,8 @@ Return a JSON object:
 ${schemaExample}`;
 
   // No non-empty guard: a clean document legitimately yields zero warnings.
-  const validated = await callGeminiValidated(prompt, STYLE_CHECK_SYSTEM_PROMPT, StyleWarningsResponseSchema);
+  const validated = await callGeminiValidated(prompt, STYLE_CHECK_SYSTEM_PROMPT, StyleWarningsResponseSchema, {
+    deadline,
+  });
   return validated.style_warnings as JsonObject[];
 }

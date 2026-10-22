@@ -150,6 +150,12 @@ export async function POST(request: Request): Promise<NextResponse> {
   } catch (err) {
     if (err instanceof AIServiceError) {
       console.error("AI Service Failure during document analysis:", err);
+      if (/time budget/i.test(err.message)) {
+        return errorResponse(
+          504,
+          "Analysis exceeded the server time limit for this document. Try a shorter manuscript or a shorter reference list."
+        );
+      }
       return errorResponse(
         503,
         "AI Processing Service is currently unavailable. Please try again shortly."

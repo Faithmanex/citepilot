@@ -20,6 +20,12 @@ export const aiConfig = {
   maxUploadMb: num(process.env.MAX_UPLOAD_MB, 10),
   maxTextChars: num(process.env.MAX_TEXT_CHARS, 200_000),
   rateLimitPerMinute: num(process.env.RATE_LIMIT_PER_MINUTE, 60),
+  // Latency budgets. Vercel kills the function at `maxDuration` (60s), so the
+  // pipeline must finish inside a smaller budget and report degraded results
+  // instead of being terminated mid-response (FUNCTION_INVOCATION_TIMEOUT).
+  analysisBudgetMs: num(process.env.ANALYSIS_BUDGET_MS, 50_000),
+  geminiTimeoutMs: num(process.env.GEMINI_TIMEOUT_MS, 25_000),
+  verifyConcurrency: num(process.env.VERIFY_CONCURRENCY, 6),
 } as const;
 
 export const SERVICE_VERSION = "0.1.0";
