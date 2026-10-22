@@ -1,9 +1,9 @@
 /**
- * Gemini client with exponential-backoff retries and fallback models.
+ * Gemini client with exponential-backoff retries on a single configured model.
  */
 import { GoogleGenAI } from "@google/genai";
 import type { z } from "zod";
-import { aiConfig, FALLBACK_MODELS } from "./config";
+import { aiConfig } from "./config";
 
 export class AIServiceError extends Error {
   constructor(message: string) {
@@ -64,44 +64,45 @@ export async function mapWithConcurrency<T, R>(
 const RETRYABLE = /503|UNAVAILABLE|429|RESOURCE_EXHAUSTED/;
 
 /**
- * Calls Gemini with retries across candidate models. Returns raw text.
- * Throws `AIServiceError` when every candidate fails.
+ * Calls the configured Gemini model with retries on transient errors.
+ * Returns raw text. Throws `AIServiceError` when every attempt fails.
+ * There are intentionally no fallback models: one model (`GEMINI_MODEL`),
+ * retried with backoff.
  */
 export async function callGemini(
   prompt: string,
   systemInstruction?: string
 ): Promise<string> {
   const ai = getClient();
+  const model = aiConfig.geminiModel;
   let lastError: unknown = null;
 
-  for (const model of FALLBACK_MODELS) {
-    for (let attempt = 0; attempt < 3; attempt += 1) {
-      try {
-        const response = await ai.models.generateContent({
-          model,
-          contents: prompt,
-          config: {
-            temperature: 0.1,
-            topP: 0.95,
-            responseMimeType: "application/json",
-            ...(systemInstruction ? { systemInstruction } : {}),
-          },
-        });
-        const text = response.text;
-        if (text) return text;
-      } catch (error) {
-        lastError = error;
-        if (RETRYABLE.test(String(error))) {
-          await sleep(2 ** attempt * 1000 + 500);
-        } else {
-          break;
-        }
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          temperature: 0.1,
+          topP: 0.95,
+          responseMimeType: "application/json",
+          ...(systemInstruction ? { systemInstruction } : {}),
+        },
+      });
+      const text = response.text;
+      if (text) return text;
+    } catch (error) {
+      lastError = error;
+      if (RETRYABLE.test(String(error))) {
+        await sleep(2 ** attempt * 1000 + 500);
+      } else {
+        break;
       }
     }
   }
 
   throw new AIServiceError(
-    `Gemini API execution failed across all candidate models. Last error: ${lastError}`
+    `Gemini API execution failed on model ${model}. Last error: ${lastError}`
   );
 }
 

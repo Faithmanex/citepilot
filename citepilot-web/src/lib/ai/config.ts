@@ -12,7 +12,7 @@ function num(value: string | undefined, fallback: number): number {
 
 export const aiConfig = {
   googleApiKey: (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim(),
-  geminiModel: (process.env.GEMINI_MODEL || "gemini-2.5-flash-lite").trim(),
+  geminiModel: (process.env.GEMINI_MODEL || "gemini-3.8-flash").trim(),
   logLevel: (process.env.LOG_LEVEL || "info").toLowerCase(),
   crossrefMailto: (process.env.CROSSREF_MAILTO || "support@citepilot.ai").trim(),
   // Security / limits
@@ -36,21 +36,3 @@ export const ALLOWED_CITATION_STYLES = new Set([
   "oscola",
   "turabian",
 ]);
-
-/**
- * Gemini candidate models, tried in order (deduped, preserving order).
- * Verified against the live models list — the retired 2.0 family 404s and
- * must not be listed here.
- */
-export const FALLBACK_MODELS: string[] = Array.from(
-  new Set(
-    [
-      aiConfig.geminiModel,
-      "gemini-2.5-flash-lite",
-      "gemini-flash-lite-latest",
-      "gemini-3.5-flash-lite",
-      "gemini-2.5-flash",
-      "gemini-flash-latest",
-    ].filter((m): m is string => Boolean(m))
-  )
-);

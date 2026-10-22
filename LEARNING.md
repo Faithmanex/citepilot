@@ -72,7 +72,7 @@ The top-level `README.md` document index and directory tree previously did not m
 | `PAYPAL_WEBHOOK_ID` | PayPal webhook ID (required in prod — webhooks without it are rejected) |
 | `PAYPAL_API_BASE` | Optional, defaults to `https://api-m.paypal.com` |
 | `GOOGLE_API_KEY` | **Required for analysis** — powers the `/api/v1/analyse` Gemini pipeline (503 if missing) |
-| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-flash-lite` |
+| `GEMINI_MODEL` | Optional, defaults to `gemini-3.8-flash` |
 | `CROSSREF_MAILTO` | Optional contact email for the Crossref polite pool |
 | `API_KEY` | Optional — if set, clients must send `X-API-Key` or `Authorization: Bearer <key>` |
 | `MAX_UPLOAD_MB` / `MAX_TEXT_CHARS` / `RATE_LIMIT_PER_MINUTE` | Optional AI request limits |
