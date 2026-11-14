@@ -56,3 +56,27 @@ export interface ParagraphMeta {
 }
 
 export type JsonObject = Record<string, unknown>;
+
+/**
+ * Outcome of one analysis stage. Reported to the client so an audit can never
+ * present an incomplete run as a clean result.
+ *
+ * - `completed`   the stage ran and produced usable output
+ * - `unavailable` the stage was attempted but failed
+ * - `skipped`     the stage was not run (no input, or the budget ran out)
+ */
+export interface CheckStatus {
+  name:
+    | "citations"
+    | "references"
+    | "uncited_claims"
+    | "matching"
+    | "style"
+    | "verification";
+  label: string;
+  status: "completed" | "unavailable" | "skipped";
+  /** Why a check was skipped: not applicable, or the time budget ran out. */
+  reason?: "not_applicable" | "budget";
+  message?: string;
+  duration_ms?: number;
+}

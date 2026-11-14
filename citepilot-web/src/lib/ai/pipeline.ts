@@ -1,5 +1,9 @@
 /**
  * Shared document-analysis orchestration.
+ *
+ * Every stage is individually bounded and individually reported. A failure in
+ * one stage degrades the audit to `partial` and is surfaced through `checks`
+ * instead of being turned into an empty (falsely clean) result.
  */
 import { aiConfig } from "./config";
 import {
@@ -14,7 +18,9 @@ import { validateReferenceWithOpenalex } from "./openalex";
 import { detectUncitedClaims } from "./uncited-claims";
 import { calculatePublicationRecency } from "./recency";
 import { checkRetractionStatus } from "./retraction";
+import { logStage } from "./log";
 import type {
+  CheckStatus,
   CitationEntry,
   JsonObject,
   MatchEntry,
@@ -33,59 +39,233 @@ export interface PipelineResult {
   style_warnings: JsonObject[];
   uncited_claims: JsonObject[];
   recency: JsonObject;
+  /** `completed` only when every attempted stage succeeded. */
+  status: "completed" | "partial";
+  checks: CheckStatus[];
+}
+
+export interface PipelineContext {
+  requestId?: string;
+  /** Overall deadline (epoch ms). Defaults to now + ANALYSIS_BUDGET_MS. */
+  deadline?: number;
+}
+
+const STAGE_LABELS = {
+  citations: "In-text citation extraction",
+  references: "Reference list parsing",
+  uncited_claims: "Uncited claim detection",
+  matching: "Citation-to-reference matching",
+  style: "Citation style checking",
+  verification: "Crossref / OpenAlex verification",
+} as const;
+
+function describeError(error: unknown): { kind: string; message: string } {
+  const kind = String((error as { kind?: unknown })?.kind || "provider_error");
+  switch (kind) {
+    case "budget_exhausted":
+      return {
+        kind,
+        message:
+          "This check could not finish within the analysis time limit. Re-run the audit on a shorter manuscript, or verify these items manually.",
+      };
+    case "invalid_config":
+      return {
+        kind,
+        message:
+          "The analysis service is not configured correctly, so this check could not run. The manuscript was preserved; retrying will not help until the configuration is fixed.",
+      };
+    case "rate_limit":
+      return {
+        kind,
+        message:
+          "The AI provider rate limit was reached, so this check could not complete. Wait a minute and retry the audit.",
+      };
+    case "timeout":
+      return {
+        kind,
+        message:
+          "The AI provider timed out before this check completed. Retrying may succeed.",
+      };
+    case "invalid_response":
+      return {
+        kind,
+        message:
+          "The AI provider returned an unusable response for this check. Retrying may succeed.",
+      };
+    default:
+      return {
+        kind,
+        message:
+          "The AI provider failed while running this check. Retrying may succeed.",
+      };
+  }
 }
 
 export async function runAnalysisPipeline(
   bodyText: string,
   refText: string,
   paraMeta: ParagraphMeta[],
-  citationStyle: string
+  citationStyle: string,
+  context: PipelineContext = {}
 ): Promise<PipelineResult> {
-  // Hard internal budget: the Vercel function is killed at `maxDuration`, so
-  // every stage below checks this deadline and degrades instead of overrunning.
-  const deadline = Date.now() + aiConfig.analysisBudgetMs;
+  const requestId = context.requestId || "req_unknown";
+  const deadline = context.deadline ?? Date.now() + aiConfig.analysisBudgetMs;
+  const checks: CheckStatus[] = [];
 
-  const settled = await Promise.allSettled([
-    bodyText
-      ? extractCitations(bodyText, citationStyle, deadline)
-      : Promise.resolve([]),
-    refText ? parseReferences(refText, deadline) : Promise.resolve([]),
-    bodyText
-      ? detectUncitedClaims(bodyText, paraMeta, deadline)
-      : Promise.resolve([]),
+  const record = (check: CheckStatus) => {
+    checks.push(check);
+    logStage({
+      requestId,
+      stage: check.name,
+      status: check.status,
+      durationMs: check.duration_ms ?? 0,
+    });
+  };
+
+  const runStage = async <T>(
+    name: CheckStatus["name"],
+    enabled: boolean,
+    task: () => Promise<T>
+  ): Promise<{ value: T | null; error: unknown | null; skipped: boolean }> => {
+    const stageStart = Date.now();
+    if (!enabled) {
+      record({
+        name,
+        label: STAGE_LABELS[name],
+        status: "skipped",
+        reason: "not_applicable",
+        message: "Not applicable to this audit mode or document.",
+        duration_ms: 0,
+      });
+      return { value: null, error: null, skipped: true };
+    }
+    if (Date.now() >= deadline) {
+      record({
+        name,
+        label: STAGE_LABELS[name],
+        status: "skipped",
+        reason: "budget",
+        message: "Skipped because the analysis time budget ran out.",
+        duration_ms: 0,
+      });
+      return { value: null, error: null, skipped: true };
+    }
+    try {
+      const value = await task();
+      record({
+        name,
+        label: STAGE_LABELS[name],
+        status: "completed",
+        duration_ms: Date.now() - stageStart,
+      });
+      return { value, error: null, skipped: false };
+    } catch (error) {
+      const described = describeError(error);
+      record({
+        name,
+        label: STAGE_LABELS[name],
+        status: "unavailable",
+        message: described.message,
+        duration_ms: Date.now() - stageStart,
+      });
+      if (described.kind === "budget_exhausted") {
+        // Budget expiry is expected degradation, not a hard failure.
+        return { value: null, error, skipped: true };
+      }
+      return { value: null, error, skipped: false };
+    }
+  };
+
+  const [citationsStage, refsStage, claimsStage] = await Promise.all([
+    runStage("citations", Boolean(bodyText), () =>
+      extractCitations(bodyText, citationStyle, deadline)
+    ),
+    runStage("references", Boolean(refText), () =>
+      parseReferences(refText, deadline)
+    ),
+    runStage("uncited_claims", Boolean(bodyText), () =>
+      detectUncitedClaims(bodyText, paraMeta, deadline)
+    ),
   ]);
 
-  const firstRejection = settled.find((r) => r.status === "rejected");
-  if (firstRejection && firstRejection.status === "rejected") {
-    throw firstRejection.reason;
-  }
+  const citations = citationsStage.value ?? [];
+  const refs = refsStage.value ?? [];
+  const uncitedClaims = claimsStage.value ?? [];
 
-  const citations = settled[0].status === "fulfilled" ? settled[0].value : [];
-  const refs = settled[1].status === "fulfilled" ? settled[1].value : [];
-  const uncitedClaims = settled[2].status === "fulfilled" ? settled[2].value : [];
+  const matchStage = await runStage(
+    "matching",
+    Boolean(citations.length && refs.length),
+    () => matchCitationsToReferences(citations, refs, deadline)
+  );
+  const matches = matchStage.value ?? [];
 
-  const matches: MatchEntry[] =
-    citations.length && refs.length
-      ? await matchCitationsToReferences(citations, refs, deadline)
-      : [];
+  const styleStage = await runStage("style", Boolean(bodyText), () =>
+    checkStyle(bodyText, citationStyle, citations, refs, deadline)
+  );
+  const styleWarnings = styleStage.value ?? [];
 
-  // Style checking is the least critical stage: skip it when the budget is
-  // already spent rather than eating into metadata verification.
-  const styleWarnings =
-    bodyText && Date.now() < deadline
-      ? await checkStyle(bodyText, citationStyle, citations, refs, deadline)
-      : [];
+  const verificationStart = Date.now();
+  const verification = await verifyReferences(refs, deadline);
+  const verificationAttempted = refs.length > 0;
+  record({
+    name: "verification",
+    label: STAGE_LABELS.verification,
+    status: verificationAttempted
+      ? verification.unavailableCount === refs.length
+        ? "unavailable"
+        : "completed"
+      : "skipped",
+    ...(verificationAttempted && verification.unavailableCount === refs.length
+      ? {
+          message:
+            "Metadata verification was unavailable for every reference. These references are unverified, not confirmed correct.",
+        }
+      : verificationAttempted && verification.unavailableCount > 0
+        ? {
+            message: `${verification.unavailableCount} of ${refs.length} references could not be verified.`,
+          }
+        : !verificationAttempted
+          ? { reason: "not_applicable", message: "No reference entries were available to verify." }
+          : {}),
+    duration_ms: Date.now() - verificationStart,
+  });
 
   const citationResults = buildCitationResults(citations, matches);
-  const { crossrefResults, openalexResults, retractionResults } =
-    await verifyReferences(refs, deadline);
   const refResults = buildReferenceResults(
     refs,
     citationResults,
-    crossrefResults,
-    openalexResults,
-    retractionResults
+    verification.crossrefResults,
+    verification.openalexResults,
+    verification.retractionResults
   );
+
+  const attempted = checks.filter((c) => c.status !== "skipped");
+  const failed = checks.filter(
+    (c) =>
+      c.status === "unavailable" ||
+      (c.status === "skipped" && c.reason === "budget")
+  );
+
+  // Everything that could run failed and no verification or parsed content
+  // exists: surface the first real provider error so the client can show an
+  // actionable retry path instead of an empty "clean" audit.
+  const coreErrors = [citationsStage, refsStage, claimsStage, styleStage]
+    .map((s) => s.error)
+    .filter((e): e is NonNullable<typeof e> => Boolean(e));
+  const hasUsableOutput =
+    citations.length > 0 ||
+    refs.length > 0 ||
+    uncitedClaims.length > 0 ||
+    styleWarnings.length > 0 ||
+    verification.unavailableCount < refs.length;
+  if (
+    coreErrors.length > 0 &&
+    attempted.length > 0 &&
+    attempted.every((c) => c.status === "unavailable") &&
+    !hasUsableOutput
+  ) {
+    throw coreErrors[0];
+  }
 
   return {
     citations: citationResults,
@@ -94,6 +274,8 @@ export async function runAnalysisPipeline(
     style_warnings: styleWarnings,
     uncited_claims: uncitedClaims,
     recency: calculatePublicationRecency(refResults),
+    status: failed.length > 0 ? "partial" : "completed",
+    checks,
   };
 }
 
@@ -148,17 +330,29 @@ async function verifyReferences(
   crossrefResults: JsonObject[];
   openalexResults: JsonObject[];
   retractionResults: JsonObject[];
+  unavailableCount: number;
 }> {
-  const unavailable = (provider: string, error: unknown): JsonObject => ({
-    status: "verification_unavailable",
-    provider,
-    message: `${provider} verification failed: ${(error as Error).message}`,
-  });
+  const unavailable = (provider: string, error: unknown): JsonObject => {
+    const kind = String((error as { kind?: unknown })?.kind || "provider_error");
+    const reason =
+      kind === "budget_exhausted"
+        ? "the analysis time budget ran out"
+        : "the provider request failed";
+    return {
+      status: "verification_unavailable",
+      provider,
+      message: `${provider} verification could not complete: ${reason}. This reference is unverified, not confirmed correct.`,
+      how_to_fix:
+        kind === "budget_exhausted"
+          ? "Re-run the audit on a shorter reference list so every entry can be verified, or check this reference manually."
+          : "Retry the audit. If the provider stays unavailable, check this reference manually.",
+    };
+  };
 
   const outOfTime = (provider: string): JsonObject => ({
     status: "verification_unavailable",
     provider,
-    message: `${provider} verification was skipped because the analysis time budget ran out.`,
+    message: `${provider} verification was skipped because the analysis time budget ran out. This reference is unverified, not confirmed correct.`,
     how_to_fix:
       "Re-run the audit on a shorter reference list so every entry can be verified, or check these references manually.",
   });
@@ -199,7 +393,16 @@ async function verifyReferences(
     r.status === "fulfilled" ? r.value : unavailable("Retraction check", r.reason)
   );
 
-  return { crossrefResults, openalexResults, retractionResults };
+  const unavailableCount = crossrefResults.filter(
+    (r) => r["status"] === "verification_unavailable"
+  ).length;
+
+  return {
+    crossrefResults,
+    openalexResults,
+    retractionResults,
+    unavailableCount,
+  };
 }
 
 function buildReferenceResults(

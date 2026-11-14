@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { checkAuth, checkRateLimit } from "@/lib/ai/auth";
-import { aiConfig, ALLOWED_CITATION_STYLES } from "@/lib/ai/config";
-import { parseDocument, parseTxtStructured, splitBodyAndReferences } from "@/lib/ai/document-parser";
+import { aiConfig, normalizeCitationStyle, ALLOWED_CITATION_STYLES } from "@/lib/ai/config";
+import { parseDocument, parseTxtStructured, splitBodyAndReferences, UnsupportedFileTypeError } from "@/lib/ai/document-parser";
 import { AIServiceError } from "@/lib/ai/llm";
+import { logRequestSummary, newRequestId } from "@/lib/ai/log";
 import { runAnalysisPipeline } from "@/lib/ai/pipeline";
 import type { ParagraphMeta } from "@/lib/ai/types";
 
@@ -10,8 +11,27 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function errorResponse(status: number, detail: string): NextResponse {
-  return NextResponse.json({ detail }, { status });
+interface ErrorBody {
+  detail: string;
+  code: string;
+  retryable: boolean;
+  request_id: string;
+}
+
+function errorResponse(
+  status: number,
+  detail: string,
+  code: string,
+  retryable: boolean,
+  requestId: string
+): NextResponse {
+  const body: ErrorBody = {
+    detail,
+    code,
+    retryable,
+    request_id: requestId,
+  };
+  return NextResponse.json(body, { status });
 }
 
 function normalizeMode(mode: string): "full" | "reference_only" | null {
@@ -35,7 +55,69 @@ function isFileLike(value: unknown): value is FileLike {
   );
 }
 
+/**
+ * Maps a provider failure to a user-facing response. Every failure preserves
+ * the manuscript (the client never discards it) and says whether retrying can
+ * help.
+ */
+function providerErrorResponse(err: AIServiceError, requestId: string): NextResponse {
+  const preserved =
+    "Your manuscript was not changed or discarded — it is still in the editor.";
+
+  switch (err.kind) {
+    case "invalid_config":
+      return errorResponse(
+        503,
+        `The analysis service is unavailable because it is not configured correctly. Retrying will not help until an administrator fixes the configuration. ${preserved}`,
+        "ai_not_configured",
+        false,
+        requestId
+      );
+    case "budget_exhausted":
+      return errorResponse(
+        504,
+        `Analysis did not finish within the time limit for this document. Try a shorter manuscript or reference list, then retry. ${preserved}`,
+        "analysis_budget_exhausted",
+        true,
+        requestId
+      );
+    case "timeout":
+      return errorResponse(
+        504,
+        `The AI provider timed out before the audit finished. Retrying is appropriate. ${preserved}`,
+        "provider_timeout",
+        true,
+        requestId
+      );
+    case "rate_limit":
+      return errorResponse(
+        429,
+        `The AI provider rate limit was reached. Wait about a minute, then retry. ${preserved}`,
+        "provider_rate_limited",
+        true,
+        requestId
+      );
+    case "invalid_response":
+      return errorResponse(
+        502,
+        `The AI provider returned a response the audit could not use. Retrying is appropriate. ${preserved}`,
+        "provider_invalid_response",
+        true,
+        requestId
+      );
+    default:
+      return errorResponse(
+        503,
+        `The AI provider is currently unavailable. Retrying shortly is appropriate. ${preserved}`,
+        "provider_unavailable",
+        true,
+        requestId
+      );
+  }
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
+  const requestId = request.headers.get("x-request-id") || newRequestId();
   const authError = checkAuth(request);
   if (authError) return authError;
   const rateError = checkRateLimit(request);
@@ -47,7 +129,13 @@ export async function POST(request: Request): Promise<NextResponse> {
   try {
     form = await request.formData();
   } catch {
-    return errorResponse(400, "Invalid multipart form data.");
+    return errorResponse(
+      400,
+      "The request body was not valid multipart form data.",
+      "invalid_request",
+      false,
+      requestId
+    );
   }
 
   const textField = form.get("text");
@@ -56,20 +144,26 @@ export async function POST(request: Request): Promise<NextResponse> {
   const modeRawOrNull = form.get("mode");
 
   const text = typeof textField === "string" ? textField : "";
-  const style = String(styleRawOrNull ?? "apa7").trim().toLowerCase();
+  const style = normalizeCitationStyle(String(styleRawOrNull ?? "apa7"));
 
   const normMode = normalizeMode(String(modeRawOrNull ?? "full"));
   if (normMode === null) {
     return errorResponse(
       400,
-      `Invalid mode '${modeRawOrNull}'. Allowed mode values: 'full', 'manuscript', 'reference_only', 'references_only'.`
+      `Invalid mode '${modeRawOrNull}'. Allowed mode values: 'full', 'manuscript', 'reference_only', 'references_only'.`,
+      "invalid_mode",
+      false,
+      requestId
     );
   }
 
-  if (!ALLOWED_CITATION_STYLES.has(style)) {
+  if (!style) {
     return errorResponse(
       400,
-      `Invalid citation_style '${styleRawOrNull}'. Allowed: ${[...ALLOWED_CITATION_STYLES].sort().join(", ")}`
+      `Invalid citation_style '${styleRawOrNull}'. Allowed: ${[...ALLOWED_CITATION_STYLES].sort().join(", ")}`,
+      "invalid_citation_style",
+      false,
+      requestId
     );
   }
 
@@ -84,12 +178,21 @@ export async function POST(request: Request): Promise<NextResponse> {
       const arrayBuffer = await fileField.arrayBuffer();
       const buffer = Buffer.from(arrayBuffer);
       if (buffer.length === 0) {
-        return errorResponse(400, "Uploaded file is empty.");
+        return errorResponse(
+          400,
+          "The uploaded file is empty. Choose a file that contains text.",
+          "empty_file",
+          false,
+          requestId
+        );
       }
       if (buffer.length > maxUploadBytes) {
         return errorResponse(
           413,
-          `File too large (${buffer.length} bytes). Maximum is ${aiConfig.maxUploadMb} MB.`
+          `File too large (${(buffer.length / (1024 * 1024)).toFixed(1)} MB). Maximum is ${aiConfig.maxUploadMb} MB.`,
+          "file_too_large",
+          false,
+          requestId
         );
       }
 
@@ -103,21 +206,63 @@ export async function POST(request: Request): Promise<NextResponse> {
       if (bodyText.length + refText.length > aiConfig.maxTextChars) {
         return errorResponse(
           413,
-          `Document too large after extraction. Maximum is ${aiConfig.maxTextChars.toLocaleString()} characters.`
+          `Document too large after extraction. Maximum is ${aiConfig.maxTextChars.toLocaleString()} characters.`,
+          "text_too_large",
+          false,
+          requestId
+        );
+      }
+      if (!bodyText.trim() && !refText.trim()) {
+        return errorResponse(
+          422,
+          "No text could be read from this file. It may be an image-only scan or an unsupported format. Try a DOCX, PDF with selectable text, TXT, RTF, or BibTeX file.",
+          "unparseable_file",
+          false,
+          requestId
         );
       }
     } catch (err) {
-      console.error("Document parse error:", err);
-      return errorResponse(400, "Invalid or corrupt document file.");
+      if (err instanceof UnsupportedFileTypeError) {
+        return errorResponse(
+          415,
+          "That file type is not supported. Use a DOCX, PDF with selectable text, TXT, RTF, or BibTeX file.",
+          "unsupported_file",
+          false,
+          requestId
+        );
+      }
+      console.error(
+        JSON.stringify({
+          event: "document_parse_failed",
+          request_id: requestId,
+          error: (err as Error)?.name || "Error",
+        })
+      );
+      return errorResponse(
+        400,
+        "This file could not be read. It may be corrupt or password-protected. Try re-saving it, or paste the text instead.",
+        "corrupt_file",
+        false,
+        requestId
+      );
     }
   } else if (text) {
     if (!text.trim()) {
-      return errorResponse(400, "Provided text is empty.");
+      return errorResponse(
+        400,
+        "The pasted text is empty. Paste a manuscript or reference list first.",
+        "empty_text",
+        false,
+        requestId
+      );
     }
     if (text.length > aiConfig.maxTextChars) {
       return errorResponse(
         413,
-        `Text too large (${text.length.toLocaleString()} chars). Maximum is ${aiConfig.maxTextChars.toLocaleString()} characters.`
+        `Text too large (${text.length.toLocaleString()} chars). Maximum is ${aiConfig.maxTextChars.toLocaleString()} characters.`,
+        "text_too_large",
+        false,
+        requestId
       );
     }
     if (normMode === "reference_only") {
@@ -131,15 +276,37 @@ export async function POST(request: Request): Promise<NextResponse> {
       paraMeta = parseTxtStructured(bodyText);
     }
   } else {
-    return errorResponse(400, "Either 'text' or 'file' must be provided.");
+    return errorResponse(
+      400,
+      "Provide manuscript text or a document file to analyse.",
+      "missing_document",
+      false,
+      requestId
+    );
   }
 
   try {
-    const results = await runAnalysisPipeline(bodyText, refText, paraMeta, style);
+    const results = await runAnalysisPipeline(bodyText, refText, paraMeta, style, {
+      requestId,
+    });
     const elapsed = (Date.now() - start) / 1000;
 
-    return NextResponse.json({
+    logRequestSummary({
+      requestId,
+      status: results.status,
+      durationMs: Date.now() - start,
+      checks: results.checks,
       mode: normMode,
+      bodyChars: bodyText.length,
+      referenceChars: refText.length,
+    });
+
+    return NextResponse.json({
+      request_id: requestId,
+      mode: normMode,
+      citation_style: style,
+      status: results.status,
+      checks: results.checks,
       elapsed_seconds: Math.round(elapsed * 100) / 100,
       citations: results.citations,
       references: results.references,
@@ -149,19 +316,32 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   } catch (err) {
     if (err instanceof AIServiceError) {
-      console.error("AI Service Failure during document analysis:", err);
-      if (/time budget/i.test(err.message)) {
-        return errorResponse(
-          504,
-          "Analysis exceeded the server time limit for this document. Try a shorter manuscript or a shorter reference list."
-        );
-      }
-      return errorResponse(
-        503,
-        "AI Processing Service is currently unavailable. Please try again shortly."
+      console.error(
+        JSON.stringify({
+          event: "analysis_failed",
+          request_id: requestId,
+          error_kind: err.kind,
+          error_detail: (err.providerDetail || err.message)
+            .replace(/\s+/g, " ")
+            .slice(0, 300),
+          duration_ms: Date.now() - start,
+        })
       );
+      return providerErrorResponse(err, requestId);
     }
-    console.error("Analysis pipeline error:", err);
-    return errorResponse(500, "Analysis failed. Please try again shortly.");
+    console.error(
+      JSON.stringify({
+        event: "analysis_exception",
+        request_id: requestId,
+        duration_ms: Date.now() - start,
+      })
+    );
+    return errorResponse(
+      500,
+      "The audit failed unexpectedly. Your manuscript is preserved; retrying is appropriate.",
+      "analysis_failed",
+      true,
+      requestId
+    );
   }
 }

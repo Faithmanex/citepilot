@@ -1,15 +1,113 @@
 /**
- * Gemini client with exponential-backoff retries on a single configured model.
+ * Gemini client with bounded attempts, error classification, and retries that
+ * only run while the pipeline budget can still absorb them.
  */
 import { GoogleGenAI } from "@google/genai";
 import type { z } from "zod";
 import { aiConfig } from "./config";
 
+export type AIErrorKind =
+  | "timeout"
+  | "rate_limit"
+  | "invalid_config"
+  | "provider_error"
+  | "budget_exhausted"
+  | "invalid_response";
+
 export class AIServiceError extends Error {
-  constructor(message: string) {
+  readonly kind: AIErrorKind;
+  readonly retryable: boolean;
+  /** Safe-to-log provider detail. Never contains manuscript content or keys. */
+  readonly providerDetail?: string;
+
+  constructor(
+    message: string,
+    options: {
+      kind?: AIErrorKind;
+      retryable?: boolean;
+      providerDetail?: string;
+    } = {}
+  ) {
     super(message);
     this.name = "AIServiceError";
+    this.kind = options.kind ?? "provider_error";
+    this.retryable =
+      options.retryable ??
+      (this.kind === "timeout" ||
+        this.kind === "rate_limit" ||
+        this.kind === "provider_error");
+    this.providerDetail = options.providerDetail;
   }
+}
+
+/**
+ * Classifies a provider SDK error without leaking its message into user-facing
+ * copy. The raw message is only used to pick the category and to build a
+ * sanitized detail string for server logs.
+ */
+export function classifyProviderError(error: unknown): AIServiceError {
+  if (error instanceof AIServiceError) return error;
+
+  const message = String(
+    (error as { message?: unknown })?.message ?? error ?? ""
+  );
+  const status = Number(
+    (error as { status?: unknown })?.status ??
+      (error as { code?: unknown })?.code ??
+      0
+  );
+  const detail = message.replace(/\s+/g, " ").slice(0, 300);
+
+  if (
+    /API_KEY_INVALID|API key not valid|PERMISSION_DENIED|UNAUTHENTICATED|401|403/i.test(
+      message
+    ) ||
+    status === 401 ||
+    status === 403
+  ) {
+    return new AIServiceError(
+      "The configured Gemini credentials were rejected. Check GOOGLE_API_KEY.",
+      { kind: "invalid_config", retryable: false, providerDetail: detail }
+    );
+  }
+
+  if (
+    /DEADLINE_EXCEEDED|ETIMEDOUT|timed? ?out|timeout|ECONNRESET|socket hang up/i.test(
+      message
+    ) ||
+    status === 408 ||
+    status === 504
+  ) {
+    return new AIServiceError("The AI provider timed out.", {
+      kind: "timeout",
+      retryable: true,
+      providerDetail: detail,
+    });
+  }
+
+  if (
+    /RESOURCE_EXHAUSTED|rate limit|quota|429/i.test(message) ||
+    status === 429
+  ) {
+    return new AIServiceError("The AI provider rate limit was reached.", {
+      kind: "rate_limit",
+      retryable: true,
+      providerDetail: detail,
+    });
+  }
+
+  return new AIServiceError("The AI provider request failed.", {
+    kind: "provider_error",
+    retryable: true,
+    providerDetail: detail,
+  });
+}
+
+function budgetExhausted(stage: string): AIServiceError {
+  return new AIServiceError(
+    `Analysis time budget exhausted before ${stage}.`,
+    { kind: "budget_exhausted", retryable: false }
+  );
 }
 
 let client: GoogleGenAI | null = null;
@@ -17,7 +115,8 @@ let client: GoogleGenAI | null = null;
 function getClient(): GoogleGenAI {
   if (!aiConfig.googleApiKey) {
     throw new AIServiceError(
-      "GOOGLE_API_KEY is not set. Gemini API requires a valid API key."
+      "GOOGLE_API_KEY is not set, so the Gemini provider cannot be called.",
+      { kind: "invalid_config", retryable: false }
     );
   }
   if (!client) {
@@ -61,8 +160,6 @@ export async function mapWithConcurrency<T, R>(
   return results;
 }
 
-const RETRYABLE = /503|UNAVAILABLE|429|RESOURCE_EXHAUSTED/;
-
 /**
  * Milliseconds left before `deadline` (an epoch timestamp). `Infinity` when no
  * deadline was supplied.
@@ -73,14 +170,50 @@ function remainingMs(deadline?: number): number {
 }
 
 /**
- * Calls the configured Gemini model with retries on transient errors.
- * Returns raw text. Throws `AIServiceError` when every attempt fails.
- * There are intentionally no fallback models: one model (`GEMINI_MODEL`),
- * retried with backoff.
+ * Races a promise against a wall-clock timeout. The SDK's own `httpOptions`
+ * timeout is not enough on its own: a hung socket, DNS stall, or a provider
+ * that ignores the setting can otherwise outlive the function budget.
+ */
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  if (!Number.isFinite(ms) || ms <= 0) {
+    return Promise.reject(
+      new AIServiceError(`${label} was not started: no time budget remained.`, {
+        kind: "budget_exhausted",
+        retryable: false,
+      })
+    );
+  }
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(
+        new AIServiceError(`${label} timed out after ${Math.round(ms / 1000)}s.`, {
+          kind: "timeout",
+          retryable: true,
+        })
+      );
+    }, ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      }
+    );
+  });
+}
+
+/**
+ * Calls the configured Gemini model with bounded retries on transient errors.
+ * Returns raw text. Throws a classified `AIServiceError` when every attempt
+ * fails. There are intentionally no fallback models: one model
+ * (`GEMINI_MODEL`), retried with backoff.
  *
- * `deadline` is an epoch timestamp: once it passes, no further attempt (or
- * backoff sleep) is started, so a slow document can't run the function past
- * the platform timeout.
+ * `deadline` is an epoch timestamp: once it passes (or too little time remains
+ * to complete an attempt), no further attempt or backoff sleep is started, so a
+ * slow document can't run the function past the platform timeout.
  */
 export async function callGemini(
   prompt: string,
@@ -89,42 +222,70 @@ export async function callGemini(
 ): Promise<string> {
   const ai = getClient();
   const model = aiConfig.geminiModel;
-  let lastError: unknown = null;
+  if (!model) {
+    throw new AIServiceError("GEMINI_MODEL is empty.", {
+      kind: "invalid_config",
+      retryable: false,
+    });
+  }
+
+  let lastError: AIServiceError | null = null;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    if (remainingMs(deadline) <= 0) {
-      throw new AIServiceError(
-        `Analysis time budget exhausted before calling ${model}.`
-      );
+    const remaining = remainingMs(deadline);
+    if (remaining <= aiConfig.minAttemptMs) {
+      throw lastError && lastError.kind === "budget_exhausted"
+        ? lastError
+        : budgetExhausted(`calling the ${model} model`);
     }
+
+    const attemptTimeout = Math.max(
+      aiConfig.minAttemptMs,
+      Math.min(aiConfig.geminiTimeoutMs, remaining)
+    );
+
     try {
-      const response = await ai.models.generateContent({
+      const request = ai.models.generateContent({
         model,
         contents: prompt,
         config: {
           temperature: 0.1,
           topP: 0.95,
           responseMimeType: "application/json",
-          httpOptions: { timeout: Math.min(aiConfig.geminiTimeoutMs, Math.max(1, remainingMs(deadline))) },
+          httpOptions: { timeout: attemptTimeout },
           ...(systemInstruction ? { systemInstruction } : {}),
         },
       });
+      const response = await withTimeout(
+        request,
+        attemptTimeout,
+        `Gemini call to ${model}`
+      );
       const text = response.text;
       if (text) return text;
+      lastError = new AIServiceError("The AI provider returned an empty response.", {
+        kind: "invalid_response",
+        retryable: true,
+      });
     } catch (error) {
-      lastError = error;
-      if (RETRYABLE.test(String(error))) {
-        const backoff = 2 ** attempt * 1000 + 500;
-        if (remainingMs(deadline) <= backoff) break;
-        await sleep(backoff);
-      } else {
-        break;
-      }
+      lastError = classifyProviderError(error);
+      // Invalid credentials/configuration never succeed on retry.
+      if (!lastError.retryable) throw lastError;
+    }
+
+    if (attempt < 2) {
+      const backoff = 2 ** attempt * 1000 + 500;
+      if (remainingMs(deadline) <= backoff + aiConfig.minAttemptMs) break;
+      await sleep(backoff);
     }
   }
 
-  throw new AIServiceError(
-    `Gemini API execution failed on model ${model}. Last error: ${lastError}`
+  throw (
+    lastError ??
+    new AIServiceError(`Gemini API execution failed on model ${model}.`, {
+      kind: "provider_error",
+      retryable: true,
+    })
   );
 }
 
@@ -135,7 +296,10 @@ export async function callGemini(
  */
 export function extractJson(text: string): unknown {
   if (!text) {
-    throw new AIServiceError("Model returned an empty response.");
+    throw new AIServiceError("Model returned an empty response.", {
+      kind: "invalid_response",
+      retryable: true,
+    });
   }
 
   try {
@@ -163,7 +327,10 @@ export function extractJson(text: string): unknown {
     }
   }
 
-  throw new AIServiceError("Model response did not contain valid JSON.");
+  throw new AIServiceError("Model response did not contain valid JSON.", {
+    kind: "invalid_response",
+    retryable: true,
+  });
 }
 
 /**
@@ -175,7 +342,8 @@ export function parseAndValidate<T>(raw: string, schema: z.ZodType<T>): T {
   const parsed = schema.safeParse(extractJson(raw));
   if (!parsed.success) {
     throw new AIServiceError(
-      `Model output did not match the expected schema: ${parsed.error.message}`
+      `Model output did not match the expected schema: ${parsed.error.message}`,
+      { kind: "invalid_response", retryable: true }
     );
   }
   return parsed.data;
@@ -191,7 +359,7 @@ export interface ValidatedCallOptions {
    * findings. Omit for calls where empty is a common legitimate outcome
    * (e.g. style warnings, uncited claims on clean text).
    */
-   nonEmptyIfInputOver?: {
+  nonEmptyIfInputOver?: {
     keys: string[];
     inputChars: number;
     threshold?: number;
@@ -213,9 +381,17 @@ export async function callGeminiValidated<T extends Record<string, unknown>>(
   opts: ValidatedCallOptions = {}
 ): Promise<T> {
   const retries = opts.retries ?? 2;
-  let lastError: unknown = new AIServiceError("Model returned no usable result.");
+  let lastError: unknown = new AIServiceError(
+    "Model returned no usable result.",
+    { kind: "invalid_response", retryable: true }
+  );
   for (let attempt = 0; attempt <= retries; attempt += 1) {
-    if (remainingMs(opts.deadline) <= 0) break;
+    if (remainingMs(opts.deadline) <= aiConfig.minAttemptMs) {
+      throw lastError instanceof AIServiceError &&
+        (lastError.kind === "invalid_config" || lastError.kind === "budget_exhausted")
+        ? lastError
+        : budgetExhausted("a provider response could be validated");
+    }
     try {
       const raw = await callGemini(prompt, systemInstruction, opts.deadline);
       const parsed = parseAndValidate(raw, schema);
@@ -227,16 +403,20 @@ export async function callGeminiValidated<T extends Record<string, unknown>>(
         });
         if (allEmpty) {
           throw new AIServiceError(
-            "Model returned an empty result for substantial input."
+            "Model returned an empty result for substantial input.",
+            { kind: "invalid_response", retryable: true }
           );
         }
       }
       return parsed;
     } catch (err) {
       lastError = err;
+      const classified =
+        err instanceof AIServiceError ? err : classifyProviderError(err);
+      if (!classified.retryable) throw classified;
       if (attempt < retries) {
         const backoff = 1500 * (attempt + 1);
-        if (remainingMs(opts.deadline) <= backoff) break;
+        if (remainingMs(opts.deadline) <= backoff + aiConfig.minAttemptMs) break;
         await sleep(backoff);
       }
     }

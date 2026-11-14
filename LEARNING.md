@@ -18,7 +18,24 @@ The AI analysis service was ported from Python/FastAPI (`citepilot-ai/`, Railway
 Two independent causes, both fixed 2026-10-22:
 
 1. **Stale Railway rewrite.** `citepilot-web/vercel.json` still proxied `/api/v1/:path*` to `citepilot-ai-production.up.railway.app` (the retired Python service). Every API call went to a dead origin and hung until the platform timeout. There must be **no** rewrite — the route handlers live in this app. If you see a Railway URL in `vercel.json`, delete it.
-2. **Unbounded pipeline work.** `maxDuration = 60` is the function cap, but the pipeline (Gemini extraction → matching → style → Crossref/OpenAlex/retraction fan-out) had no internal budget and no concurrency cap, so large manuscripts/reference lists overran it. `runAnalysisPipeline` now takes a deadline from `ANALYSIS_BUDGET_MS` (default 50s), Gemini calls get `GEMINI_TIMEOUT_MS`, and provider verification uses `VERIFY_CONCURRENCY`. Past the deadline, stages are skipped and reported as `verification_unavailable` rather than being killed mid-response.
+2. **Unbounded pipeline work.** `maxDuration = 60` is the function cap, but the pipeline (Gemini extraction → matching → style → Crossref/OpenAlex/retraction fan-out) had no internal budget and no concurrency cap, so large manuscripts/reference lists overran it. `runAnalysisPipeline` now takes a deadline from `ANALYSIS_BUDGET_MS` (default 45s), Gemini calls get `GEMINI_TIMEOUT_MS` plus a hard wall-clock race, and provider verification uses `VERIFY_CONCURRENCY`. Past the deadline, stages are skipped and reported as `verification_unavailable`/`checks: skipped(budget)` rather than being killed mid-response.
+
+## Gemini DEADLINE_EXCEEDED with a valid key (fixed 2026-11-14)
+
+The audit's 503 after ~58s was **not** a configuration or quota problem:
+
+- `GET /v1beta/models` with the account key returned 200 and listed `gemini-3.8-flash`.
+- A minimal `generateContent` call to `gemini-3.8-flash` **never returned** (still hanging after 90s, both via the SDK and plain REST).
+- The same request against `gemini-2.5-flash` returned in **1.8s**, and `gemini-3-flash-preview` in 1.3s.
+
+A listed model is therefore not a working model. The default is now `gemini-2.5-flash`; `GEMINI_MODEL` still overrides it. Before switching models again, run a minimal provider call with a hard timeout and measure latency — do not assume a model name in the catalog is usable.
+
+Related contract changes:
+
+- Every provider call is raced against a wall-clock timeout (`withTimeout`) because the SDK's `httpOptions.timeout` alone did not bound a hung request.
+- Errors are classified (`timeout`, `rate_limit`, `invalid_config`, `provider_error`, `invalid_response`, `budget_exhausted`). Invalid credentials are **never** retried; transient errors only retry while budget and `MIN_ATTEMPT_MS` remain.
+- `/api/health` no longer equates "API key present" with "ready". `status` is liveness; `provider_readiness.state` is `unverified` until `?probe=1` performs a real (cached) provider call. `ai_engine_ready` is true only after that probe succeeds.
+- The analyse response now carries `request_id`, `status` (`completed`/`partial`), and per-stage `checks` with durations. A partial audit must never be rendered as a clean one.
 
 ## TOML: dependencies must be under `[project]`
 
@@ -55,6 +72,26 @@ A failing `/health` probe almost never means the health endpoint is wrong. It me
 - **Install command**: Leave blank (defaults to `npm install` — `citepilot-web/package-lock.json` is npm; `pnpm` also works if you prefer, but do not mix lockfiles).
 - **Redeploy after env changes**: Run `npx vercel --prod` from the monorepo root (not from `citepilot-web/`) because Root Directory is already set in the project config.
 
+## Next.js 16: middleware is now `proxy`
+
+`src/middleware.ts` was renamed to `src/proxy.ts` with `export async function proxy(request)` (Next 16.2 deprecates the middleware convention). The matcher is unchanged; Supabase session refresh still runs through `updateSession`. The build output should list `ƒ Proxy (Middleware)` and must not warn about middleware.
+
+## Dashboard audit state model
+
+`src/lib/auditState.ts` is the single source of truth for whether an audit is empty, ready, running, current, stale, partial, or failed. Rules:
+
+- `revision` increments on any text/file change; every result is stored with the revision, style, and mode used to produce it.
+- A response is applied only if its request id, revision, style, and mode all still match. A response that arrives after the document changed is discarded.
+- A style or mode change marks the previous result stale.
+- `checks` with `status: "skipped"` and `reason: "not_applicable"` (e.g. citations in reference-only mode) do **not** make an audit partial; `unavailable` or budget-skipped checks do.
+- "Nothing flagged" is rendered only for a current, fully completed audit with zero findings.
+
+Do not render result counts directly from `analysisData`; derive the phase from `auditSummary(state)` so an unrun/failed/stale run cannot look clean.
+
+## Saved audits and privacy copy
+
+Auto-save (`/api/audits/save`) stores the audit result for signed-in users, and the save payload now embeds `manuscript_text` in `results` so history loads the correct document. Older rows have no text; the dashboard refuses to attach their findings to whatever text is currently in the editor and shows a read-only notice instead. Landing/FAQ privacy copy must reflect this (it previously claimed the service was sessionless and stored nothing).
+
 ## Database: Supabase (with Vercel Postgres legacy note)
 
 Early iterations used Supabase; Vercel Postgres was briefly used in production before settling back on Supabase (auth + RLS) as the source of truth in `supabase/migrations/` (14 files). Run migrations in the Supabase SQL editor (or Vercel query editor if still on Vercel Postgres).
@@ -79,7 +116,7 @@ The top-level `README.md` document index and directory tree previously did not m
 | `PAYPAL_WEBHOOK_ID` | PayPal webhook ID (required in prod — webhooks without it are rejected) |
 | `PAYPAL_API_BASE` | Optional, defaults to `https://api-m.paypal.com` |
 | `GOOGLE_API_KEY` | **Required for analysis** — powers the `/api/v1/analyse` Gemini pipeline (503 if missing) |
-| `GEMINI_MODEL` | Optional, defaults to `gemini-3.8-flash` |
+| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-flash` (the previously configured `gemini-3.8-flash` hung on every call) |
 | `CROSSREF_MAILTO` | Optional contact email for the Crossref polite pool |
 | `API_KEY` | Optional — if set, clients must send `X-API-Key` or `Authorization: Bearer <key>` |
 | `MAX_UPLOAD_MB` / `MAX_TEXT_CHARS` / `RATE_LIMIT_PER_MINUTE` | Optional AI request limits |

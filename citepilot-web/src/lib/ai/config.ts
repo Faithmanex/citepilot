@@ -10,9 +10,21 @@ function num(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+/**
+ * Vercel terminates the function at `maxDuration` in the route module (60s).
+ * The pipeline must finish *before* that, leaving headroom to serialize a
+ * response. The response budget therefore stays below the platform cap.
+ */
+const PLATFORM_MAX_DURATION_MS = 60_000;
+const RESPONSE_HEADROOM_MS = 5_000;
+
 export const aiConfig = {
   googleApiKey: (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim(),
-  geminiModel: (process.env.GEMINI_MODEL || "gemini-3.8-flash").trim(),
+  // `gemini-3.8-flash` is listed for this account but did not return within 90
+  // seconds on a minimal request (2026-11-14), which made every audit hit the
+  // deadline. `gemini-2.5-flash` answered in under 2s and is the default until
+  // the newer model's latency is verified again. Override with GEMINI_MODEL.
+  geminiModel: (process.env.GEMINI_MODEL || "gemini-2.5-flash").trim(),
   logLevel: (process.env.LOG_LEVEL || "info").toLowerCase(),
   crossrefMailto: (process.env.CROSSREF_MAILTO || "support@citepilot.ai").trim(),
   // Security / limits
@@ -20,12 +32,26 @@ export const aiConfig = {
   maxUploadMb: num(process.env.MAX_UPLOAD_MB, 10),
   maxTextChars: num(process.env.MAX_TEXT_CHARS, 200_000),
   rateLimitPerMinute: num(process.env.RATE_LIMIT_PER_MINUTE, 60),
-  // Latency budgets. Vercel kills the function at `maxDuration` (60s), so the
-  // pipeline must finish inside a smaller budget and report degraded results
-  // instead of being terminated mid-response (FUNCTION_INVOCATION_TIMEOUT).
-  analysisBudgetMs: num(process.env.ANALYSIS_BUDGET_MS, 50_000),
-  geminiTimeoutMs: num(process.env.GEMINI_TIMEOUT_MS, 25_000),
+  // Latency budgets. Every stage checks the deadline and degrades instead of
+  // running the function past the platform timeout.
+  platformMaxDurationMs: PLATFORM_MAX_DURATION_MS,
+  analysisBudgetMs: Math.min(
+    num(process.env.ANALYSIS_BUDGET_MS, 45_000),
+    PLATFORM_MAX_DURATION_MS - RESPONSE_HEADROOM_MS
+  ),
+  // Per-provider-call ceiling. A single Gemini call may never consume the whole
+  // budget: later stages (matching, style, verification) still need time.
+  geminiTimeoutMs: num(process.env.GEMINI_TIMEOUT_MS, 20_000),
+  // Minimum time that must remain before starting another provider attempt.
+  minAttemptMs: num(process.env.MIN_ATTEMPT_MS, 2_000),
   verifyConcurrency: num(process.env.VERIFY_CONCURRENCY, 6),
+  // Provider verification requests get their own short ceiling so a slow
+  // Crossref/OpenAlex response cannot hold the whole audit open.
+  verifyTimeoutMs: num(process.env.VERIFY_TIMEOUT_MS, 8_000),
+  // Readiness probes are cached so `/health` never fans out a provider call per
+  // request.
+  readinessCacheMs: num(process.env.READINESS_CACHE_MS, 300_000),
+  readinessProbeTimeoutMs: num(process.env.READINESS_PROBE_TIMEOUT_MS, 6_000),
 } as const;
 
 export const SERVICE_VERSION = "0.1.0";
@@ -42,3 +68,24 @@ export const ALLOWED_CITATION_STYLES = new Set([
   "oscola",
   "turabian",
 ]);
+
+/**
+ * Client style keys that predate the canonical server list. Normalizing here
+ * keeps saved history and older clients working instead of returning a 400.
+ */
+const STYLE_ALIASES: Record<string, string> = {
+  chicago17: "chicago-author-date",
+  chicago: "chicago-author-date",
+  "chicago-author-date": "chicago-author-date",
+  "chicago-notes": "chicago-notes",
+  mla: "mla9",
+  apa: "apa7",
+  "apa-7": "apa7",
+  "apa-6": "apa6",
+};
+
+export function normalizeCitationStyle(raw: string | null | undefined): string | null {
+  const value = String(raw ?? "apa7").trim().toLowerCase();
+  const mapped = STYLE_ALIASES[value] || value;
+  return ALLOWED_CITATION_STYLES.has(mapped) ? mapped : null;
+}

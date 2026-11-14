@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { aiConfig, SERVICE_VERSION } from "@/lib/ai/config";
+import { buildHealthPayload } from "@/lib/ai/health";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export function GET(): NextResponse {
-  return NextResponse.json({
-    status: "ok",
-    service: "citepilot-ai",
-    version: SERVICE_VERSION,
-    ai_engine_ready: Boolean(aiConfig.googleApiKey),
-    model: aiConfig.geminiModel,
-  });
+/**
+ * Liveness + provider readiness.
+ *
+ * `status` only describes the process. Analysis availability is reported
+ * separately: a configured key is *not* treated as a working provider. Pass
+ * `?probe=1` to run a real (cached) provider check.
+ */
+export async function GET(request: Request): Promise<NextResponse> {
+  return NextResponse.json(await buildHealthPayload(request));
 }
