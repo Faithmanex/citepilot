@@ -65,7 +65,7 @@ export default function BrandLogo({
           {subtitle && (
             <span
               className={`text-xs font-mono font-bold uppercase tracking-wider ${
-                isDark ? "text-slate-400" : "text-[#948a76]"
+                isDark ? "text-slate-400" : "text-[#6b6152]"
               }`}
             >
               {subtitle}

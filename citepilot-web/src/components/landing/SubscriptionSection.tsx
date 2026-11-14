@@ -45,10 +45,10 @@ export default function SubscriptionSection() {
 
               <ul className="space-y-3 mb-8 text-sm text-ink">
                 {[
-                  { ok: true,  text: "Up to 3 manuscript audits per day" },
-                  { ok: true,  text: "All 9 citation style checks" },
-                  { ok: true,  text: "Up to 5,000 words & 100 references" },
-                  { ok: true,  text: "Basic citation explanations" },
+                  { ok: true,  text: "Up to 1,500 words per audit" },
+                  { ok: true,  text: "All 10 citation style checks" },
+                  { ok: true,  text: "Citation, reference, claim & style findings" },
+                  { ok: true,  text: "Audit history for signed-in accounts" },
                   { ok: false, text: "PDF & annotated DOCX exports" },
                 ].map(({ ok, text }) => (
                   <li key={text} className={`flex items-start gap-2.5 ${!ok ? "opacity-50" : ""}`}>
@@ -90,9 +90,9 @@ export default function SubscriptionSection() {
                 {[
                   "<strong>Unlimited</strong> manuscript & reference audits",
                   "<strong>All citation styles</strong> — APA, MLA, Chicago, Harvard & more",
-                  "Unlimited words & references",
+                  "Up to 200,000 characters per audit",
                   "Export PDF diagnostic reports & annotated DOCX",
-                  "Detailed AI explanations on every finding",
+                  "Detailed explanations on every finding",
                 ].map((text) => (
                   <li key={text} className="flex items-start gap-2.5">
                     <i className="fas fa-check text-[#285235] mt-0.5 text-xs flex-none" />
@@ -121,7 +121,7 @@ export default function SubscriptionSection() {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-extrabold text-ink flex items-center gap-2">
-                  <i className="fas fa-bolt text-[#93650f]" /> CitePilot Professional
+                  <i className="fas fa-bolt text-[#7a530c]" /> CitePilot Professional
                 </h3>
               </div>
 
@@ -141,11 +141,11 @@ export default function SubscriptionSection() {
 
               <ul className="space-y-3 mb-6 text-sm text-ink font-medium">
                 {[
-                  "<strong>Unlimited</strong> Manuscript & Reference Audits",
+                  "<strong>Unlimited</strong> manuscript & reference audits",
                   "<strong>Cross-verification</strong> with Crossref metadata & retraction flags",
-                  "<strong>All 9 citation styles</strong> & style rule inspection",
-                  "Annotated DOCX & PDF Diagnostic Reports",
-                  "Priority Processing & Responsive Email Support",
+                  "<strong>All 10 citation styles</strong> & style rule inspection",
+                  "Annotated DOCX & PDF diagnostic reports",
+                  "Responsive email support",
                 ].map((text) => (
                   <li key={text} className="flex items-start gap-2.5">
                     <i className="fas fa-check text-[#285235] mt-0.5 text-xs flex-none" />

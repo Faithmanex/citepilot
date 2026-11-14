@@ -5,31 +5,31 @@ import { useState } from "react";
 const faqs = [
   {
     q: "What file types does CitePilot accept?",
-    a: "CitePilot accepts .pdf, .docx, .txt, .bib, and .rtf files up to 50 MB. You can also paste manuscript text directly into the dashboard without uploading a file.",
+    a: "CitePilot accepts .docx, .pdf with selectable text, .txt, .rtf, and .bib files up to 10 MB, or up to 200,000 characters of pasted text. You can also paste manuscript text directly into the dashboard without uploading a file.",
   },
   {
     q: "How does citation matching work?",
-    a: "CitePilot performs bidirectional matching — it extracts in-text citations from your manuscript and attempts to match each one against your reference list entries using exact and fuzzy matching algorithms. Unmatched citations and orphaned references are flagged automatically.",
+    a: "CitePilot performs bidirectional matching — it extracts in-text citations from your manuscript and attempts to match each one against your reference list entries using exact and fuzzy matching. Unmatched citations and orphaned references are flagged automatically.",
   },
   {
     q: "What does Crossref verification check?",
-    a: "CitePilot queries the Crossref API using parsed DOIs from your reference list. It verifies author names, publication titles, journal names, year of publication, and volume/page ranges — flagging any discrepancies between what you cited and the Crossref record.",
+    a: "CitePilot queries Crossref and OpenAlex using parsed DOIs and titles from your reference list. It compares author names, titles, journal names, year of publication, and volume/page ranges, flagging discrepancies. A reference marked unverified is not confirmed correct — it means the metadata check could not complete.",
   },
   {
     q: "Does CitePilot check for retracted papers?",
-    a: "Yes. CitePilot flags references that Crossref metadata marks as retracted, with guidance on how to update your citation.",
+    a: "Yes. CitePilot flags references where Crossref metadata provides a retraction signal, with guidance on how to update your citation.",
   },
   {
     q: "Is my manuscript stored or used for AI training?",
-    a: "No. CitePilot is sessionless — your manuscript is processed in memory and discarded immediately after the audit response is returned. We never store, log, or train on your submitted content.",
+    a: "Manuscript text is processed in memory to produce the audit and is not used for training. If you are signed in, the audit result is saved to your history automatically so you can reload it; you can delete any saved audit. Server logs record timings and request IDs, not manuscript content.",
   },
   {
     q: "What citation styles are supported?",
-    a: "CitePilot supports APA 7th, APA 6th, MLA 9th, Chicago 17th, Harvard, IEEE, Vancouver, Turabian, and OSCOLA. More styles are added regularly.",
+    a: "CitePilot supports APA 7th, APA 6th, MLA 9th, Chicago author-date, Chicago notes, Harvard, IEEE, Vancouver, Turabian, and OSCOLA.",
   },
   {
     q: "What is the difference between the Free and Professional plans?",
-    a: "The Free plan allows up to 3 manuscript audits per day with checks across all 9 citation styles. The Professional plan ($12.99/month) includes unlimited audits, Crossref verification, annotated DOCX and PDF exports, and priority support.",
+    a: "The Free plan audits up to 1,500 words per audit, with checks across every supported citation style. The Professional plan ($12.99/month) audits up to 200,000 characters, includes Crossref/OpenAlex verification, annotated DOCX and PDF exports, and email support.",
   },
   {
     q: "How do I cancel my subscription?",

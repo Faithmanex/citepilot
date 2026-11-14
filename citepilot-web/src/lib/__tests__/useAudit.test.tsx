@@ -5,6 +5,7 @@ import { useAudit } from "../useAudit";
 import type { AuditResponse } from "../types";
 
 vi.mock("../api", () => ({
+  ApiError: class ApiError extends Error {},
   runAudit: vi.fn(),
 }));
 
@@ -133,7 +134,59 @@ describe("useAudit", () => {
     expect(result.current.errorModal.visible).toBe(true);
     expect(result.current.errorModal.title).toBe("Audit Execution Error");
     expect(result.current.errorModal.message).toBe("boom");
-    expect(showToast).toHaveBeenCalledWith("Audit Error: boom");
+    expect(result.current.errorModal.retryable).toBe(true);
+    expect(showToast).toHaveBeenCalledWith(
+      "Audit failed. Your manuscript is preserved; you can retry."
+    );
     expect(result.current.progress.visible).toBe(false);
+    expect(result.current.summary.phase).toBe("failed");
+  });
+
+  it("never reports a clean audit before one has run", async () => {
+    const { result } = renderAudit({ text: "Body text." });
+
+    expect(result.current.summary.phase).toBe("ready");
+    expect(result.current.summary.isClean).toBe(false);
+    expect(result.current.summary.showsResult).toBe(false);
+  });
+
+  it("rejects duplicate submissions while a request is in flight", async () => {
+    let resolveAudit: (value: AuditResponse) => void = () => {};
+    mockedRunAudit.mockImplementation(
+      () => new Promise<AuditResponse>((resolve) => {
+        resolveAudit = resolve;
+      })
+    );
+    const onSuccess = vi.fn();
+    const { result } = renderAudit({ text: "Body text.", onSuccess, isPro: true });
+
+    let first: Promise<void> = Promise.resolve();
+    await act(async () => {
+      first = result.current.runAudit();
+      // Second and third triggers arrive before the first response.
+      void result.current.runAudit();
+      void result.current.runAudit();
+      await Promise.resolve();
+    });
+    expect(mockedRunAudit).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      resolveAudit({ citations: [], references: [], style_warnings: [], uncited_claims: [] });
+      await first;
+    });
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps a failed audit from being reported as a clean result", async () => {
+    mockedRunAudit.mockRejectedValue(new Error("provider down"));
+    const { result } = renderAudit({ text: "Body text.", isPro: true });
+
+    await act(async () => {
+      await result.current.runAudit();
+    });
+
+    expect(result.current.summary.phase).toBe("failed");
+    expect(result.current.summary.isClean).toBe(false);
+    expect(result.current.summary.showsResult).toBe(false);
   });
 });

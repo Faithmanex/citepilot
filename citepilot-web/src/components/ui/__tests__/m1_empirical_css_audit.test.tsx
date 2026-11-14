@@ -27,7 +27,7 @@ describe("Milestone 1 — Adversarial Empirical CSS & Layout Audit", () => {
       "--color-midnight-navy": "#14181f",
       "--color-ink-black": "#221d16",
       "--color-graphite": "#5c5344",
-      "--color-steel": "#948a76",
+      "--color-steel": "#6b6152",
       "--color-silver": "#d9cfb8",
       "--color-ash": "#d9cfb8",
       "--color-fog": "#d9cfb8",
@@ -228,12 +228,12 @@ describe("Milestone 1 — Adversarial Empirical CSS & Layout Audit", () => {
       rerender(<Badge variant="claim-needs-source">Claim Needs Source</Badge>);
       badge = container.firstElementChild;
       expect(badge).toHaveClass("bg-[#f1e4c8]");
-      expect(badge).toHaveClass("text-[#93650f]");
+      expect(badge).toHaveClass("text-[#7a530c]");
 
       rerender(<Badge variant="outdated-reference">Outdated Reference</Badge>);
       badge = container.firstElementChild;
       expect(badge).toHaveClass("bg-[#f1e4c8]");
-      expect(badge).toHaveClass("text-[#93650f]");
+      expect(badge).toHaveClass("text-[#7a530c]");
 
       rerender(<Badge variant="tone-clarity">Tone & Clarity</Badge>);
       badge = container.firstElementChild;

@@ -256,7 +256,7 @@ describe("Milestone 3 Empirical Adversarial Challenge: Cookie Consent & Footer E
     expect(screen.queryByTestId("footer-compliance-badges")).toBeNull();
 
     // Verify external links have target="_blank" and rel="noopener noreferrer"
-    const retractionLink = screen.getByText("Retraction Database").closest("a")!;
+    const retractionLink = screen.getByText("Retraction notices (external)").closest("a")!;
     expect(retractionLink).toHaveAttribute("target", "_blank");
     expect(retractionLink).toHaveAttribute("rel", "noopener noreferrer");
     expect(retractionLink).toHaveAttribute("href", "https://retractionwatch.com");

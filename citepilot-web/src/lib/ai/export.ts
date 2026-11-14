@@ -135,7 +135,7 @@ export async function generatePdfReport(analysisData: JsonObject): Promise<Buffe
     text: string,
     opts: { size: number; font: typeof helv; color: ReturnType<typeof rgb>; gapAfter: number }
   ) => {
-    const lines = wrapText(text, opts.font, opts.size, maxWidth);
+    const lines = wrapText(pdfSafe(text), opts.font, opts.size, maxWidth);
     const lineHeight = opts.size * 1.4;
     for (const line of lines) {
       ensureSpace(lineHeight);
@@ -166,11 +166,86 @@ export async function generatePdfReport(analysisData: JsonObject): Promise<Buffe
   const refs = (analysisData["references"] as JsonObject[]) || [];
   const warnings = (analysisData["style_warnings"] as JsonObject[]) || [];
   const recency = (analysisData["recency"] as JsonObject) || {};
+  const checks = (analysisData["checks"] as JsonObject[]) || [];
+  const auditStatus = String(analysisData["status"] || "completed");
+  const auditMode = String(analysisData["mode"] || "full");
+  const auditStyle = String(analysisData["citation_style"] || "unspecified");
+  const requestId = String(analysisData["request_id"] || "not recorded");
+  const elapsed = analysisData["elapsed_seconds"];
+
+  writeParagraph(
+    `Audit context: ${auditStatus.toUpperCase()} · ${auditMode === "reference_only" ? "references only" : "whole document"} · ${auditStyle} · request ${requestId}${
+      typeof elapsed === "number" ? ` · ${elapsed}s` : ""
+    }`,
+    { size: 9, font: helv, color: bodyColor, gapAfter: 6 }
+  );
 
   writeParagraph(
     `Summary: Parsed ${citations.length} citations, ${refs.length} reference entries, and ${warnings.length} style warnings.`,
     { size: 10, font: helv, color: bodyColor, gapAfter: 10 }
   );
+
+  // Report which checks ran. An unavailable check must never read as "clean".
+  if (checks.length > 0) {
+    writeParagraph("Checks Performed", {
+      size: 14,
+      font: helvBold,
+      color: h2Color,
+      gapAfter: 6,
+    });
+    for (const check of checks) {
+      const status = String(check["status"] || "unknown");
+      const line = `- ${String(check["label"] || check["name"] || "Check")}: ${status.toUpperCase()}${
+        check["message"] ? ` — ${String(check["message"])}` : ""
+      }`;
+      writeParagraph(line, {
+        size: 9,
+        font: helv,
+        color:
+          status === "completed" ? bodyColor : rgb(0.576, 0.396, 0.059),
+        gapAfter: 2,
+      });
+    }
+    writeParagraph(
+      auditStatus === "partial"
+        ? "This audit is PARTIAL. Findings for unavailable checks are missing, not clean."
+        : "Every requested check completed.",
+      {
+        size: 9,
+        font: helvBold,
+        color: auditStatus === "partial" ? rgb(0.576, 0.396, 0.059) : bodyColor,
+        gapAfter: 10,
+      }
+    );
+  }
+
+  const unmatched = (analysisData["citations"] as JsonObject[] | undefined)?.filter(
+    (c) => c["status"] === "no_match"
+  ).length;
+  const orphaned = refs.filter((r) => r["status"] === "orphaned").length;
+  const unverified = refs.filter(
+    (r) =>
+      (r["crossref_validation"] as JsonObject | undefined)?.["status"] ===
+      "verification_unavailable"
+  ).length;
+
+  writeParagraph("Citation and Reference Totals", {
+    size: 14,
+    font: helvBold,
+    color: h2Color,
+    gapAfter: 6,
+  });
+  writeParagraph(
+    `Unmatched citations: ${unmatched ?? 0} · Orphaned references (never cited): ${orphaned} · References whose metadata could not be verified: ${unverified}`,
+    { size: 10, font: helv, color: bodyColor, gapAfter: 10 }
+  );
+
+  if (unverified > 0) {
+    writeParagraph(
+      "Unverified references are not confirmed correct. Their metadata checks did not complete.",
+      { size: 9, font: helvBold, color: rgb(0.576, 0.396, 0.059), gapAfter: 10 }
+    );
+  }
 
   if (warnings.length > 0) {
     writeParagraph("Highest-Priority Findings", {
@@ -228,8 +303,28 @@ export async function generatePdfReport(analysisData: JsonObject): Promise<Buffe
   return Buffer.from(bytes);
 }
 
-function wrapText(
-  text: string,
+/**
+ * The standard PDF fonts are WinAnsi-encoded. Replace characters that encoding
+ * cannot represent so a reference title in another script cannot make the whole
+ * report fail to generate.
+ */
+function pdfSafe(text: string): string {
+  const replacements: Record<string, string> = {
+    "\u2018": "'",
+    "\u2019": "'",
+    "\u201c": '"',
+    "\u201d": '"',
+    "\u2013": "-",
+    "\u2014": "-",
+    "\u2026": "...",
+    "\u00a0": " ",
+  };
+  return String(text)
+    .replace(/[\u2018\u2019\u201c\u201d\u2013\u2014\u2026\u00a0]/g, (ch) => replacements[ch] ?? "")
+    .replace(/[^\u0000-\u00ff]/g, "?");
+}
+
+function wrapText(  text: string,
   font: { widthOfTextAtSize: (t: string, s: number) => number },
   size: number,
   maxWidth: number

@@ -235,7 +235,7 @@ export default function Header() {
                 >
                   <span>{category.label}</span>
                   <ChevronDown
-                    className={`w-3.5 h-3.5 text-[#948a76] transition-transform duration-200 ${
+                    className={`w-3.5 h-3.5 text-[#6b6152] transition-transform duration-200 ${
                       isOpen ? "rotate-180 text-[#221d16]" : ""
                     }`}
                     aria-hidden="true"
@@ -269,7 +269,7 @@ export default function Header() {
                               </span>
                             )}
                           </div>
-                          <span className="text-[12px] text-[#948a76] leading-snug">
+                          <span className="text-[12px] text-[#6b6152] leading-snug">
                             {item.description}
                           </span>
                         </a>
@@ -347,7 +347,7 @@ export default function Header() {
                   >
                     <span>{category.label}</span>
                     <ChevronDown
-                      className={`w-4 h-4 text-[#948a76] transition-transform duration-200 ${
+                      className={`w-4 h-4 text-[#6b6152] transition-transform duration-200 ${
                         isExpanded ? "rotate-180" : ""
                       }`}
                     />
@@ -368,7 +368,7 @@ export default function Header() {
                           <span className="text-[13px] font-bold text-[#221d16]">
                             {item.title}
                           </span>
-                          <span className="text-[11px] text-[#948a76]">{item.description}</span>
+                          <span className="text-[11px] text-[#6b6152]">{item.description}</span>
                         </a>
                       ))}
                     </div>

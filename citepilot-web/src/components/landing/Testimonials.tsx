@@ -56,7 +56,7 @@ export default function Testimonials() {
               {/* Stars */}
               <div className="flex gap-1" aria-label="5 out of 5 stars">
                 {Array(5).fill(0).map((_, i) => (
-                  <i key={i} className="fas fa-star text-[#93650f] text-xs" aria-hidden="true" />
+                  <i key={i} className="fas fa-star text-[#7a530c] text-xs" aria-hidden="true" />
                 ))}
               </div>
 

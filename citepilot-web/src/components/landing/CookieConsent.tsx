@@ -141,7 +141,7 @@ export default function CookieConsent() {
         <button
           type="button"
           onClick={handleEssentialOnly}
-          className="text-[#948a76] hover:text-[#221d16] p-1 rounded hover:bg-[#faf6ec] transition-colors cursor-pointer"
+          className="text-[#6b6152] hover:text-[#221d16] p-1 rounded hover:bg-[#faf6ec] transition-colors cursor-pointer"
           aria-label="Dismiss cookie notice with essential cookies only"
           data-testid="cookie-btn-dismiss"
         >
@@ -173,7 +173,7 @@ export default function CookieConsent() {
           <div className="flex items-center justify-between gap-3 text-xs">
             <div>
               <div className="font-bold text-[#221d16]">Strictly Necessary</div>
-              <div className="text-[#948a76] text-[11px]">
+              <div className="text-[#6b6152] text-[11px]">
                 Session and security tokens required for manuscript auditing.
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function CookieConsent() {
           <div className="flex items-center justify-between gap-3 text-xs">
             <div>
               <div className="font-bold text-[#221d16]">Academic Performance &amp; Telemetry</div>
-              <div className="text-[#948a76] text-[11px]">
+              <div className="text-[#6b6152] text-[11px]">
                 Anonymized query latency and citation accuracy telemetry.
               </div>
             </div>
@@ -206,7 +206,7 @@ export default function CookieConsent() {
           <div className="flex items-center justify-between gap-3 text-xs">
             <div>
               <div className="font-bold text-[#221d16]">Interface Preferences</div>
-              <div className="text-[#948a76] text-[11px]">
+              <div className="text-[#6b6152] text-[11px]">
                 Stores citation style (APA/MLA/Chicago) and theme on your device.
               </div>
             </div>
@@ -250,7 +250,7 @@ export default function CookieConsent() {
             <button
               type="button"
               onClick={() => setIsCustomizing(true)}
-              className="inline-flex items-center gap-1 text-xs text-[#948a76] hover:text-[#221d16] font-semibold py-1.5 px-2 rounded hover:bg-[#faf6ec] transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1 text-xs text-[#6b6152] hover:text-[#221d16] font-semibold py-1.5 px-2 rounded hover:bg-[#faf6ec] transition-colors cursor-pointer"
               data-testid="cookie-btn-customise"
             >
               <Settings2 className="w-3.5 h-3.5" aria-hidden="true" />

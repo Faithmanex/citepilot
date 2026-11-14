@@ -93,7 +93,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
               Full Name
             </label>
             <div className="relative">
-              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#948a76]" />
+              <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6152]" />
               <input
                 type="text"
                 required
@@ -111,7 +111,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             Email Address
           </label>
           <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#948a76]" />
+            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6152]" />
             <input
               type="email"
               required
@@ -128,7 +128,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
             Password
           </label>
           <div className="relative">
-            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#948a76]" />
+            <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6b6152]" />
             <input
               type="password"
               required
@@ -163,7 +163,7 @@ export default function AuthForm({ mode }: { mode: "login" | "signup" }) {
           <div className="w-full border-t border-[#d9cfb8]"></div>
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-[#ffffff] px-2 text-[#948a76] font-medium">Or continue with</span>
+          <span className="bg-[#ffffff] px-2 text-[#6b6152] font-medium">Or continue with</span>
         </div>
       </div>
 

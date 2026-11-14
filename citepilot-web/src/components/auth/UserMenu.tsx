@@ -13,6 +13,7 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
   const { user, profile, isPro, signOut } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -20,9 +21,19 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
         setDropdownOpen(false);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && dropdownOpen) {
+        setDropdownOpen(false);
+        triggerRef.current?.focus();
+      }
+    };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [dropdownOpen]);
 
   if (!user) {
     return (
@@ -50,8 +61,11 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
   return (
     <div className="relative" ref={menuRef}>
       <button
+        ref={triggerRef}
         onClick={() => setDropdownOpen((prev) => !prev)}
-        className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg hover:bg-[#faf6ec] transition-all text-left cursor-pointer border border-transparent hover:border-[#d9cfb8]"
+        aria-expanded={dropdownOpen}
+        aria-label={`Account menu for ${displayName}`}
+        className="flex items-center gap-2.5 px-2.5 py-1.5 min-h-11 rounded-lg hover:bg-[#faf6ec] transition-all text-left cursor-pointer border border-transparent hover:border-[#d9cfb8]"
       >
         <div className="w-8 h-8 rounded-full bg-[#2c3e8c] text-white font-bold text-xs flex items-center justify-center shadow-none">
           {profile?.avatar_url ? (
@@ -71,20 +85,23 @@ export default function UserMenu({ onOpenAuth, onOpenSubscription }: UserMenuPro
           </span>
           <span
             className={`text-[10px] font-semibold leading-tight ${
-              isPro ? "text-[#2c3e8c]" : "text-[#948a76]"
+              isPro ? "text-[#2c3e8c]" : "text-[#6b6152]"
             }`}
           >
             {tierLabel}
           </span>
         </div>
-        <ChevronDown className="w-3.5 h-3.5 text-[#948a76] hidden sm:block" />
+        <ChevronDown className="w-3.5 h-3.5 text-[#6b6152] hidden sm:block" />
       </button>
 
       {dropdownOpen && (
-        <div className="absolute right-0 mt-2 w-56 bg-[#ffffff] rounded-lg shadow-none border border-[#d9cfb8] py-2 z-50 animate-fade-in text-[#221d16]">
+        <div
+          aria-label="Account"
+          className="absolute right-0 mt-2 w-56 bg-[#ffffff] rounded-lg shadow-none border border-[#d9cfb8] py-2 z-50 animate-fade-in text-[#221d16]"
+        >
           <div className="px-4 py-2 border-b border-[#d9cfb8]">
             <p className="text-xs font-bold text-[#221d16] truncate">{displayName}</p>
-            <p className="text-[11px] text-[#948a76] truncate">{user.email}</p>
+            <p className="text-[11px] text-[#6b6152] truncate">{user.email}</p>
             <div className="mt-2 flex items-center gap-1.5">
               <span
                 className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] text-[10px] font-bold ${

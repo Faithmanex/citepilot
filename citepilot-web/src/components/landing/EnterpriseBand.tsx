@@ -47,8 +47,9 @@ export default function EnterpriseBand() {
             className="mt-4 sm:mt-5 text-[16px] sm:text-[18px] text-white/90 leading-relaxed max-w-[700px] mx-auto font-sans"
             data-testid="enterprise-subtext"
           >
-            Give every student and researcher the same citation checks. Manage accounts for a
-            department or campus, and keep a shared view of what your teams are publishing.
+            Institutional licensing is arranged directly with our team. Tell us
+            what your department or library needs, and we&apos;ll set up a trial
+            for your researchers.
           </p>
 
           <div
@@ -59,6 +60,10 @@ export default function EnterpriseBand() {
               variant="ghost-white"
               size="lg"
               withArrow
+              onClick={() => {
+                window.location.href =
+                  "mailto:support@citepilot.ai?subject=CitePilot%20institutional%20trial";
+              }}
               className="w-full sm:w-auto font-bold text-[15px] border-white hover:bg-white hover:text-[#2c3e8c] shadow-none"
               data-testid="enterprise-btn-trial"
             >
@@ -68,6 +73,10 @@ export default function EnterpriseBand() {
               variant="ghost-white"
               size="lg"
               leftIcon={<Calendar className="w-4 h-4" />}
+              onClick={() => {
+                window.location.href =
+                  "mailto:support@citepilot.ai?subject=Talk%20to%20CitePilot";
+              }}
               className="w-full sm:w-auto font-semibold text-[15px] border-white/50 hover:border-white shadow-none"
               data-testid="enterprise-btn-demo"
             >

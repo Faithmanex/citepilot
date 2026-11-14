@@ -35,14 +35,14 @@ describe("Grammarly Editorial Badge & Tag Component", () => {
     rerender(<Badge variant="claim-needs-source">Claim Needs Source</Badge>);
     badge = container.firstElementChild;
     expect(badge).toHaveClass("bg-[#f1e4c8]");
-    expect(badge).toHaveClass("text-[#93650f]");
+    expect(badge).toHaveClass("text-[#7a530c]");
     expect(badge).toHaveClass("border-[#ecd9a8]");
 
     // 3. Outdated Reference (Violet)
     rerender(<Badge variant="outdated-reference">Outdated Reference</Badge>);
     badge = container.firstElementChild;
     expect(badge).toHaveClass("bg-[#f1e4c8]");
-    expect(badge).toHaveClass("text-[#93650f]");
+    expect(badge).toHaveClass("text-[#7a530c]");
     expect(badge).toHaveClass("border-[#ecd9a8]");
 
     // 4. Tone & Clarity (Slate)

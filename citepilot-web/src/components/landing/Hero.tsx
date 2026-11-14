@@ -52,8 +52,8 @@ export default function Hero() {
           className="mt-4 sm:mt-6 font-sans text-base sm:text-lg md:text-xl leading-relaxed text-[#5c5344] max-w-2xl mx-auto"
           data-testid="hero-subtext"
         >
-          CitePilot audits manuscripts in real time for missing references, unsupported claims, and
-          retracted sources — ensuring every citation stands up to peer review.
+          CitePilot audits a manuscript in one pass for missing references, unsupported claims, and
+          retracted sources — so every citation can stand up to peer review.
         </p>
 
         {/* Dual CTAs */}
@@ -84,14 +84,14 @@ export default function Hero() {
 
         {/* Legal Microcopy */}
         <div
-          className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs text-[#948a76] font-medium tracking-tight"
+          className="mt-4 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs text-[#6b6152] font-medium tracking-tight"
           data-testid="hero-microcopy"
         >
           <span>Free for individual researchers</span>
           <span className="text-[#d9cfb8]">•</span>
           <span>No credit card required</span>
           <span className="text-[#d9cfb8]">•</span>
-          <span>Your document stays private</span>
+          <span>Your text is never used for training</span>
         </div>
 
         {/* Live Interactive Demo Embedding Showcase */}
@@ -105,7 +105,7 @@ export default function Hero() {
               <span className="w-2.5 h-2.5 rounded-[3px] bg-[#2c3e8c] inline-block" />
               <span>See CitePilot on an example document</span>
             </div>
-            <span className="text-[#948a76] hidden sm:inline">No sign-up needed</span>
+            <span className="text-[#6b6152] hidden sm:inline">No sign-up needed</span>
           </div>
 
           <div className="border border-[#d9cfb8] rounded-b-lg bg-[#ffffff] shadow-none overflow-hidden">

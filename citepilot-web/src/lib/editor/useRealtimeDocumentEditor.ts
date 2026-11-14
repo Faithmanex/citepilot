@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { AuditResponse } from "@/lib/types";
 import type {
   EditorSuggestion,
@@ -35,6 +35,15 @@ export function useRealtimeDocumentEditor({
   // Debounced re-audit timer ref (2.5s idle)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [pristineText, setPristineText] = useState(initialText);
+  // The last text this editor pushed to the parent. A parent update carrying
+  // this value is our own edit echoing back, not a new document.
+  const [lastEmitted, setLastEmitted] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
 
   // Adjust state while rendering when the parent supplies a new document or a
   // new audit response. This is React's documented pattern for resetting state
@@ -46,16 +55,20 @@ export function useRealtimeDocumentEditor({
 
   if (initialText !== syncedInputs.text) {
     setSyncedInputs({ text: initialText, audit: initialAudit });
-    setPristineText(initialText);
-    if (!isDirty) {
-      setManuscriptText(initialText);
-      setSuggestions(adaptAuditResponseToSuggestions(initialAudit, initialText));
-      setSelectedSuggestionId(null);
+    if (initialText !== lastEmitted) {
+      // A genuinely external text change (loaded report, replacement, clear).
+      setPristineText(initialText);
+      if (!isDirty) {
+        setManuscriptText(initialText);
+        setSuggestions(adaptAuditResponseToSuggestions(initialAudit, initialText));
+        setSelectedSuggestionId(null);
+      }
     }
   } else if (initialAudit !== syncedInputs.audit) {
     setSyncedInputs({ text: initialText, audit: initialAudit });
     if (initialAudit) {
       setSuggestions(adaptAuditResponseToSuggestions(initialAudit, manuscriptText));
+      setPristineText(manuscriptText);
       setIsDirty(false);
     }
   }
@@ -104,6 +117,7 @@ export function useRealtimeDocumentEditor({
       setManuscriptText(newText);
       setSuggestions(updatedSuggestions);
       setIsDirty(true);
+      setLastEmitted(newText);
       onTextChange?.(newText);
 
       // Select next active suggestion in current filtered list if available
@@ -132,6 +146,7 @@ export function useRealtimeDocumentEditor({
     (newText: string) => {
       setManuscriptText(newText);
       setIsDirty(true);
+      setLastEmitted(newText);
       onTextChange?.(newText);
 
       // Clear existing debounce timer
@@ -171,6 +186,7 @@ export function useRealtimeDocumentEditor({
       setSuggestions(currentList);
       setIsDirty(true);
       setSelectedSuggestionId(null);
+      setLastEmitted(currentString);
       onTextChange?.(currentString);
     },
     [manuscriptText, suggestions, onTextChange]
@@ -200,6 +216,8 @@ export function useRealtimeDocumentEditor({
       setSuggestions(adaptAuditResponseToSuggestions(initialAudit, pristineText));
       setIsDirty(false);
       setSelectedSuggestionId(null);
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      setLastEmitted(pristineText);
       onTextChange?.(pristineText);
     },
     acceptAllInCategory,

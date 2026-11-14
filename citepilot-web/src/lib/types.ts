@@ -1,6 +1,23 @@
+/**
+ * Canonical style keys, matching the server allowlist. `chicago17` is kept as a
+ * legacy alias and normalized to `chicago-author-date` before any request.
+ */
 export type CitationStyle =
-  | "apa7" | "apa6" | "mla9" | "chicago17"
+  | "apa7" | "apa6" | "mla9" | "chicago-author-date" | "chicago-notes"
   | "harvard" | "ieee" | "vancouver" | "turabian" | "oscola";
+
+export const CITATION_STYLES: CitationStyle[] = [
+  "apa7",
+  "apa6",
+  "mla9",
+  "chicago-author-date",
+  "chicago-notes",
+  "harvard",
+  "ieee",
+  "vancouver",
+  "turabian",
+  "oscola",
+];
 
 export type AuditMode = "full" | "reference_only";
 
@@ -79,7 +96,23 @@ export interface StructureIssue {
   how_to_fix?: string;
 }
 
+export interface AnalysisCheck {
+  name: string;
+  label: string;
+  status: "completed" | "unavailable" | "skipped";
+  reason?: "not_applicable" | "budget";
+  message?: string;
+  duration_ms?: number;
+}
+
 export interface AuditResponse {
+  request_id?: string;
+  mode?: AuditMode;
+  citation_style?: string;
+  /** `partial` means at least one requested check could not complete. */
+  status?: "completed" | "partial";
+  checks?: AnalysisCheck[];
+  elapsed_seconds?: number;
   citations?: Citation[];
   references?: Reference[];
   style_warnings?: StyleWarning[];
@@ -90,4 +123,35 @@ export interface AuditResponse {
   document_structure?: StructureIssue[];
   text?: string;
   manuscript_text?: string;
+}
+
+export const STYLE_LABELS: Record<CitationStyle, string> = {
+  apa7: "APA 7th",
+  apa6: "APA 6th",
+  mla9: "MLA 9th",
+  "chicago-author-date": "Chicago Author-Date",
+  "chicago-notes": "Chicago Notes",
+  harvard: "Harvard",
+  ieee: "IEEE",
+  vancouver: "Vancouver",
+  turabian: "Turabian",
+  oscola: "OSCOLA",
+};
+
+/**
+ * Maps legacy or historical style keys onto the canonical set so reloading an
+ * old saved audit cannot send an invalid style to the API.
+ */
+export function normalizeCitationStyle(value: string | null | undefined): CitationStyle {
+  const raw = String(value ?? "").trim().toLowerCase();
+  const aliases: Record<string, CitationStyle> = {
+    chicago17: "chicago-author-date",
+    chicago: "chicago-author-date",
+    mla: "mla9",
+    apa: "apa7",
+    "apa-7": "apa7",
+    "apa-6": "apa6",
+  };
+  const candidate = (aliases[raw] || raw) as CitationStyle;
+  return CITATION_STYLES.includes(candidate) ? candidate : "apa7";
 }

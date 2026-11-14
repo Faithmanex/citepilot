@@ -41,7 +41,7 @@ export const FOOTER_SECTIONS: FooterSection[] = [
     title: "Resources",
     links: [
       { label: "Citation Style Guides", href: "#styles" },
-      { label: "Retraction Database", href: "https://retractionwatch.com", external: true },
+      { label: "Retraction notices (external)", href: "https://retractionwatch.com", external: true },
       { label: "Crossref Metadata Index", href: "https://crossref.org", external: true },
       { label: "FAQ", href: "#faq" },
     ],
@@ -101,7 +101,7 @@ export default function Footer() {
                 data-testid="footer-mission"
               >
                 Empowering researchers, university labs, and peer reviewers with automated citation
-                discovery, real-time claim verification, and proactive source integrity auditing.
+                and reference-list checks, Crossref metadata verification, and source integrity auditing.
               </p>
             </div>
 

@@ -3,7 +3,7 @@ export default function HowItWorks() {
     {
       num: "01",
       title: "Upload your draft",
-      desc: "Word or PDF, any length. CitePilot parses structure, footnotes and your reference list automatically.",
+      desc: "DOCX, PDF, TXT, RTF, or BibTeX, up to 10 MB or 200,000 characters. CitePilot parses the structure and your reference list automatically.",
     },
     {
       num: "02",
@@ -18,7 +18,7 @@ export default function HowItWorks() {
     {
       num: "04",
       title: "Review, annotated",
-      desc: "Get your manuscript back with every issue marked in place, and a plain-language note for each.",
+      desc: "Review findings in place, then export the revised manuscript or a diagnostic report.",
     },
   ];
 

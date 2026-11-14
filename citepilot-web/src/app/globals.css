@@ -15,12 +15,15 @@
   --color-carbon: #221d16;
   --color-slate: #5c5344;
   --color-graphite: #5c5344;
-  --color-steel: #948a76;
+  /* Faint text: darkened from #948a76 (3.41:1) to meet AA on white/paper. */
+  --color-steel: #6b6152;
   --color-silver: #d9cfb8;
   --color-ash: #d9cfb8;
   --color-fog: #d9cfb8;
   --color-cloud: #faf6ec;
   --color-paper: #f1ebdc;
+  /* Control borders need 3:1 against their surface (WCAG 1.4.11). */
+  --color-control: #8f836c;
 
   /* ==========================================================================
      Audit Status & Functional Feedback Palette
@@ -35,16 +38,16 @@
   --color-status-teal-border: #c9cee8;
 
   /* Ochre / Warning / Claim Needs Source */
-  --color-status-warning: #93650f;
+  --color-status-warning: #7a530c;
   --color-status-warning-bg: #f1e4c8;
   --color-status-warning-border: #ecd9a8;
-  --color-status-amber: #93650f;
-  --color-status-amber-text: #93650f;
+  --color-status-amber: #7a530c;
+  --color-status-amber-text: #7a530c;
   --color-status-amber-bg: #f1e4c8;
   --color-status-amber-border: #ecd9a8;
 
   /* Ochre / Outdated Reference */
-  --color-status-violet: #93650f;
+  --color-status-violet: #7a530c;
   --color-status-violet-bg: #f1e4c8;
   --color-status-violet-border: #ecd9a8;
 
@@ -75,7 +78,7 @@
      ========================================================================== */
   --color-ink: #221d16;
   --color-ink-soft: #5c5344;
-  --color-ink-faint: #948a76;
+  --color-ink-faint: #6b6152;
   --color-paper-card: #faf6ec;
   --color-card: #ffffff;
   --color-rule: #d9cfb8;
@@ -85,7 +88,7 @@
   --color-brand-bg: #e7e9f5;
   --color-verified: #3b6647;
   --color-verified-bg: #dee8dd;
-  --color-warning: #93650f;
+  --color-warning: #7a530c;
   --color-warning-bg: #f1e4c8;
   --color-error: #a32b21;
   --color-error-bg: #f3dcd6;
@@ -98,7 +101,7 @@
   --color-dash-paper: #f1ebdc;
   --color-dash-ink: #221d16;
   --color-dash-ink-soft: #5c5344;
-  --color-dash-ink-faint: #948a76;
+  --color-dash-ink-faint: #6b6152;
 
   /* ==========================================================================
      Strict 8px Border Radius Standard (No Pills / No Oversized Corners)
@@ -174,10 +177,52 @@
   select:focus-visible,
   textarea:focus-visible,
   input:focus-visible,
+  summary:focus-visible,
   [tabindex="0"]:focus-visible {
     outline: 2px solid var(--color-teal-primary) !important;
     outline-offset: 2px !important;
     box-shadow: none !important;
+  }
+
+  /* Placeholders must stay legible: 6.07:1 on white. */
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-steel);
+    opacity: 1;
+  }
+
+  /* Skip link: visible only when focused. */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+    padding: 12px 16px;
+    background-color: var(--color-teal-primary);
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 14px;
+    border-radius: 8px;
+    text-decoration: none;
+  }
+
+  .skip-link:focus {
+    left: 1rem;
+    top: 1rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
@@ -564,5 +609,28 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Indeterminate audit progress: communicates activity without inventing a
+   percentage the client cannot measure. */
+.audit-progress-bar {
+  width: 40%;
+  animation: auditIndeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes auditIndeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .audit-progress-bar {
+    width: 100%;
+    animation: none;
   }
 }

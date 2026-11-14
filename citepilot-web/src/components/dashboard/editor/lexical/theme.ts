@@ -11,8 +11,8 @@ export const lexicalEditorTheme: EditorThemeClasses = {
     bold: "font-bold text-[#221d16]",
     italic: "italic",
     underline: "underline decoration-[#2c3e8c] decoration-2 underline-offset-2",
-    strikethrough: "line-through text-[#948a76]",
-    code: "font-mono text-xs px-1.5 py-0.5 rounded bg-[#faf6ec] text-[#93650f] border border-[#d9cfb8]",
+    strikethrough: "line-through text-[#6b6152]",
+    code: "font-mono text-xs px-1.5 py-0.5 rounded bg-[#faf6ec] text-[#7a530c] border border-[#d9cfb8]",
   },
   list: {
     ul: "list-disc pl-5 my-2 space-y-1",

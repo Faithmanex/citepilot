@@ -65,21 +65,21 @@ const VARIANT_STYLES: Record<
   // Amber (Claim Needs Source / Warning)
   amber: {
     bg: "bg-[#f1e4c8]",
-    text: "text-[#93650f]",
+    text: "text-[#7a530c]",
     border: "border-[#ecd9a8]",
     dot: "bg-[#93650f]",
     hover: "hover:bg-[#ecd9a8]/60",
   },
   "claim-needs-source": {
     bg: "bg-[#f1e4c8]",
-    text: "text-[#93650f]",
+    text: "text-[#7a530c]",
     border: "border-[#ecd9a8]",
     dot: "bg-[#93650f]",
     hover: "hover:bg-[#ecd9a8]/60",
   },
   warning: {
     bg: "bg-[#f1e4c8]",
-    text: "text-[#93650f]",
+    text: "text-[#7a530c]",
     border: "border-[#ecd9a8]",
     dot: "bg-[#93650f]",
     hover: "hover:bg-[#ecd9a8]/60",
@@ -88,14 +88,14 @@ const VARIANT_STYLES: Record<
   // Violet (Outdated Reference)
   violet: {
     bg: "bg-[#f1e4c8]",
-    text: "text-[#93650f]",
+    text: "text-[#7a530c]",
     border: "border-[#ecd9a8]",
     dot: "bg-[#93650f]",
     hover: "hover:bg-[#ecd9a8]/60",
   },
   "outdated-reference": {
     bg: "bg-[#f1e4c8]",
-    text: "text-[#93650f]",
+    text: "text-[#7a530c]",
     border: "border-[#ecd9a8]",
     dot: "bg-[#93650f]",
     hover: "hover:bg-[#ecd9a8]/60",

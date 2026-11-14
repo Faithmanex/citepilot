@@ -6,6 +6,22 @@ import { DocumentEditorCanvas } from "@/components/dashboard/editor/DocumentEdit
 import { FindingsSummaryWidget } from "@/components/dashboard/editor/RigorScoreWidget";
 import { LiveSuggestionFeed } from "@/components/dashboard/editor/LiveSuggestionFeed";
 import { useDemoEditor } from "./useDemoEditor";
+import type { AuditSummary } from "@/lib/auditState";
+
+/**
+ * The demo renders a finished worked example, so its audit state is
+ * "completed and current" by definition.
+ */
+const DEMO_AUDIT: AuditSummary = {
+  phase: "completed",
+  freshness: "current",
+  headline: "Audit completed",
+  description: "Example audit results.",
+  tone: "success",
+  showsResult: true,
+  isClean: false,
+  incompleteChecks: [],
+};
 
 export interface InteractiveDemoEditorProps {
   defaultDraftId?: string;
@@ -110,12 +126,13 @@ export function InteractiveDemoEditor({
           </div>
 
           <div className="lg:col-span-5 w-full flex flex-col gap-5">
-            <FindingsSummaryWidget summary={findings} />
+            <FindingsSummaryWidget summary={findings} audit={DEMO_AUDIT} />
 
             <LiveSuggestionFeed
               suggestions={suggestions}
               filteredSuggestions={activeSuggestions}
               selectedSuggestion={selectedSuggestion}
+              audit={DEMO_AUDIT}
               onSelectSuggestion={selectSuggestion}
               onAcceptSuggestion={acceptSuggestion}
               onDismissSuggestion={dismissSuggestion}

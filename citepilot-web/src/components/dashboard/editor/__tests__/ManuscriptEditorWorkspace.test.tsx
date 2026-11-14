@@ -57,6 +57,17 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     ],
   };
 
+  const completedAudit = {
+    phase: "completed" as const,
+    freshness: "current" as const,
+    headline: "Audit completed",
+    description: "Every requested check completed.",
+    tone: "success" as const,
+    showsResult: true,
+    isClean: false,
+    incompleteChecks: [],
+  };
+
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -71,6 +82,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
         auditData={mockAudit}
+        audit={completedAudit}
         documentName="transformer_study.docx"
       />
     );
@@ -94,6 +106,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       <ManuscriptEditorWorkspace
         initialText={docxText}
         auditData={null}
+        audit={completedAudit}
         documentName="freshly_uploaded_manuscript.docx"
       />
     );
@@ -110,6 +123,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
         auditData={mockAudit}
+        audit={completedAudit}
       />
     );
 
@@ -135,6 +149,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
         auditData={mockAudit}
+        audit={completedAudit}
         onTextChange={handleTextChange}
       />
     );
@@ -166,6 +181,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
         auditData={mockAudit}
+        audit={completedAudit}
         onTextChange={handleTextChange}
       />
     );
@@ -181,6 +197,38 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
     expect(contentEditable).toHaveTextContent(/Large language models require rigorous citation verification/i);
   });
 
+  it("resets to the last audited text, not the latest keystroke", async () => {
+    const handleTextChange = vi.fn();
+
+    render(
+      <ManuscriptEditorWorkspace
+        initialText={sampleManuscript}
+        auditData={mockAudit}
+        audit={completedAudit}
+        onTextChange={handleTextChange}
+      />
+    );
+
+    // Accept a fix, which edits the draft.
+    const highlightSpan = screen.getAllByRole("button").find((btn) =>
+      btn.getAttribute("data-testid")?.startsWith("highlight-span-")
+    );
+    expect(highlightSpan).toBeDefined();
+    if (highlightSpan) {
+      fireEvent.click(highlightSpan);
+      fireEvent.click(screen.getByTestId("accept-suggestion-button"));
+    }
+    expect(handleTextChange).toHaveBeenCalled();
+
+    // Reset asks for confirmation, then restores the audited text.
+    fireEvent.click(screen.getByRole("button", { name: /reset manuscript/i }));
+    const confirm = screen.getByRole("button", { name: /reset and discard edits/i });
+    fireEvent.click(confirm);
+
+    const lastCall = handleTextChange.mock.calls.at(-1)?.[0];
+    expect(lastCall).toBe(sampleManuscript);
+  });
+
   it("triggers clean docx, redline docx, and copy manuscript exports", async () => {
     const { exportDocx } = await import("@/lib/api");
 
@@ -188,6 +236,7 @@ Vaswani, A. et al. (2017). Attention is all you need. NeurIPS.`;
       <ManuscriptEditorWorkspace
         initialText={sampleManuscript}
         auditData={mockAudit}
+        audit={completedAudit}
         documentName="my_research.docx"
       />
     );

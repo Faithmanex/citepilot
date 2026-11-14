@@ -143,14 +143,14 @@ describe("Milestone 3: Hero Component (Hero.tsx)", () => {
     const subtext = screen.getByTestId("hero-subtext");
     expect(subtext).toBeInTheDocument();
     expect(subtext).toHaveTextContent(
-      "CitePilot audits manuscripts in real time for missing references"
+      "CitePilot audits a manuscript in one pass for missing references"
     );
 
     const microcopy = screen.getByTestId("hero-microcopy");
     expect(microcopy).toBeInTheDocument();
     expect(microcopy).toHaveTextContent("Free for individual researchers");
     expect(microcopy).toHaveTextContent("No credit card required");
-    expect(microcopy).toHaveTextContent("Your document stays private");
+    expect(microcopy).toHaveTextContent("Your text is never used for training");
   });
 
   it("renders dual CTAs and handles primary and demo explore actions", () => {
@@ -395,7 +395,7 @@ describe("Milestone 3: Footer Component (Footer.tsx)", () => {
     expect(screen.getByText("Citation Checks")).toBeInTheDocument();
     expect(screen.getByText("How It Works")).toBeInTheDocument();
     expect(screen.getByText("Researchers & Students")).toBeInTheDocument();
-    expect(screen.getByText("Retraction Database")).toBeInTheDocument();
+    expect(screen.getByText("Retraction notices (external)")).toBeInTheDocument();
     expect(screen.getByText("Privacy Policy")).toBeInTheDocument();
   });
 

@@ -51,7 +51,7 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
         </div>
 
         {/* Word / character count */}
-        <div className="flex items-center gap-2 text-xs font-mono text-[#948a76]">
+        <div className="flex items-center gap-2 text-xs font-mono text-[#6b6152]">
           <span className="font-semibold text-[#221d16]">{words}</span>
           <span>words</span>
           <span>•</span>
@@ -82,7 +82,7 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
             className="doc-page whitespace-pre-wrap select-text"
           >
             {textSegments.length === 0 ? (
-              <p className="text-[#948a76] italic">No document text loaded.</p>
+              <p className="text-[#6b6152] italic">No document text loaded.</p>
             ) : (
               textSegments.map((segment) => {
                 if (segment.type === "text") {
@@ -107,7 +107,7 @@ export const DocumentEditorCanvas: React.FC<DocumentEditorCanvasProps> = ({
       </div>
 
       {/* Canvas Footer */}
-      <div className="px-5 py-2.5 border-t border-[#d9cfb8] bg-[#faf6ec] rounded-b-lg flex flex-wrap items-center justify-between text-xs text-[#948a76] gap-2">
+      <div className="px-5 py-2.5 border-t border-[#d9cfb8] bg-[#faf6ec] rounded-b-lg flex flex-wrap items-center justify-between text-xs text-[#6b6152] gap-2">
         <span>Click a highlight to see the suggested fix</span>
       </div>
     </div>

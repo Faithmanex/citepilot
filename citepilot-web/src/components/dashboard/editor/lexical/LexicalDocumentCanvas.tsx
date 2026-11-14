@@ -139,7 +139,7 @@ export function LexicalDocumentCanvas({
               />
             }
             placeholder={
-              <div className="absolute top-[28px] left-[22px] sm:top-16 sm:left-[72px] text-[#948a76] italic pointer-events-none select-none">
+              <div className="absolute top-[28px] left-[22px] sm:top-16 sm:left-[72px] text-[#6b6152] italic pointer-events-none select-none">
                 Start writing or paste your academic manuscript here…
               </div>
             }
