@@ -308,6 +308,16 @@ export async function POST(request: Request): Promise<NextResponse> {
       status: results.status,
       checks: results.checks,
       elapsed_seconds: Math.round(elapsed * 100) / 100,
+      // Echo the analysed manuscript so findings can be shown against the text
+      // (and edited) even when the document was uploaded as a file. When the
+      // splitter found no reference heading, body and reference text are the
+      // same string and must not be duplicated.
+      manuscript_text:
+        normMode === "reference_only"
+          ? refText
+          : refText && refText !== bodyText
+            ? `${bodyText}\n\nReferences\n\n${refText}`
+            : bodyText,
       citations: results.citations,
       references: results.references,
       style_warnings: results.style_warnings,

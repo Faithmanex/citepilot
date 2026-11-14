@@ -427,7 +427,18 @@ export default function DashboardView() {
                 </div>
               )}
 
-              {hasDocument && (
+              {hasDocument && !manuscriptText.trim() && uploadedFile ? (
+                <div className="bg-[#ffffff] border border-[#d9cfb8] rounded-lg p-6 space-y-2">
+                  <h2 className="text-sm font-bold text-[#221d16]">
+                    File attached: {uploadedFile.name}
+                  </h2>
+                  <p className="text-xs text-[#5c5344]">
+                    {uploadedFile.name.toLowerCase().endsWith(".pdf")
+                      ? "PDF text is extracted on the server. Run the audit to parse the document and produce findings."
+                      : "Run the audit to analyse this file."}
+                  </p>
+                </div>
+              ) : hasDocument ? (
                 <ManuscriptEditorWorkspace
                   initialText={manuscriptText}
                   initialHtml={manuscriptHtml}
@@ -438,7 +449,7 @@ export default function DashboardView() {
                   onTextChange={handleTextChange}
                   onRequestReAudit={() => void runAudit()}
                 />
-              )}
+              ) : null}
             </div>
 
             {activePanel === "history" && (
