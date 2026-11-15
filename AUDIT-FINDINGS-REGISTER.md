@@ -1,8 +1,8 @@
 # CitePilot — Remediation Findings Register
 
 Document ID: CP-REMEDIATION-002
-Version: 1.1
-Last Updated: 2026-11-14
+Version: 1.2
+Last Updated: 2026-11-15
 Companion: `REMEDIATION-PLAN.md` (CP-REMEDIATION-001)
 
 Each finding below is linked to the change that resolves it and to the evidence gathered. "Verified" means the behaviour was exercised locally against the real application (not only asserted in a test).
@@ -27,11 +27,11 @@ Follow-up verification: full suite passed 236 tests across 26 files; after addin
 
 | # | Finding | Fix | Verification |
 |---|---|---|---|
-| 1.1 | A short analysis returned HTTP 503 after ~58s with Gemini `DEADLINE_EXCEEDED` | Root cause found: the configured default model `gemini-3.8-flash` is listed by the account but **never returned** (still hanging after 90s). Default changed to `gemini-2.5-flash`, which answered in 1.8s. `src/lib/ai/config.ts` | Provider catalogue returned 200 and listed the model; direct REST/SDK calls to `gemini-3.8-flash` timed out at 30s/90s/120s; `gemini-2.5-flash` returned 200 in 1.8s. Full pipeline then returned 200 in 20.0s. |
+| 1.1 | A short analysis returned HTTP 503 after ~58s with Gemini `DEADLINE_EXCEEDED` | Root cause found: the configured default model `gemini-3.8-flash` is listed by the account but **never returned** (still hanging after 90s). Default changed to `gemini-3.1-flash-lite`, verified with a real call on 2026-11-15 (1.7s); `gemini-2.5-flash` is also verified. `src/lib/ai/config.ts` | Provider catalogue returned 200 and listed the model; direct REST/SDK calls to `gemini-3.8-flash` timed out at 30s/90s/120s; `gemini-3.1-flash-lite` answered a minimal request in 1.7s and the full pipeline completed twice with it (19.1s / 26.8s, all checks). |
 | 1.2 | SDK/inline timeouts did not bound a hung provider call | Every provider call is raced against a wall-clock timeout (`withTimeout` in `llm.ts`), and each attempt is capped by the remaining overall budget (`attemptTimeout = min(GEMINI_TIMEOUT_MS, remaining)`) | Failure harness with `GEMINI_TIMEOUT_MS=800`, `ANALYSIS_BUDGET_MS=1200`, slow model: `504 provider_timeout` in **983 ms** with `retryable: true`. |
 | 1.3 | Invalid credentials could be retried pointlessly | Errors classified (`timeout`, `rate_limit`, `invalid_config`, `provider_error`, `invalid_response`, `budget_exhausted`); `invalid_config` never retried. Quota/rate-limit signals are checked **before** credential signals, and bare `401`/`403` digits inside a message are no longer treated as an HTTP status | Server started with `GOOGLE_API_KEY=invalid-key`: `503 ai_not_configured` in **975 ms**, `retryable: false`. Regression tests: a quota failure returned as HTTP 403 → `rate_limit` (retryable); explicit `PERMISSION_DENIED` → `invalid_config`; a message containing `40123` → `provider_error`. |
 | 1.4 | `503` told the user nothing actionable | Error body now carries `detail`, `code`, `retryable`, `request_id`; each message says the manuscript is preserved and whether retry helps | Live responses captured for 503/504/400 (`invalid_citation_style`). |
-| 1.5 | Health reported `status ok` + `ai_engine_ready true` while analysis failed | `/health` and `/api/health` share `buildHealthPayload`: `status` is liveness; `provider_readiness.state` is `unverified` from key presence alone; `?probe=1` runs a real cached provider call. `ai_engine_ready` is true only after a successful probe | `GET /api/health` → `ai_engine_ready:false`, `state:"unverified"`, detail explains how to probe. `?probe=1` ran a real call and reported `unavailable` with the actual timeout reason. |
+| 1.5 | Health reported `status ok` + `ai_engine_ready true` while analysis failed | `/health` and `/api/health` share `buildHealthPayload`: `status` is liveness; `provider_readiness.state` is `unverified` from key presence alone; `?probe=1` runs a real cached provider call. `ai_engine_ready` is true only after a successful probe | `GET /api/health` → `ai_engine_ready:false`, `state:"unverified"`, detail explains how to probe. `?probe=1` → `state:"ready"` in **1.9s** with `gemini-3.1-flash-lite`. An earlier probe passed a 6s SDK deadline, which the provider rejects (10s minimum) and which was misreported as a timeout; the probe now relies on the client-side race instead. |
 | 1.6 | Fabricated/stalled 65% progress | Client progress is an indeterminate bar with elapsed seconds and no `aria-valuenow`; stage list is descriptive, not a fake percentage. `Topbar.tsx`, `useAudit.ts`, `globals.css` | Browser: during a live audit the progressbar exposed `Audit in progress for N seconds`; no percentage rendered. |
 | 1.7 | Duplicate submissions possible from button + keyboard shortcut | `runningRef` guard in `useAudit`; button disabled while running; shortcut routes through the same guarded function | Unit test: one provider call for one click + Ctrl+Enter + two more clicks. Browser: single audit request per run. |
 | 1.8 | No request IDs or sanitized stage timing logs | `src/lib/ai/log.ts`; one JSON line per stage with request id, status, duration; request summary with character counts only. Never logs text, prompts, output, or keys | Server logs captured: `analysis_stage` entries and `analysis_failed` with `error_kind` only. |
@@ -93,7 +93,8 @@ Commands (from `citepilot-web/`):
 - `npm run typecheck` — clean.
 - `npm run lint` — **0 problems** (was 1 warning + new rules).
 - `npm run build` — compiled successfully; 18 routes; proxy recognized.
-- Real API: `POST /api/v1/analyse` → `200`, `status: completed`, 20.0s, 2 citations matched, 2 references verified, all six checks completed with durations.
+- Real API: `POST /api/v1/analyse` with `gemini-3.1-flash-lite` → `200`, `status: completed`, 19.1s and 26.8s on two runs, 2 citations matched, 2 references verified, all six checks completed with durations.
+- Provider readiness: `?probe=1` → `ready` in 1.9s; `ai_engine_ready=true`.
 - Bounded failures: `503 ai_not_configured` in 975ms (invalid key, no retries); `504 provider_timeout` in 983ms (budget exhaustion).
 - Browser (Playwright, 390×844 and 1280×900): 0 console errors, no horizontal overflow, keyboard-only modal/drawer focus containment and restore, reduced-motion emulation, stale-state transition, export availability.
 
@@ -102,7 +103,7 @@ Commands (from `citepilot-web/`):
 These are release gates in CP-REMEDIATION-001 that cannot be closed from this environment:
 
 1. **Deployed preview journey.** No Vercel credentials/project link were available. Run the manuscript → results → export journey on a preview, and record the previous deployment + rollback procedure.
-2. **Production environment variables.** Confirm the deployed project uses `GEMINI_MODEL=gemini-2.5-flash` (or another model verified with a timed minimal call). Repo default and `.env.example` are updated; the Vercel project value must be checked.
+2. **Production environment variables.** Confirm the deployed project uses `GEMINI_MODEL=gemini-3.1-flash-lite` (or another model verified with a timed minimal call) and a valid `GOOGLE_API_KEY`. Repo default and `.env.example` are updated; the Vercel project values must be checked.
 3. **Screen-reader pass.** Automated a11y-tree inspection and keyboard tests passed; a real NVDA/VoiceOver pass is still required.
 4. **Authentication and subscription with test accounts.** Sign-in/return flow, history ownership, and sandbox PayPal activation were not exercised (no test accounts/sandbox credentials).
 5. **Live file-upload journey.** Client-side validation and parsers are tested; a real DOCX/PDF upload through the deployed UI was not performed in this session.

@@ -1,8 +1,8 @@
 # CitePilot — Functionality, Usability, and Accessibility Remediation Plan
 
 Document ID: CP-REMEDIATION-001
-Version: 1.1
-Last Updated: 2026-11-14
+Version: 1.2
+Last Updated: 2026-11-15
 Status: Implemented with review corrections — local automated verification; deployment, manual accessibility, and account release gates remain open
 
 ## Objective and scope
@@ -240,9 +240,9 @@ Add behavior-focused coverage for gaps exposed by the audit rather than tests th
 
 Implementation should begin with phases 1 and 2 because reliable processing and truthful results determine whether users can trust the platform. Accessibility work should use shared patterns so the same correction applies consistently across the product.
 
-## Verification record (2026-11-14)
+## Verification record (2026-11-15)
 
-Root cause of the P0 failure: the default model `gemini-3.8-flash` is listed for the account but never returned (still hanging after 90s). `gemini-2.5-flash` answered in 1.8s; the default and `.env.example` now use it. A short manuscript through the real pipeline returns `200` in ~20s with all six checks completed. Bounded failures return in under 1s (`503 ai_not_configured`, no retries; `504 provider_timeout`), and health only reports readiness after a real probe.
+Root cause of the P0 failure: the default model `gemini-3.8-flash` is listed for the account but never returned (still hanging after 90s). The default and `.env.example` now use `gemini-3.1-flash-lite` (verified: minimal call 1.7s). A short manuscript through the real pipeline returns `200` with all six checks completed (19.1s and 26.8s on two runs). Provider readiness reports `ready` in 1.9s after a real probe. Bounded failures return in under 1s (`503 ai_not_configured`, no retries; `504 provider_timeout`), and health only reports readiness after a real probe.
 
 Local evidence:
 

@@ -106,8 +106,7 @@ export async function probeProvider(): Promise<ProviderReadiness> {
           contents: "Reply with the single word: ok",
           config: {
             temperature: 0,
-            maxOutputTokens: 8,
-            httpOptions: { timeout: aiConfig.readinessProbeTimeoutMs },
+            maxOutputTokens: 16,
           },
         }),
         aiConfig.readinessProbeTimeoutMs
@@ -126,9 +125,11 @@ export async function probeProvider(): Promise<ProviderReadiness> {
         : /NOT_FOUND|404|model/i.test(message) &&
             /not found|not supported|does not exist/i.test(message)
           ? `The configured model (${aiConfig.geminiModel}) is not available to this account.`
-          : /DEADLINE|timeout|timed out/i.test(message)
-            ? "The provider probe timed out."
-            : "The provider probe failed.";
+          : /INVALID_ARGUMENT|invalid argument/i.test(message)
+            ? "The provider rejected the probe request as invalid."
+            : /DEADLINE_EXCEEDED|ETIMEDOUT|timed out|timeout/i.test(message)
+              ? "The provider probe timed out."
+              : "The provider probe failed.";
       cache = { state: "unavailable", checkedAt: startedAt, detail };
     } finally {
       inFlight = null;

@@ -22,9 +22,9 @@ export const aiConfig = {
   googleApiKey: (process.env.GOOGLE_API_KEY || process.env.GEMINI_API_KEY || "").trim(),
   // `gemini-3.8-flash` is listed for this account but did not return within 90
   // seconds on a minimal request (2026-11-14), which made every audit hit the
-  // deadline. `gemini-2.5-flash` answered in under 2s and is the default until
-  // the newer model's latency is verified again. Override with GEMINI_MODEL.
-  geminiModel: (process.env.GEMINI_MODEL || "gemini-2.5-flash").trim(),
+  // deadline. `gemini-3.1-flash-lite` answered in 1.7s (2026-11-15) and is the
+  // default; `gemini-2.5-flash` is also verified. Override with GEMINI_MODEL.
+  geminiModel: (process.env.GEMINI_MODEL || "gemini-3.1-flash-lite").trim(),
   logLevel: (process.env.LOG_LEVEL || "info").toLowerCase(),
   crossrefMailto: (process.env.CROSSREF_MAILTO || "support@citepilot.ai").trim(),
   // Security / limits

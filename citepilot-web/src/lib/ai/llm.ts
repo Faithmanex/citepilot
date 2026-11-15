@@ -249,6 +249,10 @@ export async function callGemini(
       aiConfig.minAttemptMs,
       Math.min(aiConfig.geminiTimeoutMs, remaining)
     );
+    // The provider rejects per-request deadlines below 10s, so the SDK deadline
+    // is floored at 10s while the wall-clock race below still returns at
+    // `attemptTimeout`. This keeps short-budget attempts possible.
+    const providerDeadline = Math.max(10_000, attemptTimeout);
 
     try {
       const request = ai.models.generateContent({
@@ -258,7 +262,7 @@ export async function callGemini(
           temperature: 0.1,
           topP: 0.95,
           responseMimeType: "application/json",
-          httpOptions: { timeout: attemptTimeout },
+          httpOptions: { timeout: providerDeadline },
           ...(systemInstruction ? { systemInstruction } : {}),
         },
       });

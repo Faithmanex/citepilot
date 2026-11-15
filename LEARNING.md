@@ -28,7 +28,9 @@ The audit's 503 after ~58s was **not** a configuration or quota problem:
 - A minimal `generateContent` call to `gemini-3.8-flash` **never returned** (still hanging after 90s, both via the SDK and plain REST).
 - The same request against `gemini-2.5-flash` returned in **1.8s**, and `gemini-3-flash-preview` in 1.3s.
 
-A listed model is therefore not a working model. The default is now `gemini-2.5-flash`; `GEMINI_MODEL` still overrides it. Before switching models again, run a minimal provider call with a hard timeout and measure latency — do not assume a model name in the catalog is usable.
+A listed model is therefore not a working model. The default is now `gemini-3.1-flash-lite` (verified 2026-11-15: minimal call answered in 1.7s); `gemini-2.5-flash` is also verified. `GEMINI_MODEL` still overrides the default. Before switching models again, run a minimal provider call with a hard timeout and measure latency — do not assume a model name in the catalog is usable.
+
+**Provider deadlines have a floor.** `gemini-3.1-flash-lite` rejects any per-request `httpOptions.timeout` below **10s** (`400 INVALID_ARGUMENT: Manually set deadline 6s is too short`). The client-side wall-clock race still enforces the real attempt budget, so `callGemini` floors the SDK deadline at 10s, and the readiness probe lets the race (6s) bound it without passing an SDK deadline.
 
 Related contract changes:
 
@@ -116,7 +118,7 @@ The top-level `README.md` document index and directory tree previously did not m
 | `PAYPAL_WEBHOOK_ID` | PayPal webhook ID (required in prod — webhooks without it are rejected) |
 | `PAYPAL_API_BASE` | Optional, defaults to `https://api-m.paypal.com` |
 | `GOOGLE_API_KEY` | **Required for analysis** — powers the `/api/v1/analyse` Gemini pipeline (503 if missing) |
-| `GEMINI_MODEL` | Optional, defaults to `gemini-2.5-flash` (the previously configured `gemini-3.8-flash` hung on every call) |
+| `GEMINI_MODEL` | Optional, defaults to `gemini-3.1-flash-lite` (the previously configured `gemini-3.8-flash` hung on every call) |
 | `CROSSREF_MAILTO` | Optional contact email for the Crossref polite pool |
 | `API_KEY` | Optional — if set, clients must send `X-API-Key` or `Authorization: Bearer <key>` |
 | `MAX_UPLOAD_MB` / `MAX_TEXT_CHARS` / `RATE_LIMIT_PER_MINUTE` | Optional AI request limits |
