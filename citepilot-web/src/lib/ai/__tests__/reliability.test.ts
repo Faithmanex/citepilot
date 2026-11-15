@@ -14,6 +14,36 @@ describe("provider error classification", () => {
     expect(error.retryable).toBe(false);
   });
 
+  it("treats a quota failure returned as 403 as a rate limit, not misconfiguration", () => {
+    // Regression: providers can surface RESOURCE_EXHAUSTED with HTTP 403 or
+    // with quota JSON that contains 401/403-looking values. This used to be
+    // reported as "not configured, retrying will not help".
+    const error = classifyProviderError({
+      status: 403,
+      message:
+        '{"error":{"code":403,"status":"RESOURCE_EXHAUSTED","message":"You exceeded your current quota. Quota exceeded for metric: generate_content_free_tier_requests"}}',
+    });
+    expect(error.kind).toBe("rate_limit");
+    expect(error.retryable).toBe(true);
+  });
+
+  it("still treats explicit permission denial as invalid configuration", () => {
+    const error = classifyProviderError({
+      status: 403,
+      message: "PERMISSION_DENIED: the caller does not have permission.",
+    });
+    expect(error.kind).toBe("invalid_config");
+    expect(error.retryable).toBe(false);
+  });
+
+  it("does not read digits inside a message as an HTTP status", () => {
+    const error = classifyProviderError(
+      new Error("request 40123 failed while streaming")
+    );
+    expect(error.kind).toBe("provider_error");
+    expect(error.retryable).toBe(true);
+  });
+
   it("classifies timeouts and rate limits as retryable", () => {
     expect(classifyProviderError(new Error("DEADLINE_EXCEEDED")).kind).toBe("timeout");
     expect(classifyProviderError(new Error("DEADLINE_EXCEEDED")).retryable).toBe(true);

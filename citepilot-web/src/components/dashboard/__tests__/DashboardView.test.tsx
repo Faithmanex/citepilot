@@ -65,6 +65,19 @@ function typeIntoTextarea(value: string) {
 }
 
 describe("dashboard workflow", () => {
+  it.each(["rtf", "bib"])("keeps uploaded %s as a file until server normalization", async (extension) => {
+    runAuditMock.mockResolvedValue({ ...COMPLETED_RESPONSE, manuscript_text: "Normalized manuscript" });
+    render(<DashboardView />);
+    const file = new File(["Encoded source"], `paper.${extension}`);
+    fireEvent.change(document.getElementById("manuscript-file")!, { target: { files: [file] } });
+    fireEvent.click(screen.getByTestId("run-audit-btn"));
+    await waitFor(() => expect(runAuditMock).toHaveBeenCalledTimes(1));
+    const form = runAuditMock.mock.calls[0][0] as FormData;
+    expect(form.get("file")).toBe(file);
+    expect(form.has("text")).toBe(false);
+    await waitFor(() => expect(screen.getByTestId("audit-state-headline")).toHaveTextContent("Audit completed"));
+    expect(screen.getByTestId("document-editor-canvas").textContent).toContain("Normalized manuscript");
+  });
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
@@ -115,7 +128,7 @@ describe("dashboard workflow", () => {
     expect(runAuditMock).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      resolveAudit(COMPLETED_RESPONSE);
+        resolveAudit({ ...COMPLETED_RESPONSE, manuscript_text: "First document text." });
       await Promise.resolve();
       await Promise.resolve();
     });
@@ -183,13 +196,14 @@ describe("dashboard workflow", () => {
     typeIntoTextarea("Replacement document text.");
 
     await act(async () => {
-      resolveAudit(COMPLETED_RESPONSE);
+      resolveAudit({ ...COMPLETED_RESPONSE, manuscript_text: "First document text." });
       await Promise.resolve();
       await Promise.resolve();
     });
 
     // The stale response must not be attached to the replacement document.
     expect(screen.getByTestId("audit-state-headline")).toHaveTextContent("Ready to audit");
+      expect(screen.getByRole("textbox", { name: /paste manuscript text/i })).toHaveValue("Replacement document text.");
     expect(screen.queryByText("Nothing flagged")).not.toBeInTheDocument();
   });
 

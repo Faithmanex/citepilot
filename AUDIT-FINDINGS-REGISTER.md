@@ -1,11 +1,27 @@
 # CitePilot — Remediation Findings Register
 
 Document ID: CP-REMEDIATION-002
-Version: 1.0
+Version: 1.1
 Last Updated: 2026-11-14
 Companion: `REMEDIATION-PLAN.md` (CP-REMEDIATION-001)
 
 Each finding below is linked to the change that resolves it and to the evidence gathered. "Verified" means the behaviour was exercised locally against the real application (not only asserted in a test).
+
+## Review corrections — 2026-11-14
+
+The original tables below record the earlier implementation and evidence, not current proof that every release gate is closed. The follow-up code review reopened five issues. This section supersedes conflicting closure claims in rows 1.9, 2.4, 4.4, and 4.6. These corrections are covered by automated regression tests; no new production, payment, or screen-reader verification is claimed.
+
+| Review issue | Corrected behavior | Regression evidence |
+| --- | --- | --- |
+| Late response overwrites a replacement document | A request generation guard rejects obsolete responses before callbacks, success notifications, and history saving; replacement/history/settings/input changes invalidate it. | Hook tests assert no success callback, toast, or save after replacement. Dashboard test includes returned old manuscript text and asserts replacement text survives. |
+| Reference-only result replaces full manuscript | Existing editor text remains authoritative; server extraction initializes file-only input. The response is copied without mutating shared data. History saves the preserved or extracted manuscript. | Hook test returns reference-only text and asserts the full manuscript survives. |
+| Some unavailable references/providers reported completed | Any unavailable Crossref, OpenAlex, or retraction check marks verification unavailable and the audit partial. | Pipeline tests fail one of two references for each provider, plus an all-success control. |
+| RTF/BibTeX parsers bypassed | Dashboard retains encoded uploads as files for server normalization; raw encoded content is not submitted as plain manuscript text. | Hook and dashboard tests verify multipart file submission for both extensions and normalized text/current results after success. |
+| Stale evidence exported without revision context | Annotated DOCX and diagnostic PDF require current audit evidence. Users must re-audit after changing the manuscript or settings; plain DOCX remains available. | Export availability test asserts both evidence buttons disabled and plain DOCX enabled for stale results. |
+
+Current completion boundary: these five code corrections are implemented locally. Deployment, uploaded-file journeys on the deployed UI, real screen-reader use, authenticated ownership, and sandbox subscription activation remain open as listed in section 6. Earlier artifact tests remain useful but do not prove those release gates.
+
+Follow-up verification: full suite passed 236 tests across 26 files; after adding two upload integration cases, the dashboard suite passed all 8 tests (238 total cases in the current suite). TypeScript passed. This follow-up did not rerun a production deployment or live provider calls.
 
 ## 1. Analysis reliability
 
@@ -13,13 +29,13 @@ Each finding below is linked to the change that resolves it and to the evidence 
 |---|---|---|---|
 | 1.1 | A short analysis returned HTTP 503 after ~58s with Gemini `DEADLINE_EXCEEDED` | Root cause found: the configured default model `gemini-3.8-flash` is listed by the account but **never returned** (still hanging after 90s). Default changed to `gemini-2.5-flash`, which answered in 1.8s. `src/lib/ai/config.ts` | Provider catalogue returned 200 and listed the model; direct REST/SDK calls to `gemini-3.8-flash` timed out at 30s/90s/120s; `gemini-2.5-flash` returned 200 in 1.8s. Full pipeline then returned 200 in 20.0s. |
 | 1.2 | SDK/inline timeouts did not bound a hung provider call | Every provider call is raced against a wall-clock timeout (`withTimeout` in `llm.ts`), and each attempt is capped by the remaining overall budget (`attemptTimeout = min(GEMINI_TIMEOUT_MS, remaining)`) | Failure harness with `GEMINI_TIMEOUT_MS=800`, `ANALYSIS_BUDGET_MS=1200`, slow model: `504 provider_timeout` in **983 ms** with `retryable: true`. |
-| 1.3 | Invalid credentials could be retried pointlessly | Errors classified (`timeout`, `rate_limit`, `invalid_config`, `provider_error`, `invalid_response`, `budget_exhausted`); `invalid_config` never retried | Server started with `GOOGLE_API_KEY=invalid-key`: `503 ai_not_configured` in **975 ms**, `retryable: false`. Logs show one attempt per stage, no retries. |
+| 1.3 | Invalid credentials could be retried pointlessly | Errors classified (`timeout`, `rate_limit`, `invalid_config`, `provider_error`, `invalid_response`, `budget_exhausted`); `invalid_config` never retried. Quota/rate-limit signals are checked **before** credential signals, and bare `401`/`403` digits inside a message are no longer treated as an HTTP status | Server started with `GOOGLE_API_KEY=invalid-key`: `503 ai_not_configured` in **975 ms**, `retryable: false`. Regression tests: a quota failure returned as HTTP 403 → `rate_limit` (retryable); explicit `PERMISSION_DENIED` → `invalid_config`; a message containing `40123` → `provider_error`. |
 | 1.4 | `503` told the user nothing actionable | Error body now carries `detail`, `code`, `retryable`, `request_id`; each message says the manuscript is preserved and whether retry helps | Live responses captured for 503/504/400 (`invalid_citation_style`). |
 | 1.5 | Health reported `status ok` + `ai_engine_ready true` while analysis failed | `/health` and `/api/health` share `buildHealthPayload`: `status` is liveness; `provider_readiness.state` is `unverified` from key presence alone; `?probe=1` runs a real cached provider call. `ai_engine_ready` is true only after a successful probe | `GET /api/health` → `ai_engine_ready:false`, `state:"unverified"`, detail explains how to probe. `?probe=1` ran a real call and reported `unavailable` with the actual timeout reason. |
 | 1.6 | Fabricated/stalled 65% progress | Client progress is an indeterminate bar with elapsed seconds and no `aria-valuenow`; stage list is descriptive, not a fake percentage. `Topbar.tsx`, `useAudit.ts`, `globals.css` | Browser: during a live audit the progressbar exposed `Audit in progress for N seconds`; no percentage rendered. |
 | 1.7 | Duplicate submissions possible from button + keyboard shortcut | `runningRef` guard in `useAudit`; button disabled while running; shortcut routes through the same guarded function | Unit test: one provider call for one click + Ctrl+Enter + two more clicks. Browser: single audit request per run. |
 | 1.8 | No request IDs or sanitized stage timing logs | `src/lib/ai/log.ts`; one JSON line per stage with request id, status, duration; request summary with character counts only. Never logs text, prompts, output, or keys | Server logs captured: `analysis_stage` entries and `analysis_failed` with `error_kind` only. |
-| 1.9 | Partial verification could look complete | Pipeline returns per-stage `checks` (`completed`/`unavailable`/`skipped` + reason + duration) and `status: completed|partial`; reference entries carry `verification_unavailable` with "unverified, not confirmed correct" copy | Live response: all six checks `completed` with durations; PDF report renders the checks table and unverified count. |
+| 1.9 | Partial verification could look complete | Pipeline returns per-stage `checks` (`completed`/`unavailable`/`skipped` + reason + duration) and `status: completed|partial`; **any** reference that could not be verified marks the verification check `unavailable` (with an “N of M” message), and the reference entry carries `verification_unavailable` with "unverified, not confirmed correct" copy | Live response: all six checks `completed` with durations; pipeline tests cover a failing Crossref/OpenAlex/retraction check each → `partial` + verification `unavailable`; PDF report renders the checks table and unverified count. |
 | 1.10 | Configured `chicago17` was rejected by the server (`400`) | Server and client share canonical style keys; `normalizeCitationStyle` maps `chicago17` → `chicago-author-date` | Live: `citation_style=chicago17` returned 200 with `citation_style: "chicago-author-date"`. |
 
 ## 2. Document and audit state
@@ -27,7 +43,7 @@ Each finding below is linked to the change that resolves it and to the evidence 
 | # | Finding | Fix | Verification |
 |---|---|---|---|
 | 2.1 | “Nothing flagged” shown before any audit | `src/lib/auditState.ts` models `empty/ready/running/completed/stale/failed`; “Nothing flagged” renders only for a current, fully completed audit with zero findings | Unit tests; browser showed “Ready to audit” before the first run and “Audit completed” after. |
-| 2.2 | Failed/partial audits could read as clean | Partial audit shows “Audit completed with unavailable checks”, lists incomplete checks, and states missing findings are not clean | Widget unit tests with an unavailable verification check; PDF report states `PARTIAL`. |
+| 2.2 | Failed/partial audits could read as clean | Partial audit shows “Audit completed with unavailable checks”, lists incomplete checks, and states missing findings are not clean. Finding counts are qualified (“N open findings so far … detected by completed checks”), and a category whose check did not run shows “— / not checked” instead of a misleading zero | Widget unit tests with unavailable verification, citation, style, and reference checks; PDF report states `PARTIAL`. |
 | 2.3 | Stale results not marked after edits/style/mode changes | Result stores revision + style + mode; any change marks it stale with a warning banner and editor notice | Browser: appending text changed the banner to “Edited since this audit”. Unit tests cover text/style/mode. |
 | 2.4 | An in-flight response could attach to a replacement document | Results are applied only when request id + revision + style + mode match; document change clears the run | Unit test (reducer) + dashboard test (clear during in-flight request) — replacement document stayed “Ready to audit”. |
 | 2.5 | First character replaced the textarea (focus/state loss) | Input surface is controlled by the dashboard and stays mounted while typing; the editor is shown alongside/below, and only an explicit action hides the input. `InputArea` is controlled, no local copy | Unit test types character-by-character and asserts the same DOM node persists; browser `fill` retained focus. |
@@ -62,7 +78,7 @@ Each finding below is linked to the change that resolves it and to the evidence 
 | 4.3 | Unsupported/oversized/empty/corrupt files failed silently | Client validates extension, size, empty file with `role=alert`; server returns `415 unsupported_file`, `413 file_too_large`, `422 unparseable_file`, `400 corrupt_file`, `400 empty_file`; DOCX read failures surface in the UI | Unit tests for client validation; server codes implemented and type-checked; live 400/503 captured. |
 | 4.4 | Advertised RTF/BIB not parsed | `rtfToPlainText` and `bibtexToPlainText` added to `document-parser.ts` | Unit tests for RTF groups/paragraphs/escapes and BibTeX fields. |
 | 4.5 | Ambiguous source precedence | Selecting a file clears pasted text and typing clears the file; the UI states exactly what will be analysed | Controlled `InputArea` + dashboard handlers. |
-| 4.6 | Export panels disagreed | `ExportPanel` now renders the same `DocumentExportSuite` as the editor; before an audit, annotated/PDF exports are disabled with an explanation; plain manuscript export stays available and is labelled “No findings” | Unit tests for enabled/disabled states; browser Export panel shows stale-revision warning and all three enabled after an audit. |
+| 4.6 | Export panels disagreed | `ExportPanel` renders the same `DocumentExportSuite` as the editor. Before an audit, annotated/PDF exports are disabled with an explanation; when the manuscript or settings changed after the audit, evidence exports are blocked with a re-run reason, while the plain manuscript export (“No findings”) stays available | Unit tests for enabled/disabled/no-audit/stale states; browser Export panel shows the stale-revision explanation. |
 | 4.7 | Exported files unverified | Clean DOCX, annotated DOCX, and PDF are generated and re-parsed in tests: current text (incl. accepted fix), style annotation, audit context, checks table, unverified warning, and non-Latin text handling | `src/lib/ai/__tests__/export.test.ts` (4 tests, passing). |
 | 4.8 | History had no failure/retry state | Loading, empty, error + “Try again”, and signed-out states; delete uses an accessible confirm dialog; delete failures announced | Code review + `HistoryPanel` test (load). |
 | 4.9 | Product copy overstated capabilities | Removed: “real time”, “any length”, “50 MB”, “3 audits/day”, “5,000 words”, “unlimited words”, “priority processing”, “sessionless / never store”, “9 styles”, “Retraction Database”. Corrected limits, styles, privacy/save behaviour, institutional framing; institutional CTAs now open email | `copy-accuracy.test.tsx` (6 tests) fails if the old claims return. |
@@ -73,7 +89,7 @@ Each finding below is linked to the change that resolves it and to the evidence 
 
 Commands (from `citepilot-web/`):
 
-- `npm test` — **228 passed / 25 files** (was 172/18). New suites: audit state, input limits, reliability, export artifacts, dashboard workflow, accessibility, copy accuracy.
+- `npm test` — **242 passed / 26 files** (was 172/18). New suites: audit state, input limits, reliability, pipeline completeness, export artifacts, dashboard workflow, accessibility, copy accuracy.
 - `npm run typecheck` — clean.
 - `npm run lint` — **0 problems** (was 1 warning + new rules).
 - `npm run build` — compiled successfully; 18 routes; proxy recognized.

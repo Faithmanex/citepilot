@@ -231,6 +231,37 @@ describe("audit-state-aware findings summary", () => {
       screen.getByText(/Missing findings for these checks do not mean the document is clean/i)
     ).toBeInTheDocument();
   });
+
+  it("qualifies finding counts and marks categories whose checks did not run", () => {
+    const partialAudit: AuditSummary = {
+      ...PARTIAL,
+      incompleteChecks: [
+        { name: "citations", label: "In-text citation extraction", status: "unavailable" },
+        { name: "style", label: "Citation style checking", status: "unavailable" },
+        { name: "references", label: "Reference list parsing", status: "unavailable" },
+      ],
+    };
+    const summary = {
+      total: 1,
+      active: 1,
+      resolved: 0,
+      byCategory: { citation: 0, style: 0, claim: 1, reference: 0 },
+    };
+
+    render(<FindingsSummaryWidget summary={summary} audit={partialAudit} />);
+
+    // The count is explicitly limited to checks that actually ran.
+    expect(screen.getByTestId("findings-summary-headline")).toHaveTextContent(
+      "1 open finding so far"
+    );
+    expect(screen.getByText(/detected by completed checks/i)).toBeInTheDocument();
+    expect(screen.getByText(/3 checks could not complete/i)).toBeInTheDocument();
+
+    // Categories backed by unavailable checks must not display a fake zero.
+    expect(screen.getAllByText("not checked")).toHaveLength(3);
+    const claimRow = screen.getByText("Uncited claims").closest("div");
+    expect(claimRow).toHaveTextContent("1");
+  });
 });
 
 describe("export availability", () => {
@@ -257,7 +288,7 @@ describe("export availability", () => {
     expect(screen.getByText(/No audit evidence yet/i)).toBeInTheDocument();
   });
 
-  it("enables evidence exports and flags a stale revision", () => {
+  it("blocks stale evidence exports while retaining plain manuscript export", () => {
     render(
       <DocumentExportSuite
         data={EMPTY_RESULT}
@@ -267,8 +298,9 @@ describe("export availability", () => {
       />,
     );
 
-    expect(screen.getByTestId("export-redline-docx-btn")).toBeEnabled();
-    expect(screen.getByTestId("export-pdf-report-btn")).toBeEnabled();
+    expect(screen.getByTestId("export-clean-docx-btn")).toBeEnabled();
+    expect(screen.getByTestId("export-redline-docx-btn")).toBeDisabled();
+    expect(screen.getByTestId("export-pdf-report-btn")).toBeDisabled();
     expect(screen.getByText(/edited after this audit/i)).toBeInTheDocument();
   });
 });

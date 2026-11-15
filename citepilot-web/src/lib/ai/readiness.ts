@@ -122,7 +122,7 @@ export async function probeProvider(): Promise<ProviderReadiness> {
       const detail = /API_KEY_INVALID|PERMISSION_DENIED|UNAUTHENTICATED|401|403/i.test(
         message
       )
-        ? "The provider rejected the configured credentials."
+        ? "The provider rejected the request (credentials or project permissions)."
         : /NOT_FOUND|404|model/i.test(message) &&
             /not found|not supported|does not exist/i.test(message)
           ? `The configured model (${aiConfig.geminiModel}) is not available to this account.`

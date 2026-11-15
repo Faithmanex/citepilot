@@ -32,6 +32,43 @@ function renderAudit(overrides: Record<string, unknown> = {}) {
 }
 
 describe("useAudit", () => {
+  it("discards all success side effects after document replacement", async () => {
+    let resolve!: (data: AuditResponse) => void;
+    mockedRunAudit.mockImplementation(() => new Promise(r => { resolve = r; }));
+    const onSuccess = vi.fn();
+    const showToast = vi.fn();
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    const { result } = renderAudit({ text: "Original", onSuccess, showToast, user: { id: "u" } });
+    let pending!: Promise<void>;
+    act(() => { pending = result.current.runAudit(); });
+    act(() => result.current.replaceDocument(true));
+    await act(async () => {
+      resolve({ citations: [], references: [], manuscript_text: "Old response" });
+      await pending;
+    });
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(showToast).not.toHaveBeenCalled();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("preserves the full manuscript when reference-only analysis echoes a section", async () => {
+    mockedRunAudit.mockResolvedValue({ citations: [], references: [], manuscript_text: "References only" });
+    const onSuccess = vi.fn();
+    const { result } = renderAudit({ text: "Full body\nReferences only", mode: "reference_only", onSuccess });
+    await act(async () => { await result.current.runAudit(); });
+    expect(onSuccess.mock.calls[0][0].manuscript_text).toBe("Full body\nReferences only");
+  });
+
+  it.each(["rtf", "bib"])("submits an unparsed %s file for server parsing", async (extension) => {
+    mockedRunAudit.mockResolvedValue({ citations: [], references: [], manuscript_text: "Normalized text" });
+    const file = new File(["encoded file"], `paper.${extension}`);
+    const { result } = renderAudit({ file });
+    await act(async () => { await result.current.runAudit(); });
+    const body = mockedRunAudit.mock.calls[0][0];
+    expect(body.get("file")).toBe(file);
+    expect(body.has("text")).toBe(false);
+  });
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -103,7 +140,7 @@ describe("useAudit", () => {
     });
 
     expect(mockedRunAudit).toHaveBeenCalledTimes(1);
-    expect(onSuccess).toHaveBeenCalledWith(data);
+    expect(onSuccess).toHaveBeenCalledWith(expect.objectContaining(data));
     expect(showToast).toHaveBeenCalledWith("Manuscript audit completed successfully!");
     expect(result.current.progress.visible).toBe(false);
     expect(result.current.errorModal.visible).toBe(false);

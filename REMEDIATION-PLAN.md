@@ -1,9 +1,9 @@
 # CitePilot — Functionality, Usability, and Accessibility Remediation Plan
 
 Document ID: CP-REMEDIATION-001
-Version: 1.0
+Version: 1.1
 Last Updated: 2026-11-14
-Status: Implemented — local verification complete; deployment and account verification pending
+Status: Implemented with review corrections — local automated verification; deployment, manual accessibility, and account release gates remain open
 
 ## Objective and scope
 

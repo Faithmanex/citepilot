@@ -59,12 +59,13 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
   const [copied, setCopied] = useState(false);
 
   const hasText = Boolean(manuscriptText.trim());
-  // Audit evidence only exists when a result is shown. A stale result is still
-  // usable evidence, but the export says so.
-  const hasAuditEvidence = audit.showsResult && Boolean(data);
+  // Evidence exports require findings for the current revision and settings.
+  const hasAuditEvidence = audit.showsResult && Boolean(data) && audit.freshness === "current";
   const evidenceReason = hasAuditEvidence
     ? null
-    : "Run an audit to enable exports that include audit findings. The plain manuscript export stays available.";
+    : audit.freshness === "stale"
+      ? "The document or settings were edited after this audit. Re-run the audit before exporting evidence. Plain manuscript export remains available."
+      : "Run an audit of the current document and settings to enable audit evidence exports. The plain manuscript export stays available.";
 
   const baseFileName = documentName
     .replace(/\.[^/.]+$/, "")

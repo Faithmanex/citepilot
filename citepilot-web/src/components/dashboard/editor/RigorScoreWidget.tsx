@@ -18,11 +18,15 @@ export interface FindingsSummaryWidgetProps {
   className?: string;
 }
 
-const CATEGORY_ROWS: { key: keyof FindingsSummary["byCategory"]; label: string }[] = [
-  { key: "citation", label: "Citations" },
-  { key: "style", label: "Style" },
-  { key: "claim", label: "Uncited claims" },
-  { key: "reference", label: "References" },
+const CATEGORY_ROWS: {
+  key: keyof FindingsSummary["byCategory"];
+  label: string;
+  check: string;
+}[] = [
+  { key: "citation", label: "Citations", check: "citations" },
+  { key: "style", label: "Style", check: "style" },
+  { key: "claim", label: "Uncited claims", check: "uncited_claims" },
+  { key: "reference", label: "References", check: "references" },
 ];
 
 const TONE_STYLES: Record<
@@ -50,24 +54,36 @@ export const FindingsSummaryWidget: React.FC<FindingsSummaryWidgetProps> = ({
   const { Icon } = toneStyle;
   const hasFindings = summary.total > 0;
   const showCounts = audit.showsResult && hasFindings;
-  const clean =
-    audit.phase === "completed" &&
-    audit.freshness === "current" &&
-    audit.isClean &&
-    !hasFindings;
+  const completedAudit =
+    audit.phase === "completed" && audit.freshness === "current";
+  const partial = audit.incompleteChecks.length > 0;
+  const clean = completedAudit && audit.isClean && !hasFindings;
+  const unavailableChecks = new Set(
+    audit.incompleteChecks.map((check) => check.name)
+  );
 
   const headline = clean
     ? "Nothing flagged"
-    : audit.phase === "completed" && audit.freshness === "current"
-      ? `${summary.active} open ${summary.active === 1 ? "finding" : "findings"}`
+    : completedAudit
+      ? hasFindings
+        ? `${summary.active} open ${summary.active === 1 ? "finding" : "findings"}${partial ? " so far" : ""}`
+        : audit.headline
       : audit.headline;
 
   const description = clean
     ? "This completed audit found no citation or reference problems."
-    : audit.phase === "completed" && audit.freshness === "current"
-      ? `${summary.total} total detected${
-          summary.resolved > 0 ? ` · ${summary.resolved} resolved` : ""
-        }`
+    : completedAudit
+      ? hasFindings
+        ? `${summary.total} detected by completed checks${
+            summary.resolved > 0 ? ` · ${summary.resolved} resolved` : ""
+          }${
+            partial
+              ? ` · ${audit.incompleteChecks.length} ${
+                  audit.incompleteChecks.length === 1 ? "check" : "checks"
+                } could not complete`
+              : ""
+          }`
+        : audit.description
       : audit.description;
 
   return (
@@ -102,14 +118,24 @@ export const FindingsSummaryWidget: React.FC<FindingsSummaryWidgetProps> = ({
 
       {showCounts && (
         <dl className="grid grid-cols-2 gap-x-4 gap-y-2 pt-3 border-t border-[#d9cfb8]">
-          {CATEGORY_ROWS.map((row) => (
-            <div key={row.key} className="flex items-baseline justify-between gap-2">
-              <dt className="text-xs text-[#5c5344]">{row.label}</dt>
-              <dd className="text-xs font-bold text-[#221d16] tabular-nums">
-                {summary.byCategory[row.key]}
-              </dd>
-            </div>
-          ))}
+          {CATEGORY_ROWS.map((row) => {
+            const notChecked = unavailableChecks.has(row.check);
+            return (
+              <div key={row.key} className="flex items-baseline justify-between gap-2">
+                <dt className="text-xs text-[#5c5344]">{row.label}</dt>
+                <dd className="text-xs font-bold text-[#221d16] tabular-nums">
+                  {notChecked ? (
+                    <>
+                      <span aria-hidden="true">—</span>
+                      <span className="sr-only">not checked</span>
+                    </>
+                  ) : (
+                    summary.byCategory[row.key]
+                  )}
+                </dd>
+              </div>
+            );
+          })}
         </dl>
       )}
 

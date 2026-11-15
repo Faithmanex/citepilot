@@ -68,7 +68,7 @@ function providerErrorResponse(err: AIServiceError, requestId: string): NextResp
     case "invalid_config":
       return errorResponse(
         503,
-        `The analysis service is unavailable because it is not configured correctly. Retrying will not help until an administrator fixes the configuration. ${preserved}`,
+        `The AI provider denied access to the analysis service, so the audit could not run. This is a credentials or project-permission problem; retrying will not help until an administrator fixes it. ${preserved}`,
         "ai_not_configured",
         false,
         requestId
@@ -313,9 +313,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       // splitter found no reference heading, body and reference text are the
       // same string and must not be duplicated.
       manuscript_text:
-        normMode === "reference_only"
-          ? refText
-          : refText && refText !== bodyText
+        !bodyText ? refText : refText && refText !== bodyText
             ? `${bodyText}\n\nReferences\n\n${refText}`
             : bodyText,
       citations: results.citations,

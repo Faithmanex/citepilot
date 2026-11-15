@@ -141,9 +141,7 @@ export default function DashboardView() {
           setManuscriptHtml(extracted.html);
           showToast(`Loaded ${file.name}`);
         } else if (
-          fileName.endsWith(".txt") ||
-          fileName.endsWith(".rtf") ||
-          fileName.endsWith(".bib")
+          fileName.endsWith(".txt")
         ) {
           const text = await file.text();
           setManuscriptText(text);

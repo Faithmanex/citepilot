@@ -72,7 +72,7 @@ function describeError(error: unknown): { kind: string; message: string } {
       return {
         kind,
         message:
-          "The analysis service is not configured correctly, so this check could not run. The manuscript was preserved; retrying will not help until the configuration is fixed.",
+          "The AI provider denied access to the analysis service, so this check could not run. This is a credentials or project-permission problem; retrying will not help until an administrator fixes it. The manuscript was preserved.",
       };
     case "rate_limit":
       return {
@@ -211,7 +211,7 @@ export async function runAnalysisPipeline(
     name: "verification",
     label: STAGE_LABELS.verification,
     status: verificationAttempted
-      ? verification.unavailableCount === refs.length
+      ? verification.unavailableCount > 0
         ? "unavailable"
         : "completed"
       : "skipped",
@@ -393,8 +393,10 @@ async function verifyReferences(
     r.status === "fulfilled" ? r.value : unavailable("Retraction check", r.reason)
   );
 
-  const unavailableCount = crossrefResults.filter(
-    (r) => r["status"] === "verification_unavailable"
+  const unavailableCount = refs.filter((_, i) =>
+    [crossrefResults[i], openalexResults[i], retractionResults[i]].some(
+      (r) => r["status"] === "verification_unavailable"
+    )
   ).length;
 
   return {

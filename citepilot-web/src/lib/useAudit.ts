@@ -103,6 +103,7 @@ export function useAudit({
   const [errorDismissed, setErrorDismissed] = useState(false);
 
   const runningRef = useRef(false);
+  const generation = useRef(0);
   const lastInputRef = useRef<{ text: string; file: File | null }>({ text, file });
 
   // Track document revisions (text edits and file replacement). The effect runs
@@ -111,6 +112,7 @@ export function useAudit({
   useEffect(() => {
     const previous = lastInputRef.current;
     if (previous.text === text && previous.file === file) return;
+    generation.current += 1;
     lastInputRef.current = { text, file };
     if (!text.trim() && !file) {
       dispatch({ type: "document/emptied" });
@@ -120,6 +122,7 @@ export function useAudit({
   }, [text, file]);
 
   useEffect(() => {
+    generation.current += 1;
     dispatch({ type: "settings/changed", style, mode });
   }, [style, mode]);
 
@@ -158,6 +161,7 @@ export function useAudit({
     }
 
     const requestId = newClientRequestId();
+    const requestGeneration = generation.current;
     const formData = new FormData();
     if (textVal) {
       formData.append("text", textVal);
@@ -185,10 +189,15 @@ export function useAudit({
     }, CLIENT_ANALYSIS_TIMEOUT_MS);
 
     try {
-      const data = await runAudit(formData, {
+      const response = await runAudit(formData, {
         signal: controller.signal,
         requestId,
       });
+      if (generation.current !== requestGeneration) return;
+      // Existing text is authoritative. Server extraction initializes file-only input.
+      const documentText = text || response.manuscript_text || response.text || "";
+      const data = { ...response, manuscript_text: documentText, text: documentText };
+      lastInputRef.current = { text: documentText, file };
       const checks = data.checks || [];
       // The server is authoritative about partial results; a check that was
       // skipped because the audit mode does not need it is not an incomplete
@@ -224,10 +233,11 @@ export function useAudit({
           referenceCount: data.references?.length || 0,
           score: computeMatchRate(data),
           results: data,
-          manuscriptText: textVal,
+          manuscriptText: documentText,
         });
       }
     } catch (err) {
+      if (generation.current !== requestGeneration) return;
       const error = timedOut
         ? toAuditError(new DOMException("Timed out", "AbortError"))
         : toAuditError(err);
@@ -261,6 +271,7 @@ export function useAudit({
       hasDocument: boolean,
       nextInput?: { text: string; file: File | null }
     ) => {
+      generation.current += 1;
       // Keep the input snapshot in sync so the post-render change effect does
       // not count the replacement as another revision.
       if (nextInput) lastInputRef.current = nextInput;
@@ -278,6 +289,7 @@ export function useAudit({
       style: CitationStyle;
       mode: AuditMode;
     }) => {
+      generation.current += 1;
       dispatch({ type: "audit/loaded", ...input, at: Date.now() });
     },
     []

@@ -58,12 +58,29 @@ export function classifyProviderError(error: unknown): AIServiceError {
   );
   const detail = message.replace(/\s+/g, " ").slice(0, 300);
 
+  // Quota/rate-limit signals win over credential heuristics. Providers can
+  // return a quota failure with HTTP 403 or with digits that look like 401/403
+  // inside a JSON body; classifying that as "misconfigured, do not retry" is
+  // both wrong and user-hostile.
   if (
-    /API_KEY_INVALID|API key not valid|PERMISSION_DENIED|UNAUTHENTICATED|401|403/i.test(
+    status === 429 ||
+    /RESOURCE_EXHAUSTED|RATE_LIMIT_EXCEEDED|rate limit|quota|too many requests|429/i.test(
       message
-    ) ||
+    )
+  ) {
+    return new AIServiceError("The AI provider rate limit was reached.", {
+      kind: "rate_limit",
+      retryable: true,
+      providerDetail: detail,
+    });
+  }
+
+  if (
     status === 401 ||
-    status === 403
+    status === 403 ||
+    /API_KEY_INVALID|API key not valid|UNAUTHENTICATED|PERMISSION_DENIED|invalid api key/i.test(
+      message
+    )
   ) {
     return new AIServiceError(
       "The configured Gemini credentials were rejected. Check GOOGLE_API_KEY.",
@@ -80,17 +97,6 @@ export function classifyProviderError(error: unknown): AIServiceError {
   ) {
     return new AIServiceError("The AI provider timed out.", {
       kind: "timeout",
-      retryable: true,
-      providerDetail: detail,
-    });
-  }
-
-  if (
-    /RESOURCE_EXHAUSTED|rate limit|quota|429/i.test(message) ||
-    status === 429
-  ) {
-    return new AIServiceError("The AI provider rate limit was reached.", {
-      kind: "rate_limit",
       retryable: true,
       providerDetail: detail,
     });
