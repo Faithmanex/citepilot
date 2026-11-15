@@ -18,7 +18,7 @@ The on-disk layout is the source of truth:
 | `06-operations/` | Runbooks, incident response |
 | `07-launch/` | Launch checklist, support docs |
 | `citepilot-web/` | Next.js 16.2 frontend **+ AI API routes** (vendored in this monorepo) |
-| `supabase/migrations/` | 14 SQL migrations — DB source of truth |
+| `supabase/migrations/` | 16 SQL migrations — DB source of truth |
 
 Document IDs on disk use schemes `CP-DS-001`, `CP-ARCH-010`, `CITE-ENG-017` etc. — not the obsolete `CP-PROD-0XX` scheme.
 

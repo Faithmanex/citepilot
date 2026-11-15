@@ -1,0 +1,25 @@
+Citation Integrity in Machine Learning Research
+
+1. Introduction
+
+Citation integrity is central to reproducible machine learning research (Smith et al 2020). Prior work has shown that deep networks can be trained efficiently at scale (LeCunn et al., 2014). Krizhevsky et al. (2017) demonstrated the impact of convolutional architectures on image classification.
+
+Retracted findings continue to influence public discourse (Mehra et al., 2020). At the same time, 87% of biomedical retractions are attributable to honest error rather than misconduct. Researchers increasingly rely on automated tools, with adoption rising by 42% between 2020 and 2024.
+
+The field still lacks standardised reporting (Johnson & Wang, 2022). Missing page indicators make provenance checks difficult (LeCun et al., 2015, 436). Automated citation graphs remain unproven for underwater robotics (Nguyen & Park, 2023). Some argue that open science practices should be mandatory, while others disagree.
+
+Automated citation audits reduce the risk of referencing errors (Doe, 2020). However, 63% of researchers report never checking reference lists before submission.
+
+References
+
+Bishop, C. M. (2006). Pattern recognition and machine learning. Springer.
+
+Doe, J. (2020). Automated citation auditing: A Review. Journal of Imaginary Studies, 1(1), 1-2. https://doi.org/10.9999/fake.2020.001
+
+Krizhevsky, A., Sutskever, I., & Hinton, G. E. (2017). ImageNet classification with deep convolutional neural networks. Communications of the ACM, 60(6), 84-90. https://doi.org/10.1145/3065386
+
+LeCunn, Y., Bengio, Y., & Hinton, G. (2015). Deep learning for artificial intelligence. Science, 521(7553), 436-44. https://doi.org/10.1038/nature14539
+
+Mehra, M. R., Desai, S. S., Ruschitzka, F., & Patel, A. N. (2020). Hydroxychloroquine or chloroquine with or without a macrolide for treatment of COVID-19: a multinational registry analysis. The Lancet, 395(10240), 1820-1829. https://doi.org/10.1016/S0140-6736(20)31180-6
+
+Nguyen, T., & Park, S. (2023). Zxqvth citation resonance in non-existent underwater libraries. Journal of Unverifiable Results, 9(2), 101-119. https://doi.org/10.9999/zxqvth.2023.001

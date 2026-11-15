@@ -13,7 +13,6 @@ import Footer from "../Footer";
 import LandingView from "../LandingView";
 
 import CitationStyles from "../CitationStyles";
-import Testimonials from "../Testimonials";
 import SubscriptionSection from "../SubscriptionSection";
 import FAQ from "../FAQ";
 import CTASection from "../CTASection";
@@ -145,11 +144,6 @@ describe("Milestone 3 Challenger 2: Strict 8px Radius Standard & Pill Shape Audi
     const { container: subContainer } = render(<SubscriptionSection />);
     expect(subContainer.querySelectorAll(".rounded-full").length).toBeGreaterThan(0);
     expect(subContainer.querySelectorAll(".rounded-2xl").length).toBeGreaterThan(0);
-
-    // 5. Testimonials has rounded-full tags and rounded-2xl cards
-    const { container: testContainer } = render(<Testimonials />);
-    expect(testContainer.querySelector(".rounded-full")).not.toBeNull();
-    expect(testContainer.querySelectorAll(".rounded-2xl").length).toBe(3);
   });
 });
 

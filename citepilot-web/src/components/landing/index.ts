@@ -26,7 +26,6 @@ export * from "./LandingView";
 export { default as HowItWorks } from "./HowItWorks";
 export { default as CitationStyles } from "./CitationStyles";
 export { default as SubscriptionSection } from "./SubscriptionSection";
-export { default as Testimonials } from "./Testimonials";
 export { default as FAQ } from "./FAQ";
 export { default as CTASection } from "./CTASection";
 export { default as WhoItsFor } from "./WhoItsFor";

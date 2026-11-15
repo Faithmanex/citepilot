@@ -2,79 +2,150 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const ALLOWED_PLAN_IDS = new Set([
-  process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || "P-00697875B1151583ANJV3VOY",
-  "P-00697875B1151583ANJV3VOY",
-]);
-
 const PAYPAL_API_BASE =
   process.env.PAYPAL_API_BASE || "https://api-m.paypal.com";
 
+/**
+ * Billing is not configured on this deployment. Activation must fail closed:
+ * never grant a paid tier on the strength of a client-supplied ID.
+ */
+const BILLING_NOT_CONFIGURED =
+  "Billing is not configured on this deployment (PAYPAL_CLIENT_ID / PAYPAL_CLIENT_SECRET / NEXT_PUBLIC_PAYPAL_PLAN_ID are missing). Subscription activation is unavailable.";
+
+interface PayPalSubscription {
+  status?: string;
+  plan_id?: string;
+  start_time?: string;
+  billing_info?: { next_billing_time?: string };
+}
+
+type Verification =
+  | { ok: true; subscription: PayPalSubscription }
+  | { ok: false; status: number; error: string };
+
+async function getPayPalAccessToken(
+  clientId: string,
+  secret: string
+): Promise<string | null> {
+  const basic = Buffer.from(`${clientId}:${secret}`).toString("base64");
+  const tokenRes = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: "grant_type=client_credentials",
+  });
+  if (!tokenRes.ok) {
+    console.error(
+      "[subscription/activate] PayPal token fetch failed:",
+      tokenRes.status
+    );
+    return null;
+  }
+  const tokenData = (await tokenRes.json()) as { access_token?: string };
+  return tokenData.access_token || null;
+}
+
+/**
+ * Confirms the subscription exists in PayPal, is active, and belongs to the
+ * plan this product sells. The PayPal response — not the request body — is the
+ * source of truth for plan, status, and billing period.
+ */
 async function verifyPayPalSubscription(
   subscriptionId: string,
-  expectedPlanId?: string
-): Promise<{ valid: boolean; error?: string }> {
+  expectedPlanId: string
+): Promise<Verification> {
   const clientId = process.env.PAYPAL_CLIENT_ID;
   const secret = process.env.PAYPAL_CLIENT_SECRET;
-  // If PayPal credentials not configured, skip server-side verification but log.
   if (!clientId || !secret) {
-    console.warn(
-      "[subscription/activate] PAYPAL_CLIENT_ID/SECRET not set — skipping PayPal subscription verification (dev mode)"
-    );
-    return { valid: true };
+    return { ok: false, status: 503, error: BILLING_NOT_CONFIGURED };
   }
 
-  // PayPal subscription IDs typically start with "I-"
-  if (!/^I-[A-Z0-9]+$/i.test(subscriptionId) && subscriptionId.length < 5) {
-    return { valid: false, error: "Invalid subscriptionId format" };
+  let accessToken: string | null = null;
+  try {
+    accessToken = await getPayPalAccessToken(clientId, secret);
+  } catch (e) {
+    console.error("[subscription/activate] PayPal token error:", e);
+  }
+  if (!accessToken) {
+    return {
+      ok: false,
+      status: 503,
+      error: "PayPal is unreachable, so this subscription could not be verified. Try again shortly.",
+    };
   }
 
   try {
-    const basic = Buffer.from(`${clientId}:${secret}`).toString("base64");
-    const tokenRes = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${basic}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: "grant_type=client_credentials",
-    });
-    if (!tokenRes.ok) {
-      console.error("[subscription/activate] PayPal token fetch failed:", tokenRes.status);
-      return { valid: false, error: "PayPal verification unavailable" };
-    }
-    const tokenData = (await tokenRes.json()) as { access_token?: string };
-    if (!tokenData.access_token) {
-      return { valid: false, error: "PayPal verification unavailable" };
-    }
     const subRes = await fetch(
       `${PAYPAL_API_BASE}/v1/billing/subscriptions/${encodeURIComponent(subscriptionId)}`,
-      { headers: { Authorization: `Bearer ${tokenData.access_token}` } }
+      { headers: { Authorization: `Bearer ${accessToken}` } }
     );
+
+    if (subRes.status === 404) {
+      return {
+        ok: false,
+        status: 400,
+        error: "PayPal has no subscription with that ID.",
+      };
+    }
     if (!subRes.ok) {
-      console.warn("[subscription/activate] PayPal subscription lookup failed:", subRes.status);
-      return { valid: false, error: "Subscription not found or not verified with PayPal" };
-    }
-    const subData = (await subRes.json()) as { status?: string; plan_id?: string };
-    if (subData.status !== "ACTIVE" && subData.status !== "APPROVAL_PENDING") {
-      return { valid: false, error: `PayPal subscription status is ${subData.status}, expected ACTIVE` };
-    }
-    if (expectedPlanId && subData.plan_id && subData.plan_id !== expectedPlanId) {
-      console.warn(
-        `[subscription/activate] plan_id mismatch: expected ${expectedPlanId}, got ${subData.plan_id}`
+      console.error(
+        "[subscription/activate] PayPal subscription lookup failed:",
+        subRes.status
       );
-      // Do not block on plan mismatch alone, but log it; uncomment next line to enforce strict match:
-      // return { valid: false, error: "Plan ID mismatch" };
+      return {
+        ok: false,
+        status: 503,
+        error: "PayPal could not be reached to verify this subscription. Try again shortly.",
+      };
     }
-    return { valid: true };
+
+    const subscription = (await subRes.json()) as PayPalSubscription;
+
+    if (subscription.status !== "ACTIVE") {
+      return {
+        ok: false,
+        status: 400,
+        error: `This PayPal subscription is ${subscription.status || "not active"}, not ACTIVE. Complete payment approval first.`,
+      };
+    }
+
+    if (subscription.plan_id !== expectedPlanId) {
+      console.warn(
+        `[subscription/activate] plan mismatch: expected ${expectedPlanId}, PayPal reports ${subscription.plan_id}`
+      );
+      return {
+        ok: false,
+        status: 400,
+        error: "This subscription is for a different plan than the one CitePilot sells.",
+      };
+    }
+
+    return { ok: true, subscription };
   } catch (e) {
     console.error("[subscription/activate] PayPal verification error:", e);
-    return { valid: false, error: "PayPal verification error" };
+    return {
+      ok: false,
+      status: 503,
+      error: "PayPal verification failed. Try again shortly.",
+    };
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const expectedPlanId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
+    if (!expectedPlanId) {
+      console.error(
+        "[subscription/activate] NEXT_PUBLIC_PAYPAL_PLAN_ID is not set — refusing activation."
+      );
+      return NextResponse.json(
+        { error: BILLING_NOT_CONFIGURED },
+        { status: 503 }
+      );
+    }
+
     const supabase = await createClient();
     const {
       data: { user },
@@ -85,72 +156,104 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { subscriptionId, planId } = body as {
-      subscriptionId?: string;
-      planId?: string;
-      tier?: string;
+    const body = (await request.json()) as {
+      subscriptionId?: unknown;
+      planId?: unknown;
+      tier?: unknown;
     };
 
-    if (!subscriptionId || typeof subscriptionId !== "string" || !subscriptionId.trim()) {
-      return NextResponse.json({ error: "Missing subscriptionId" }, { status: 400 });
+    const subscriptionId =
+      typeof body.subscriptionId === "string" ? body.subscriptionId.trim() : "";
+    if (!subscriptionId) {
+      return NextResponse.json(
+        { error: "Missing subscriptionId" },
+        { status: 400 }
+      );
     }
 
-    const cleanSubscriptionId = subscriptionId.trim();
-    // Tier is server-controlled — never trust client-supplied tier. Always "professional".
+    // The client's planId is only a claim. PayPal's report is authoritative.
+    if (typeof body.planId === "string" && body.planId !== expectedPlanId) {
+      return NextResponse.json(
+        { error: "This subscription is for a different plan than the one CitePilot sells." },
+        { status: 400 }
+      );
+    }
+
+    const verification = await verifyPayPalSubscription(
+      subscriptionId,
+      expectedPlanId
+    );
+    if (!verification.ok) {
+      return NextResponse.json(
+        { error: verification.error },
+        { status: verification.status }
+      );
+    }
+
+    // Tier is server-controlled — never trust client-supplied tier.
     const tier = "professional" as const;
-
-    // Validate planId if provided — must be in allowlist
-    if (planId && !ALLOWED_PLAN_IDS.has(planId)) {
-      console.warn(`[subscription/activate] Unknown planId ${planId} — allowing but logging`);
-    }
-
-    // Verify subscription with PayPal when possible
-    const verification = await verifyPayPalSubscription(cleanSubscriptionId, planId);
-    if (!verification.valid) {
-      return NextResponse.json({ error: verification.error || "Subscription verification failed" }, { status: 400 });
-    }
-
     const admin = createAdminClient();
 
-    // Get user id from public.users
-    const { data: userProfile } = await admin
+    const { data: userProfile, error: profileErr } = await admin
       .from("users")
       .select("id")
       .eq("auth_user_id", user.id)
       .maybeSingle();
-
-    const targetUserId = userProfile?.id || user.id;
-
-    // Upsert subscription — check errors
-    const { error: upsertErr } = await admin
-      .from("subscriptions")
-      .upsert(
-        {
-          user_id: targetUserId,
-          paypal_subscription_id: cleanSubscriptionId,
-          paypal_plan_id: planId,
-          tier,
-          status: "active",
-          current_period_start: new Date().toISOString(),
-          current_period_end: new Date(Date.now() + 30 * 86400000).toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id" }
+    if (profileErr) {
+      console.error(
+        "[subscription/activate] user lookup failed:",
+        profileErr
       );
-    if (upsertErr) {
-      console.error("[subscription/activate] subscriptions upsert failed:", upsertErr);
-      return NextResponse.json({ error: "Failed to persist subscription" }, { status: 500 });
+      return NextResponse.json(
+        { error: "Failed to look up the signed-in user" },
+        { status: 500 }
+      );
     }
 
-    // Update user profile tier — check errors
+    const targetUserId = userProfile?.id || user.id;
+    const now = new Date().toISOString();
+
+    const { error: upsertErr } = await admin.from("subscriptions").upsert(
+      {
+        user_id: targetUserId,
+        paypal_subscription_id: subscriptionId,
+        paypal_plan_id: verification.subscription.plan_id,
+        tier,
+        status: "active",
+        current_period_start:
+          verification.subscription.start_time || now,
+        // Only a real PayPal next-billing time is stored; when PayPal does not
+        // report one, the column stays null rather than inventing a period.
+        current_period_end:
+          verification.subscription.billing_info?.next_billing_time || null,
+        updated_at: now,
+      },
+      { onConflict: "user_id" }
+    );
+    if (upsertErr) {
+      console.error(
+        "[subscription/activate] subscriptions upsert failed:",
+        upsertErr
+      );
+      return NextResponse.json(
+        { error: "Failed to persist subscription" },
+        { status: 500 }
+      );
+    }
+
     const { error: tierErr } = await admin
       .from("users")
-      .update({ tier, updated_at: new Date().toISOString() })
+      .update({ tier, updated_at: now })
       .eq("id", targetUserId);
     if (tierErr) {
-      console.error("[subscription/activate] users tier update failed:", tierErr);
-      return NextResponse.json({ error: "Failed to update user tier" }, { status: 500 });
+      console.error(
+        "[subscription/activate] users tier update failed:",
+        tierErr
+      );
+      return NextResponse.json(
+        { error: "Failed to update user tier" },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({

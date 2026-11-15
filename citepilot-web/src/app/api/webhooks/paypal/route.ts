@@ -114,19 +114,22 @@ export async function POST(request: Request) {
     }
 
     // --- PayPal webhook signature verification ---
+    // A webhook is only trustworthy when PayPal's signature checks out. There
+    // is no "dev mode" that accepts unsigned events: an unverified webhook
+    // could grant a paid tier to anyone who can POST to this URL.
     const webhookId = process.env.PAYPAL_WEBHOOK_ID;
-    if (webhookId) {
-      const verified = await verifyWebhookSignature(request.headers, rawBody, webhookId);
-      if (!verified) {
-        return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 401 });
-      }
-    } else if (process.env.NODE_ENV === "production") {
+    if (!webhookId) {
       console.error(
-        "[PayPal Webhook] PAYPAL_WEBHOOK_ID is not set — rejecting unverified webhook in production. Set PAYPAL_WEBHOOK_ID in Vercel env vars."
+        "[PayPal Webhook] PAYPAL_WEBHOOK_ID is not set — rejecting webhook. Set PAYPAL_WEBHOOK_ID in Vercel env vars."
       );
-      return NextResponse.json({ error: "Webhook not configured" }, { status: 503 });
-    } else {
-      console.warn("[PayPal Webhook] PAYPAL_WEBHOOK_ID not set — skipping signature verification (dev only)");
+      return NextResponse.json(
+        { error: "Billing webhooks are not configured on this deployment" },
+        { status: 503 }
+      );
+    }
+    const verified = await verifyWebhookSignature(request.headers, rawBody, webhookId);
+    if (!verified) {
+      return NextResponse.json({ error: "Webhook signature verification failed" }, { status: 401 });
     }
 
     const supabase = createAdminClient();
@@ -135,7 +138,13 @@ export async function POST(request: Request) {
 
     console.log(`[PayPal Webhook] Received event: ${eventType} for resource ${resource.id || resource.billing_agreement_id}`);
 
-    const subscriptionId = resource.id || resource.billing_agreement_id;
+    // A sale event's `resource.id` is the sale, not the subscription; the
+    // subscription is carried in `billing_agreement_id`. Using the sale ID as a
+    // subscription ID would create phantom records.
+    const subscriptionId =
+      eventType === "PAYMENT.SALE.COMPLETED"
+        ? resource.billing_agreement_id
+        : resource.id || resource.billing_agreement_id;
     const payerId = resource.subscriber?.payer_id;
     const payerEmail = resource.subscriber?.email_address;
     const customUserId = resource.custom_id;
@@ -185,6 +194,7 @@ export async function POST(request: Request) {
     }
 
     const nextBillingTime = resource.billing_info?.next_billing_time;
+    const expectedPlanId = process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID;
 
     const ALLOWED_EVENTS = new Set([
       "BILLING.SUBSCRIPTION.ACTIVATED",
@@ -203,38 +213,60 @@ export async function POST(request: Request) {
       case "BILLING.SUBSCRIPTION.ACTIVATED":
       case "BILLING.SUBSCRIPTION.RE-ACTIVATED":
       case "PAYMENT.SALE.COMPLETED": {
-        if (targetUserId) {
-          // Upsert subscription record — check errors
-          const { error: upsertErr } = await supabase
-            .from("subscriptions")
-            .upsert(
-              {
-                user_id: targetUserId,
-                paypal_subscription_id: subscriptionId,
-                paypal_payer_id: payerId,
-                paypal_plan_id: resource.plan_id,
-                tier: "professional",
-                status: "active",
-                current_period_start: resource.start_time || new Date().toISOString(),
-                current_period_end: nextBillingTime || new Date(Date.now() + 30 * 86400000).toISOString(),
-                updated_at: new Date().toISOString(),
-              },
-              { onConflict: "user_id" }
-            );
-          if (upsertErr) {
-            console.error("[PayPal Webhook] subscriptions upsert failed:", upsertErr);
-            return NextResponse.json({ error: "Failed to persist subscription" }, { status: 500 });
-          }
+        // Subscription events carry the plan they were created for. A webhook
+        // for a plan CitePilot does not sell must not grant the paid tier.
+        if (
+          expectedPlanId &&
+          resource.plan_id &&
+          resource.plan_id !== expectedPlanId
+        ) {
+          console.warn(
+            `[PayPal Webhook] plan mismatch for ${subscriptionId}: expected ${expectedPlanId}, got ${resource.plan_id} — ignoring`
+          );
+          return NextResponse.json({ received: true, ignored: "plan_mismatch" });
+        }
 
-          // Update user tier
-          const { error: userErr } = await supabase
-            .from("users")
-            .update({ tier: "professional", updated_at: new Date().toISOString() })
-            .eq("id", targetUserId);
-          if (userErr) {
-            console.error("[PayPal Webhook] users tier update failed:", userErr);
-            return NextResponse.json({ error: "Failed to update user tier" }, { status: 500 });
-          }
+        if (!targetUserId) {
+          // Returning 2xx prevents an endless retry storm, but this event
+          // granted nothing: surface it so the paid customer can be resolved
+          // manually.
+          console.error(
+            `[PayPal Webhook] ${eventType} for subscription ${subscriptionId} could not be matched to a user (payer email: ${payerEmail || "none"}, custom_id: ${customUserId || "none"}). No tier was granted.`
+          );
+          return NextResponse.json({ received: true, unassigned: true });
+        }
+
+        const now = new Date().toISOString();
+        // Only a real PayPal next-billing time is stored; inventing a 30-day
+        // window would misstate the paid term.
+        const { error: upsertErr } = await supabase
+          .from("subscriptions")
+          .upsert(
+            {
+              user_id: targetUserId,
+              paypal_subscription_id: subscriptionId,
+              paypal_payer_id: payerId,
+              paypal_plan_id: resource.plan_id,
+              tier: "professional",
+              status: "active",
+              current_period_start: resource.start_time || now,
+              current_period_end: nextBillingTime || null,
+              updated_at: now,
+            },
+            { onConflict: "user_id" }
+          );
+        if (upsertErr) {
+          console.error("[PayPal Webhook] subscriptions upsert failed:", upsertErr);
+          return NextResponse.json({ error: "Failed to persist subscription" }, { status: 500 });
+        }
+
+        const { error: userErr } = await supabase
+          .from("users")
+          .update({ tier: "professional", updated_at: now })
+          .eq("id", targetUserId);
+        if (userErr) {
+          console.error("[PayPal Webhook] users tier update failed:", userErr);
+          return NextResponse.json({ error: "Failed to update user tier" }, { status: 500 });
         }
         break;
       }
@@ -243,12 +275,27 @@ export async function POST(request: Request) {
       case "BILLING.SUBSCRIPTION.SUSPENDED":
       case "BILLING.SUBSCRIPTION.EXPIRED": {
         if (targetUserId) {
+          const now = new Date();
+          // A cancelled subscription may still be paid up to the end of the
+          // current period. Access follows what was paid for, not the moment
+          // the cancellation arrived.
+          const { data: existing } = await supabase
+            .from("subscriptions")
+            .select("current_period_end")
+            .eq("paypal_subscription_id", subscriptionId)
+            .maybeSingle();
+          const periodEnd = existing?.current_period_end
+            ? new Date(existing.current_period_end)
+            : null;
+          const stillPaid = Boolean(periodEnd && periodEnd.getTime() > now.getTime());
+
           const { error: subErr } = await supabase
             .from("subscriptions")
             .update({
               status: "cancelled",
-              tier: "free",
-              updated_at: new Date().toISOString(),
+              cancel_at_period_end: !stillPaid,
+              tier: stillPaid ? "professional" : "free",
+              updated_at: now.toISOString(),
             })
             .eq("paypal_subscription_id", subscriptionId);
           if (subErr) {
@@ -256,13 +303,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Failed to update subscription" }, { status: 500 });
           }
 
-          const { error: userErr2 } = await supabase
-            .from("users")
-            .update({ tier: "free", updated_at: new Date().toISOString() })
-            .eq("id", targetUserId);
-          if (userErr2) {
-            console.error("[PayPal Webhook] users tier downgrade failed:", userErr2);
-            return NextResponse.json({ error: "Failed to update user tier" }, { status: 500 });
+          // Only downgrade the profile once nothing remains paid. Otherwise the
+          // tier stays until the period ends, and entitlement resolution
+          // (lib/ai/entitlement.ts) applies the expiry lazily.
+          if (!stillPaid) {
+            const { error: userErr2 } = await supabase
+              .from("users")
+              .update({ tier: "free", updated_at: now.toISOString() })
+              .eq("id", targetUserId);
+            if (userErr2) {
+              console.error("[PayPal Webhook] users tier downgrade failed:", userErr2);
+              return NextResponse.json({ error: "Failed to update user tier" }, { status: 500 });
+            }
           }
         }
         break;

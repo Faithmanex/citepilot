@@ -7,7 +7,6 @@ import FeatureTriptych from "@/components/landing/FeatureTriptych";
 import HowItWorks from "@/components/landing/HowItWorks";
 import CitationStyles from "@/components/landing/CitationStyles";
 import EnterpriseBand from "@/components/landing/EnterpriseBand";
-import Testimonials from "@/components/landing/Testimonials";
 import SubscriptionSection from "@/components/landing/SubscriptionSection";
 import FAQ from "@/components/landing/FAQ";
 import CTASection from "@/components/landing/CTASection";
@@ -41,9 +40,6 @@ export default function LandingView() {
 
         {/* Full-Bleed Enterprise Teal Band */}
         <EnterpriseBand />
-
-        {/* Social Proof Testimonials */}
-        <Testimonials />
 
         {/* Pricing & Subscription Tier Matrix */}
         <SubscriptionSection />

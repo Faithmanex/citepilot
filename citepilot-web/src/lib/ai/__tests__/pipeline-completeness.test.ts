@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { runAnalysisPipeline } from "../pipeline";
+import { extractCitations, matchCitationsToReferences } from "../citation-extractor";
 import { validateReferenceWithCrossref } from "../crossref";
 import { validateReferenceWithOpenalex } from "../openalex";
 import { checkRetractionStatus } from "../retraction";
@@ -35,5 +36,33 @@ describe("verification completeness", () => {
   it("reports completed when every required check succeeds", async () => {
     const result = await runAnalysisPipeline("Body", "References", [], "apa7");
     expect(result.status).toBe("completed");
+  });
+
+  it("does not claim citations are unmatched or references orphaned when matching never ran", async () => {
+    vi.mocked(extractCitations).mockResolvedValueOnce([
+      { raw_text: "(Smith, 2020)" } as never,
+    ]);
+    vi.mocked(matchCitationsToReferences).mockRejectedValueOnce(
+      new Error("provider stalled")
+    );
+
+    const result = await runAnalysisPipeline(
+      "Citation integrity matters (Smith, 2020).",
+      "References",
+      [],
+      "apa7"
+    );
+
+    expect(result.checks.find((c) => c.name === "matching")?.status).toBe(
+      "unavailable"
+    );
+    // "orphaned"/"no_match" are findings. A check that did not run cannot
+    // produce them, so every item is reported as unchecked instead.
+    expect(result.references.map((r) => r["status"])).toEqual([
+      "unchecked",
+      "unchecked",
+    ]);
+    expect(result.citations.map((c) => c["status"])).toEqual(["unchecked"]);
+    expect(result.status).toBe("partial");
   });
 });

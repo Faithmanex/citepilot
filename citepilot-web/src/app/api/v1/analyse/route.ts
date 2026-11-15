@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { checkAuth, checkRateLimit } from "@/lib/ai/auth";
 import { aiConfig, normalizeCitationStyle, ALLOWED_CITATION_STYLES } from "@/lib/ai/config";
 import { parseDocument, parseTxtStructured, splitBodyAndReferences, UnsupportedFileTypeError } from "@/lib/ai/document-parser";
+import { checkWordLimit, resolveAuditEntitlement } from "@/lib/ai/entitlement";
 import { AIServiceError } from "@/lib/ai/llm";
 import { logRequestSummary, newRequestId } from "@/lib/ai/log";
 import { runAnalysisPipeline } from "@/lib/ai/pipeline";
@@ -120,7 +121,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const requestId = request.headers.get("x-request-id") || newRequestId();
   const authError = checkAuth(request);
   if (authError) return authError;
-  const rateError = checkRateLimit(request);
+  const rateError = await checkRateLimit(request);
   if (rateError) return rateError;
 
   const start = Date.now();
@@ -280,6 +281,20 @@ export async function POST(request: Request): Promise<NextResponse> {
       400,
       "Provide manuscript text or a document file to analyse.",
       "missing_document",
+      false,
+      requestId
+    );
+  }
+
+  // The free-tier word limit is enforced here, not only in the editor: a
+  // direct API call must not get more than the pricing page promises.
+  const entitlement = await resolveAuditEntitlement();
+  const limitCheck = checkWordLimit(`${bodyText}\n${refText}`, entitlement);
+  if (!limitCheck.allowed) {
+    return errorResponse(
+      403,
+      `Your manuscript contains approximately ${limitCheck.wordCount.toLocaleString()} words. The Free Plan allows up to ${limitCheck.limit.toLocaleString()} words per audit. Upgrade to Pro for unlimited length thesis & article auditing. Your manuscript was not changed or discarded.`,
+      "word_limit_exceeded",
       false,
       requestId
     );

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { User, Session } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { SUPABASE_NOT_CONFIGURED_MESSAGE, isSupabaseConfigured } from "@/lib/supabase/config";
 
 export interface UserProfile {
   id: string;
@@ -46,9 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(isSupabaseConfigured);
 
   const fetchProfileAndSubscription = useCallback(async (authUser: User) => {
+    if (!supabase) return;
     try {
       // 1. Fetch profile from public.users
       const { data: userProfile, error: profileErr } = await supabase
@@ -58,8 +60,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .maybeSingle();
 
       if (userProfile && !profileErr) {
-        setProfile(userProfile as UserProfile);
-
         // 2. Fetch subscription if user profile exists
         const { data: subData } = await supabase
           .from("subscriptions")
@@ -68,13 +68,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           .eq("status", "active")
           .maybeSingle();
 
-        if (subData) {
-          setSubscription(subData as UserSubscription);
-        } else {
-          setSubscription(null);
-        }
+        // A subscription row can outlive its paid period (cancellation, missed
+        // renewal). The UI must not advertise Pro access the server will refuse.
+        const periodEnd = subData?.current_period_end
+          ? new Date(subData.current_period_end as string)
+          : null;
+        const expired = Boolean(periodEnd && periodEnd.getTime() <= Date.now());
+
+        setProfile(
+          expired
+            ? { ...(userProfile as UserProfile), tier: "free" }
+            : (userProfile as UserProfile)
+        );
+        setSubscription(expired ? null : ((subData as UserSubscription) ?? null));
       } else {
-        // Fallback profile from auth metadata if not yet created by trigger
+        // Fallback profile from auth metadata if not yet created by trigger.
+        // Tier always falls back to "free": user metadata is client-writable,
+        // so it can never grant a paid entitlement.
         const meta = authUser.user_metadata || {};
         const fallbackProfile: UserProfile = {
           id: authUser.id,
@@ -82,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           email: authUser.email || "",
           name: meta.full_name || meta.name || (authUser.email ? authUser.email.split("@")[0] : "Researcher"),
           role: "user",
-          tier: (meta.tier as UserProfile["tier"]) || "free",
+          tier: "free",
           avatar_url: meta.avatar_url || null,
         };
         setProfile(fallbackProfile);
@@ -93,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [supabase]);
 
   useEffect(() => {
+    if (!supabase) return;
     // Check active session
     supabase.auth.getSession().then(({ data: { session: currentSession } }) => {
       setSession(currentSession);
@@ -130,6 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, fetchProfileAndSubscription]);
 
   const signInWithPassword = async (email: string, password: string) => {
+    if (!supabase) return { error: new Error(SUPABASE_NOT_CONFIGURED_MESSAGE) };
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -143,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUpWithPassword = async (email: string, password: string, fullName: string) => {
+    if (!supabase) return { error: new Error(SUPABASE_NOT_CONFIGURED_MESSAGE) };
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -164,6 +177,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signInWithOAuth = async (provider: "google") => {
+    if (!supabase) return { error: new Error(SUPABASE_NOT_CONFIGURED_MESSAGE) };
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
@@ -179,7 +193,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    if (supabase) await supabase.auth.signOut();
     setUser(null);
     setSession(null);
     setProfile(null);

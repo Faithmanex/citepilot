@@ -17,7 +17,7 @@ declare global {
           data: Record<string, unknown>,
           actions: {
             subscription: {
-              create: (options: { plan_id: string }) => Promise<string>;
+              create: (options: { plan_id: string; custom_id?: string }) => Promise<string>;
             };
           }
         ) => Promise<string>;
@@ -34,6 +34,13 @@ declare global {
   }
 }
 
+/**
+ * Plan and client IDs are configuration, not code. When they are absent the
+ * button says so instead of silently charging against a hardcoded plan.
+ */
+const CONFIGURED_PLAN_ID = (process.env.NEXT_PUBLIC_PAYPAL_PLAN_ID || "").trim();
+const CONFIGURED_CLIENT_ID = (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "").trim();
+
 interface PayPalSubscriptionButtonProps {
   planId?: string;
   clientId?: string;
@@ -42,32 +49,38 @@ interface PayPalSubscriptionButtonProps {
   onError?: (error: unknown) => void;
 }
 
-const DEFAULT_PLAN_ID = "P-00697875B1151583ANJV3VOY";
-const DEFAULT_CLIENT_ID =
-  "AQk7S24Sc2iKHeIuA93BP-3MN3fPOumFejN4lxJmku14oGkjT_T7l8lYgaS9ohmMf8YZl4M1aHLLS_H3";
+type Status =
+  | "loading"
+  | "ready"
+  | "activating"
+  | "active"
+  | "error"
+  | "unconfigured";
 
 export default function PayPalSubscriptionButton({
-  planId = DEFAULT_PLAN_ID,
-  clientId = DEFAULT_CLIENT_ID,
+  planId = CONFIGURED_PLAN_ID,
+  clientId = CONFIGURED_CLIENT_ID,
   customId,
   onSuccess,
   onError,
 }: PayPalSubscriptionButtonProps) {
-  const containerId = `paypal-button-container-${planId}`;
+  const containerId = `paypal-button-container-${planId || "unconfigured"}`;
   const containerRef = useRef<HTMLDivElement>(null);
-  const [loading, setLoading] = useState(true);
-  const [scriptError, setScriptError] = useState<string | null>(null);
+  const configured = Boolean(planId && clientId);
+  const [status, setStatus] = useState<Status>(configured ? "loading" : "unconfigured");
+  const [message, setMessage] = useState<string>("");
   const [subscribedId, setSubscribedId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!configured) return;
     let isMounted = true;
     const scriptId = "paypal-sdk-script";
 
     const renderPayPalButtons = () => {
       if (!isMounted) return;
       if (!window.paypal) {
-        setScriptError("PayPal SDK failed to load.");
-        setLoading(false);
+        setMessage("PayPal could not be loaded. Check your connection and reload the page.");
+        setStatus("error");
         return;
       }
 
@@ -89,56 +102,76 @@ export default function PayPalSubscriptionButton({
               if (customId) {
                 opts.custom_id = customId;
               }
-              return actions.subscription.create(opts as { plan_id: string });
+              return actions.subscription.create(opts);
             },
             onApprove: async function (data) {
-              if (isMounted) {
-                setSubscribedId(data.subscriptionID);
-              }
-              // Attempt server-side activation immediately
+              if (!isMounted) return;
+              setStatus("activating");
+              setMessage("Confirming your subscription with CitePilot…");
+
+              // Activation is only real when the server confirms it. Showing
+              // success on the strength of the PayPal callback alone would tell
+              // a paying customer they have access when they might not.
               try {
-                await fetch("/api/subscription/activate", {
+                const res = await fetch("/api/subscription/activate", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     subscriptionId: data.subscriptionID,
                     planId,
-                    tier: "professional",
                   }),
                 });
-              } catch (e) {
-                console.warn("Direct activation fallback triggered:", e);
-              }
+                const payload = (await res.json().catch(() => ({}))) as {
+                  error?: string;
+                };
 
-              if (onSuccess) {
-                onSuccess(data.subscriptionID);
+                if (!res.ok) {
+                  if (!isMounted) return;
+                  setMessage(
+                    payload.error ||
+                      `Your payment was approved, but CitePilot could not activate the subscription (HTTP ${res.status}). Contact support with this subscription ID.`
+                  );
+                  setStatus("error");
+                  if (onError) onError(new Error(payload.error || "Activation failed"));
+                  return;
+                }
+
+                if (!isMounted) return;
+                setSubscribedId(data.subscriptionID);
+                setStatus("active");
+                if (onSuccess) onSuccess(data.subscriptionID);
+              } catch (err) {
+                if (!isMounted) return;
+                setMessage(
+                  "Your payment was approved, but CitePilot could not be reached to activate the subscription. Reload the page to retry activation, or contact support."
+                );
+                setStatus("error");
+                if (onError) onError(err);
               }
             },
             onError: function (err) {
               console.error("PayPal Subscription Error:", err);
-              if (isMounted) {
-                setScriptError("Payment processing error occurred. Please try again.");
-              }
+              if (!isMounted) return;
+              setMessage("PayPal reported a payment error. No charge was completed.");
+              setStatus("error");
               if (onError) onError(err);
             },
           })
           .render(`#${containerId}`)
           .then(() => {
-            if (isMounted) setLoading(false);
+            if (isMounted && status === "loading") setStatus("ready");
           })
           .catch((err) => {
             console.error("PayPal Render Error:", err);
-            if (isMounted) {
-              setScriptError("Could not render PayPal button.");
-              setLoading(false);
-            }
+            if (!isMounted) return;
+            setMessage("The PayPal button could not be displayed. Reload the page to try again.");
+            setStatus("error");
           });
       } catch (err) {
         console.error("PayPal Initialization Error:", err);
-        if (isMounted) {
-          setScriptError("Initialization failed.");
-          setLoading(false);
-        }
+        if (!isMounted) return;
+        setMessage("The PayPal button could not be initialised. Reload the page to try again.");
+        setStatus("error");
       }
     };
 
@@ -154,7 +187,7 @@ export default function PayPalSubscriptionButton({
     if (!existingScript) {
       const script = document.createElement("script");
       script.id = scriptId;
-      script.src = `https://www.paypal.com/sdk/js?client-id=${clientId}&vault=true&intent=subscription`;
+      script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&vault=true&intent=subscription`;
       script.setAttribute("data-sdk-integration-source", "button-factory");
       script.async = true;
 
@@ -163,10 +196,9 @@ export default function PayPalSubscriptionButton({
       };
 
       script.onerror = () => {
-        if (isMounted) {
-          setScriptError("Failed to load PayPal SDK script.");
-          setLoading(false);
-        }
+        if (!isMounted) return;
+        setMessage("The PayPal SDK failed to load. Check your connection and reload the page.");
+        setStatus("error");
       };
 
       document.head.appendChild(script);
@@ -180,18 +212,35 @@ export default function PayPalSubscriptionButton({
         existingScript.removeEventListener("load", renderPayPalButtons);
       }
     };
-  }, [planId, clientId, containerId, customId, onSuccess, onError]);
+    // `status` intentionally omitted: it only gates the first "ready" update.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [configured, planId, clientId, containerId, customId, onSuccess, onError]);
+
+  if (status === "unconfigured") {
+    return (
+      <div
+        role="status"
+        className="w-full max-w-md my-4 rounded-xl border-2 border-[#d9cfb8] bg-[#f7f3e8] p-4 text-center text-sm text-[#5c5344]"
+      >
+        <p className="font-bold text-[#221d16] mb-1">Card and PayPal checkout is not configured</p>
+        <p>
+          This deployment has no PayPal plan configured, so no payment can be taken. Contact
+          support to subscribe.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full flex flex-col items-center justify-center my-4">
-      {subscribedId ? (
-        <div className="p-4 bg-[#dee8dd] border-2 border-[#285235] rounded-xl text-[#1d3a26] text-center w-full max-w-md animate-fade-in">
-          <div className="w-12 h-12 bg-[#dee8dd]0 text-white rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
+      {status === "active" && subscribedId ? (
+        <div className="p-4 bg-[#dee8dd] border-2 border-[#285235] rounded-xl text-[#1d3a26] text-center w-full max-w-md">
+          <div className="w-12 h-12 bg-[#285235] text-white rounded-full flex items-center justify-center mx-auto mb-2 text-xl font-bold">
             ✓
           </div>
-          <h4 className="font-bold text-lg mb-1">Subscription Active!</h4>
+          <h4 className="font-bold text-lg mb-1">Subscription verified</h4>
           <p className="text-sm opacity-90 mb-2">
-            Thank you for subscribing to CitePilot. Your subscription ID is:
+            CitePilot confirmed this subscription with PayPal. Your subscription ID is:
           </p>
           <code className="bg-white px-3 py-1 rounded border border-[#a8c3ad] font-mono text-xs font-semibold block text-[#285235] break-all">
             {subscribedId}
@@ -199,21 +248,29 @@ export default function PayPalSubscriptionButton({
         </div>
       ) : (
         <div className="w-full max-w-md relative min-h-[120px] flex flex-col items-center justify-center">
-          {loading && (
-            <div className="flex items-center gap-2 text-ink-soft text-sm font-semibold py-6">
-              <i className="fas fa-circle-notch fa-spin text-brand text-lg" aria-hidden="true" />
-              Loading PayPal Subscription options...
+          {(status === "loading" || status === "activating") && (
+            <div
+              role="status"
+              className="flex items-center gap-2 text-[#5c5344] text-sm font-semibold py-6"
+            >
+              <span aria-hidden="true" className="inline-block animate-spin">◌</span>
+              {status === "activating"
+                ? "Confirming your subscription with CitePilot…"
+                : "Loading PayPal subscription options…"}
             </div>
           )}
 
-          {scriptError && (
-            <div className="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-red-700 text-sm text-center w-full">
-              <p className="font-semibold mb-1">{scriptError}</p>
+          {status === "error" && (
+            <div
+              role="alert"
+              className="p-4 bg-red-50 border-2 border-red-300 rounded-lg text-red-700 text-sm text-center w-full"
+            >
+              <p className="font-semibold mb-1">{message}</p>
               <button
                 onClick={() => window.location.reload()}
-                className="text-xs underline text-red-800 font-bold hover:text-red-900 mt-2"
+                className="text-xs underline text-red-800 font-bold hover:text-red-900 mt-2 cursor-pointer"
               >
-                Reload Page
+                Reload page
               </button>
             </div>
           )}
@@ -221,8 +278,9 @@ export default function PayPalSubscriptionButton({
           <div
             id={containerId}
             ref={containerRef}
+            aria-busy={status === "loading"}
             className={`w-full transition-opacity duration-300 ${
-              loading ? "opacity-0 h-0 overflow-hidden" : "opacity-100"
+              status === "ready" ? "opacity-100" : "opacity-0 h-0 overflow-hidden"
             }`}
           />
         </div>

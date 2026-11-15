@@ -223,11 +223,10 @@ export async function generatePdfReport(analysisData: JsonObject): Promise<Buffe
     (c) => c["status"] === "no_match"
   ).length;
   const orphaned = refs.filter((r) => r["status"] === "orphaned").length;
-  const unverified = refs.filter(
-    (r) =>
-      (r["crossref_validation"] as JsonObject | undefined)?.["status"] ===
-      "verification_unavailable"
-  ).length;
+  const unverified = refs.filter((r) => {
+    const status = (r["crossref_validation"] as JsonObject | undefined)?.["status"];
+    return status === "verification_unavailable" || status === "not_found";
+  }).length;
 
   writeParagraph("Citation and Reference Totals", {
     size: 14,

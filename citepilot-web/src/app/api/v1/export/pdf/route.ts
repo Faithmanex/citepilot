@@ -21,7 +21,7 @@ function resolveData(payload: Record<string, unknown>): JsonObject {
 export async function POST(request: Request): Promise<NextResponse> {
   const authError = checkAuth(request);
   if (authError) return authError;
-  const rateError = checkRateLimit(request);
+  const rateError = await checkRateLimit(request);
   if (rateError) return rateError;
 
   try {

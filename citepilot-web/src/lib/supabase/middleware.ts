@@ -1,11 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { supabaseUrl, supabaseAnonKey } from "./config";
+import { isSupabaseConfigured, supabaseUrl, supabaseAnonKey } from "./config";
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
     request,
   });
+
+  // No Supabase configuration means no session to refresh. Do not create a
+  // client against a placeholder project.
+  if (!isSupabaseConfigured) return supabaseResponse;
 
   const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
@@ -27,10 +31,7 @@ export async function updateSession(request: NextRequest) {
   // IMPORTANT: Do not run code between createServerClient and
   // supabase.auth.getUser(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
-
-  if (!supabaseUrl.includes("mock-project")) {
-    await supabase.auth.getUser();
-  }
+  await supabase.auth.getUser();
 
   return supabaseResponse;
 }

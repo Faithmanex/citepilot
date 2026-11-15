@@ -24,7 +24,7 @@ export type AuditMode = "full" | "reference_only";
 export interface Citation {
   raw_text: string;
   paragraph_index?: number;
-  status: "matched" | "no_match";
+  status: "matched" | "no_match" | "unchecked";
   matched_reference_index?: number | null;
   match_type?: "exact" | "fuzzy";
   issues?: CitationIssue[];
@@ -38,7 +38,7 @@ export interface CitationIssue {
 
 export interface Reference {
   raw_entry: string;
-  status: "cited" | "orphaned" | "retracted";
+  status: "cited" | "orphaned" | "retracted" | "unchecked";
   parsed_doi?: string;
   crossref_validation?: CrossrefValidation;
   retraction_info?: RetractionInfo;
@@ -46,6 +46,9 @@ export interface Reference {
 
 export interface CrossrefValidation {
   crossref_verified: boolean;
+  status?: "verified" | "discrepancies_found" | "not_found" | "verification_unavailable";
+  message?: string;
+  how_to_fix?: string;
   discrepancies?: CrossrefDiscrepancy[];
 }
 

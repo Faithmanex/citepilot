@@ -264,13 +264,24 @@ export async function matchCitationsToReferences(
     2
   );
 
+  // Compact digests: indices plus the text the model must reason about. The
+  // pretty-printed parser output was tens of kilobytes and dominated latency.
+  const citationDigest = citations
+    .map((c, i) => `${i}. ${c.raw_text || ""}`)
+    .join("\n")
+    .slice(0, 20000);
+  const referenceDigest = references
+    .map((r, i) => `${i}. ${r.raw_entry || ""}`)
+    .join("\n")
+    .slice(0, 20000);
+
   const prompt = `Match the following in-text citations to reference list entries.
 
 Citations:
-${JSON.stringify(citations, null, 2).slice(0, 40000)}
+${citationDigest}
 
 References:
-${JSON.stringify(references, null, 2).slice(0, 40000)}
+${referenceDigest}
 
 For each citation, determine:
 1. Which reference it matches by 0-based array index (null if no match)
@@ -323,16 +334,30 @@ export async function checkStyle(
     2
   );
 
+  // Only what a style check needs: the raw citation strings and the raw
+  // reference entries. Pretty-printed parser output added tens of kilobytes and
+  // pushed this stage past its timeout on ordinary manuscripts.
+  const citationDigest = citations
+    .map((c) => c.raw_text)
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 8000);
+  const referenceDigest = references
+    .map((r) => r.raw_entry)
+    .filter(Boolean)
+    .join("\n")
+    .slice(0, 8000);
+
   const prompt = `Analyze the document text, citations, and reference list for compliance with the ${citationStyle} style manual.
 
 Document text sample:
-${text.slice(0, 20000)}
+${text.slice(0, 8000)}
 
 Citations:
-${JSON.stringify(citations, null, 2).slice(0, 20000)}
+${citationDigest}
 
 References:
-${JSON.stringify(references, null, 2).slice(0, 20000)}
+${referenceDigest}
 
 For every style issue found, include the exact target_text where the issue occurs.
 

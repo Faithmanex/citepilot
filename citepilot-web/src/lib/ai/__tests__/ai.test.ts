@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cleanDoi, titlesMatch } from "@/lib/ai/crossref";
+import { cleanDoi, titlesMatch, titlesRelated, namesMatch, journalsMatch, volumesMatch, pagesMatch } from "@/lib/ai/crossref";
 import { analyzeCrossrefRetraction } from "@/lib/ai/retraction";
 import { calculatePublicationRecency } from "@/lib/ai/recency";
 import { splitBodyAndReferences, parseTxtStructured } from "@/lib/ai/document-parser";
@@ -24,6 +24,59 @@ describe("AI service port — pure helpers", () => {
       ).toBe(false);
       // A near-miss (one differing word) is a discrepancy, not a fuzzy match.
       expect(titlesMatch("Deep learning", "Deep learning advances")).toBe(false);
+    });
+  });
+
+  describe("crossref.titlesRelated", () => {
+    it("accepts a Crossref record that extends the reference title as a subtitle", () => {
+      expect(
+        titlesRelated(
+          "Deep learning for artificial intelligence",
+          "Deep learning"
+        )
+      ).toBe(true);
+      expect(
+        titlesRelated(
+          "Attention is all you need",
+          "Attention is all you need: a survey of transformers"
+        )
+      ).toBe(true);
+    });
+
+    it("rejects unrelated search hits so fabricated references stay not_found", () => {
+      expect(
+        titlesRelated(
+          "Zxqvth citation resonance in non-existent underwater libraries",
+          "Deep learning"
+        )
+      ).toBe(false);
+      expect(
+        titlesRelated("Automated citation auditing: A Review", "ImageNet classification with deep convolutional neural networks")
+      ).toBe(false);
+    });
+  });
+
+  describe("crossref metadata comparisons", () => {
+    it("compares author surnames across accents, punctuation, and spacing", () => {
+      expect(namesMatch("LeCun", "LeCun")).toBe(true);
+      expect(namesMatch("García", "Garcia")).toBe(true);
+      expect(namesMatch("O'Brien", "OBrien")).toBe(true);
+      expect(namesMatch("LeCun", "LeCunn")).toBe(false);
+      expect(namesMatch("Smith", "Jones")).toBe(false);
+    });
+
+    it("compares journal names without flagging container-name variants", () => {
+      expect(journalsMatch("Nature", "Nature")).toBe(true);
+      expect(journalsMatch("Journal of Testing", "Journal of Testing (Online)")).toBe(true);
+      expect(journalsMatch("Nature", "Science")).toBe(false);
+    });
+
+    it("compares volumes and full page ranges", () => {
+      expect(volumesMatch("521", "521")).toBe(true);
+      expect(volumesMatch("521", "522")).toBe(false);
+      expect(pagesMatch("436-444", "436–444")).toBe(true);
+      expect(pagesMatch("436-44", "436-444")).toBe(false);
+      expect(pagesMatch("e12345", "e12345")).toBe(true);
     });
   });
 

@@ -36,14 +36,20 @@ export const aiConfig = {
   // running the function past the platform timeout.
   platformMaxDurationMs: PLATFORM_MAX_DURATION_MS,
   analysisBudgetMs: Math.min(
-    num(process.env.ANALYSIS_BUDGET_MS, 45_000),
+    num(process.env.ANALYSIS_BUDGET_MS, 52_000),
     PLATFORM_MAX_DURATION_MS - RESPONSE_HEADROOM_MS
   ),
   // Per-provider-call ceiling. A single Gemini call may never consume the whole
   // budget: later stages (matching, style, verification) still need time.
-  geminiTimeoutMs: num(process.env.GEMINI_TIMEOUT_MS, 20_000),
+  // 28s covers this provider's observed tail (a trivial call can take 27s).
+  geminiTimeoutMs: num(process.env.GEMINI_TIMEOUT_MS, 28_000),
   // Minimum time that must remain before starting another provider attempt.
   minAttemptMs: num(process.env.MIN_ATTEMPT_MS, 2_000),
+  // Gemini calls are gated globally so a single audit can't fan out without
+  // bound. The default covers the three stages that start together: if the gate
+  // is lower, the third call waits for a slot and can lose its whole window to
+  // the queue rather than to the provider.
+  llmConcurrency: Math.max(1, num(process.env.LLM_CONCURRENCY, 3)),
   verifyConcurrency: num(process.env.VERIFY_CONCURRENCY, 6),
   // Provider verification requests get their own short ceiling so a slow
   // Crossref/OpenAlex response cannot hold the whole audit open.

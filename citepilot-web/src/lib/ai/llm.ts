@@ -136,6 +136,31 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
+ * Global gate on in-flight Gemini requests. The pipeline starts several stages
+ * at once; without a gate every request is issued immediately, the provider
+ * queues the excess, and a queued request burns its whole attempt window
+ * waiting rather than generating. Waiting here is cheaper because the timeout
+ * clock starts once the call is actually issued.
+ */
+let activeLlmCalls = 0;
+const llmWaiters: Array<() => void> = [];
+
+async function acquireSlot(): Promise<void> {
+  if (activeLlmCalls < aiConfig.llmConcurrency) {
+    activeLlmCalls += 1;
+    return;
+  }
+  await new Promise<void>((resolve) => llmWaiters.push(resolve));
+  activeLlmCalls += 1;
+}
+
+function releaseSlot(): void {
+  activeLlmCalls = Math.max(0, activeLlmCalls - 1);
+  const next = llmWaiters.shift();
+  if (next) next();
+}
+
+/**
  * Runs async tasks with at most `limit` in flight, collecting settled
  * results in input order. Used to cap Gemini burst concurrency on large
  * documents so chunk fan-outs don't self-inflict 429 quota errors.
@@ -238,23 +263,24 @@ export async function callGemini(
   let lastError: AIServiceError | null = null;
 
   for (let attempt = 0; attempt < 3; attempt += 1) {
-    const remaining = remainingMs(deadline);
-    if (remaining <= aiConfig.minAttemptMs) {
-      throw lastError && lastError.kind === "budget_exhausted"
-        ? lastError
-        : budgetExhausted(`calling the ${model} model`);
-    }
-
-    const attemptTimeout = Math.max(
-      aiConfig.minAttemptMs,
-      Math.min(aiConfig.geminiTimeoutMs, remaining)
-    );
-    // The provider rejects per-request deadlines below 10s, so the SDK deadline
-    // is floored at 10s while the wall-clock race below still returns at
-    // `attemptTimeout`. This keeps short-budget attempts possible.
-    const providerDeadline = Math.max(10_000, attemptTimeout);
-
+    await acquireSlot();
     try {
+      const remaining = remainingMs(deadline);
+      if (remaining <= aiConfig.minAttemptMs) {
+        throw lastError && lastError.kind === "budget_exhausted"
+          ? lastError
+          : budgetExhausted(`calling the ${model} model`);
+      }
+
+      const attemptTimeout = Math.max(
+        aiConfig.minAttemptMs,
+        Math.min(aiConfig.geminiTimeoutMs, remaining)
+      );
+      // The provider rejects per-request deadlines below 10s, so the SDK deadline
+      // is floored at 10s while the wall-clock race below still returns at
+      // `attemptTimeout`. This keeps short-budget attempts possible.
+      const providerDeadline = Math.max(10_000, attemptTimeout);
+
       const request = ai.models.generateContent({
         model,
         contents: prompt,
@@ -281,6 +307,11 @@ export async function callGemini(
       lastError = classifyProviderError(error);
       // Invalid credentials/configuration never succeed on retry.
       if (!lastError.retryable) throw lastError;
+      // A timeout already consumed a full attempt window. Retrying it doubles
+      // the wait and starves the pipeline's other stages, so surface it now.
+      if (lastError.kind === "timeout") throw lastError;
+    } finally {
+      releaseSlot();
     }
 
     if (attempt < 2) {
@@ -424,6 +455,8 @@ export async function callGeminiValidated<T extends Record<string, unknown>>(
       const classified =
         err instanceof AIServiceError ? err : classifyProviderError(err);
       if (!classified.retryable) throw classified;
+      // Same reasoning as `callGemini`: a timeout is terminal for this stage.
+      if (classified.kind === "timeout") throw classified;
       if (attempt < retries) {
         const backoff = 1500 * (attempt + 1);
         if (remainingMs(opts.deadline) <= backoff + aiConfig.minAttemptMs) break;

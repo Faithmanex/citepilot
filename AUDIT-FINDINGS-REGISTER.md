@@ -107,3 +107,52 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 3. **Screen-reader pass.** Automated a11y-tree inspection and keyboard tests passed; a real NVDA/VoiceOver pass is still required.
 4. **Authentication and subscription with test accounts.** Sign-in/return flow, history ownership, and sandbox PayPal activation were not exercised (no test accounts/sandbox credentials).
 5. **Live file-upload journey.** Client-side validation and parsers are tested; a real DOCX/PDF upload through the deployed UI was not performed in this session.
+
+## 7. Mock removal and production hardening — 2026-11-15
+
+### 7.1 Mocks removed (no fallback left behind)
+
+| Mock | Where | Replacement |
+|---|---|---|
+| `https://mock-project.supabase.co` / `mock-anon-key` defaults | `lib/supabase/config.ts` | `isSupabaseConfigured`; `createClient()` returns `null`, server client throws `SUPABASE_NOT_CONFIGURED_MESSAGE`, middleware skips session refresh |
+| Fabricated testimonials (Dr. Amara Osei, Prof. Elena Marchetti, Dr. James Okafor) | `components/landing/Testimonials.tsx` | Component deleted; section removed from `LandingView` and the landing barrel |
+| Hardcoded PayPal plan ID `P-00697875…` and client ID | `PayPalSubscriptionButton.tsx` | Read from `NEXT_PUBLIC_PAYPAL_PLAN_ID` / `NEXT_PUBLIC_PAYPAL_CLIENT_ID`; unconfigured renders "checkout is not configured" |
+| "Dev mode" activation grant (`valid: true` without PayPal) | `api/subscription/activate/route.ts` | 503 when credentials are absent; activation only after PayPal reports `ACTIVE` for the sold plan |
+| Unsigned webhook path (`NODE_ENV !== production`) | `api/webhooks/paypal/route.ts` | Signature verification always required; missing `PAYPAL_WEBHOOK_ID` → 503 |
+| Client-only paywall (1,500-word free limit) | `lib/gating.ts` used only in the browser | `lib/ai/entitlement.ts` + 403 `word_limit_exceeded` in `/api/v1/analyse` |
+| Tier read from client-writable auth metadata | `AuthContext.tsx` fallback profile | Always `free`; paid tiers come from the profile row and a live subscription |
+
+### 7.2 Correctness fixes found while validating the demo manuscript
+
+| Defect | Symptom | Fix |
+|---|---|---|
+| Crossref/OpenAlex accepted their top search hit | A fabricated reference was reported as "discrepancies found" against an unrelated paper | `titlesRelated` gate in both providers; no title match → `not_found` |
+| Crossref 429 on burst searches | Audit flipped to `partial` on one throttled request | Bounded retries with `Retry-After`; Crossref fan-out capped at 3 |
+| OpenAlex 404 treated as an outage | Legitimate "no record" marked the whole audit `partial` | 404 → `not_found` |
+| Matching/style/references stages serialized after citations | 45s budget consumed before later checks ran | Independent stages run concurrently |
+| One hung model call consumed the whole budget | `references=unavailable(45015ms)`, everything else skipped | 28s per-stage deadline, one bounded retry, global LLM concurrency 2 |
+| Timeout retried inside the client | Two 20s attempts per stage | Timeouts are terminal for the stage; transient 5xx/429 still retried |
+| Style/matching prompts carried up to 60–80KB of pretty-printed JSON | Style timed out at ~20s on ordinary manuscripts | Compact digests (8–20KB) with only the fields under review |
+| `PAYMENT.SALE.COMPLETED` used the sale ID as the subscription ID | Phantom subscription rows on renewal | Uses `billing_agreement_id` |
+| Invented 30-day billing period | `current_period_end` did not match PayPal | Stored from `next_billing_time`, else null |
+| Cancellation revoked access immediately | Paid customer lost access mid-period | Tier retained until `current_period_end`; expiry applied lazily |
+| Checkout reported "Subscription Active!" regardless of activation | Paying user could be told they had access when the server refused | Button awaits the activation response and shows the failure |
+| API key compared with `!==` | Timing side channel | `timingSafeEqual` |
+| Rate limiter was per serverless instance | A caller could exceed the limit by N on N instances | Migration `016` adds an atomic `consume_rate_limit` RPC (service-role only); the per-instance window remains only as a logged degradation |
+| A retried stage could consume two full provider windows | One reference-parsing call took 52s and starved style/matching | One bounded window per stage (28s, no retry); timeout is terminal |
+| `LLM_CONCURRENCY=2` made the third parallel stage wait out its window | One extraction stage timed out in every run | Gate default 3, matching the number of stages that start together |
+| A timed-out matching stage still labelled every citation `no_match` and every reference `orphaned` | A check that never ran produced definitive findings | `unchecked` status when matching did not complete |
+
+### 7.3 Verification for this pass
+
+- Demo manuscript `samples/citepilot-error-demo.txt`: **six consecutive `completed` audits**, 6/6 checks, 9.8s–42.5s, identical finding set.
+- Findings returned: 2 unmatched citations, 1 year mismatch, 1 spelling mismatch, 1 retracted reference (Mehra et al. 2020), 1 orphaned reference (Bishop 2006), Crossref discrepancies for 2 entries (author/journal/pages/title), 4 style warnings, 3 uncited statistical claims, recency 16.7% within 5 years.
+- Fabricated entries (`Doe 2020`, `Nguyen & Park 2023`) now report `not_found` from both providers instead of inheriting unrelated metadata.
+- Free-tier enforcement: 1,608-word request → `403 word_limit_exceeded`.
+- Billing: 9 route tests (`src/app/api/__tests__/billing.test.ts`) cover fail-closed activation and signature-required webhooks.
+- Rate limiting: 7 tests (`src/lib/ai/__tests__/rate-limit.test.ts`) cover the shared counter, `Retry-After`, and the logged degradation path.
+- `npm test` — **267 passed / 29 files**; `npm run typecheck` clean; `npm run lint` clean.
+
+### 7.4 Still open
+
+The production env values, a deployed preview, a real screen-reader pass, an interactive accept/dismiss round-trip, history save/restore with a test account, and a sandbox PayPal journey still require access this environment does not have. Every one of them needs credentials or a browser session rather than code.

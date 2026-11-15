@@ -1,7 +1,8 @@
 /**
  * OpenAlex metadata verification (multi-provider fallback).
  */
-import { getJson } from "./http";
+import { getJson, HttpError } from "./http";
+import { titlesRelated } from "./crossref";
 import type { JsonObject, ReferenceEntry } from "./types";
 
 const OPENALEX_API_BASE = "https://api.openalex.org";
@@ -10,10 +11,17 @@ export async function lookupOpenalexByDoi(
   doi: string
 ): Promise<JsonObject | null> {
   if (!doi) return null;
-  const data = await getJson(
-    `${OPENALEX_API_BASE}/works/https://doi.org/${encodeURIComponent(doi)}`
-  );
-  return data;
+  try {
+    const data = await getJson(
+      `${OPENALEX_API_BASE}/works/https://doi.org/${encodeURIComponent(doi)}`
+    );
+    return data;
+  } catch (error) {
+    // 404 means OpenAlex has no record for this DOI, which is an answer, not an
+    // outage. Callers fall back to a title search.
+    if (error instanceof HttpError && error.status === 404) return null;
+    throw error;
+  }
 }
 
 export async function lookupOpenalexByTitleAuthor(
@@ -26,13 +34,21 @@ export async function lookupOpenalexByTitleAuthor(
   let query = title.trim();
   if (author) query = `${query} ${author.trim()}`;
 
-  const params = new URLSearchParams({ search: query, per_page: "3" });
+  const params = new URLSearchParams({ search: query, per_page: "5" });
   if (year) params.set("filter", `publication_year:${year}`);
 
   const data = await getJson(`${OPENALEX_API_BASE}/works?${params.toString()}`);
   const results = data?.results as unknown[] | undefined;
-  if (results && results.length > 0 && typeof results[0] === "object") {
-    return results[0] as JsonObject;
+  if (!Array.isArray(results)) return null;
+
+  // OpenAlex search always returns candidates; only one whose title is the
+  // reference's title may stand in for it.
+  for (const result of results) {
+    if (!result || typeof result !== "object") continue;
+    const candidate = result as JsonObject;
+    const candidateTitle =
+      typeof candidate["title"] === "string" ? (candidate["title"] as string) : "";
+    if (candidateTitle && titlesRelated(title, candidateTitle)) return candidate;
   }
   return null;
 }

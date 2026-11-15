@@ -176,15 +176,46 @@ export async function runAnalysisPipeline(
     }
   };
 
+  // A single stage may never consume the whole audit budget. Without this, one
+  // hung model call starves every check that still had time to run, turning a
+  // mostly-complete audit into an empty one.
+  //
+  // There is deliberately no retry here: a provider timeout already consumed a
+  // full attempt window, and retrying it doubled the worst case (52s for one
+  // reference-parsing call) while starving every later check. The provider call
+  // itself still retries transient 5xx/429/network errors.
+  const STAGE_BUDGET_MS = 28_000;
+
+  const withStageBudget = <T>(
+    task: (attemptDeadline: number) => Promise<T>
+  ): (() => Promise<T>) => {
+    return () => {
+      const stageEnd = Math.min(deadline, Date.now() + STAGE_BUDGET_MS);
+      return task(stageEnd);
+    };
+  };
+
   const [citationsStage, refsStage, claimsStage] = await Promise.all([
-    runStage("citations", Boolean(bodyText), () =>
-      extractCitations(bodyText, citationStyle, deadline)
+    runStage(
+      "citations",
+      Boolean(bodyText),
+      withStageBudget((attemptDeadline) =>
+        extractCitations(bodyText, citationStyle, attemptDeadline)
+      )
     ),
-    runStage("references", Boolean(refText), () =>
-      parseReferences(refText, deadline)
+    runStage(
+      "references",
+      Boolean(refText),
+      withStageBudget((attemptDeadline) =>
+        parseReferences(refText, attemptDeadline)
+      )
     ),
-    runStage("uncited_claims", Boolean(bodyText), () =>
-      detectUncitedClaims(bodyText, paraMeta, deadline)
+    runStage(
+      "uncited_claims",
+      Boolean(bodyText),
+      withStageBudget((attemptDeadline) =>
+        detectUncitedClaims(bodyText, paraMeta, attemptDeadline)
+      )
     ),
   ]);
 
@@ -192,51 +223,69 @@ export async function runAnalysisPipeline(
   const refs = refsStage.value ?? [];
   const uncitedClaims = claimsStage.value ?? [];
 
-  const matchStage = await runStage(
-    "matching",
-    Boolean(citations.length && refs.length),
-    () => matchCitationsToReferences(citations, refs, deadline)
-  );
-  const matches = matchStage.value ?? [];
-
-  const styleStage = await runStage("style", Boolean(bodyText), () =>
-    checkStyle(bodyText, citationStyle, citations, refs, deadline)
-  );
-  const styleWarnings = styleStage.value ?? [];
-
-  const verificationStart = Date.now();
-  const verification = await verifyReferences(refs, deadline);
-  const verificationAttempted = refs.length > 0;
-  record({
-    name: "verification",
-    label: STAGE_LABELS.verification,
-    status: verificationAttempted
-      ? verification.unavailableCount > 0
-        ? "unavailable"
-        : "completed"
-      : "skipped",
-    ...(verificationAttempted && verification.unavailableCount === refs.length
-      ? {
-          message:
-            "Metadata verification was unavailable for every reference. These references are unverified, not confirmed correct.",
-        }
-      : verificationAttempted && verification.unavailableCount > 0
+  const runVerification = async () => {
+    const verificationStart = Date.now();
+    const verification = await verifyReferences(refs, deadline);
+    const verificationAttempted = refs.length > 0;
+    record({
+      name: "verification",
+      label: STAGE_LABELS.verification,
+      status: verificationAttempted
+        ? verification.unavailableCount > 0
+          ? "unavailable"
+          : "completed"
+        : "skipped",
+      ...(verificationAttempted && verification.unavailableCount === refs.length
         ? {
-            message: `${verification.unavailableCount} of ${refs.length} references could not be verified.`,
+            message:
+              "Metadata verification was unavailable for every reference. These references are unverified, not confirmed correct.",
           }
-        : !verificationAttempted
-          ? { reason: "not_applicable", message: "No reference entries were available to verify." }
-          : {}),
-    duration_ms: Date.now() - verificationStart,
-  });
+        : verificationAttempted && verification.unavailableCount > 0
+          ? {
+              message: `${verification.unavailableCount} of ${refs.length} references could not be verified.`,
+            }
+          : !verificationAttempted
+            ? { reason: "not_applicable", message: "No reference entries were available to verify." }
+            : {}),
+      duration_ms: Date.now() - verificationStart,
+    });
+    return verification;
+  };
 
-  const citationResults = buildCitationResults(citations, matches);
+  // Matching, style checking, and metadata verification are independent once
+  // citations and references exist. Running them concurrently keeps the audit
+  // inside its budget instead of paying for each stage serially.
+  const [matchStage, styleStage, verification] = await Promise.all([
+    runStage(
+      "matching",
+      Boolean(citations.length && refs.length),
+      withStageBudget((attemptDeadline) =>
+        matchCitationsToReferences(citations, refs, attemptDeadline)
+      )
+    ),
+    runStage(
+      "style",
+      Boolean(bodyText),
+      withStageBudget((attemptDeadline) =>
+        checkStyle(bodyText, citationStyle, citations, refs, attemptDeadline)
+      )
+    ),
+    runVerification(),
+  ]);
+  const matches = matchStage.value ?? [];
+  const styleWarnings = styleStage.value ?? [];
+  // A failed matching stage yields no matches; that must not be read as "no
+  // citation matches anything".
+  const matchingChecked = matchStage.value !== null;
+
+  const citationResults = buildCitationResults(citations, matches, matchingChecked);
   const refResults = buildReferenceResults(
     refs,
     citationResults,
     verification.crossrefResults,
     verification.openalexResults,
-    verification.retractionResults
+    verification.retractionResults,
+    matchingChecked
   );
 
   const attempted = checks.filter((c) => c.status !== "skipped");
@@ -281,7 +330,8 @@ export async function runAnalysisPipeline(
 
 function buildCitationResults(
   citations: CitationEntry[],
-  matches: MatchEntry[]
+  matches: MatchEntry[],
+  matchingChecked: boolean
 ): JsonObject[] {
   const matchListByText = new Map<string, MatchEntry[]>();
   for (const m of matches) {
@@ -314,7 +364,15 @@ function buildCitationResults(
       extracted_authors: c.extracted_authors || [],
       extracted_year: c.extracted_year ?? null,
       citation_type: c.citation_type || "parenthetical",
-      status: matchedRefIdx !== null ? "matched" : "no_match",
+      // "no_match" is a claim: the citation is not in the reference list. Only
+      // make it when the matching check actually ran; otherwise the citation is
+      // unchecked, not unmatched.
+      status:
+        matchedRefIdx !== null
+          ? "matched"
+          : matchingChecked
+            ? "no_match"
+            : "unchecked",
       confidence: match?.confidence ?? 0,
       matched_reference_index: matchedRefIdx,
       match_type: match?.match_type || "none",
@@ -361,8 +419,11 @@ async function verifyReferences(
   // Reference lists can be long; unbounded fan-out both trips provider rate
   // limits and burns the function's time budget waiting on the slowest tail.
   const limit = Math.max(1, aiConfig.verifyConcurrency);
+  // Crossref rate-limits bursts (HTTP 429), so its fan-out stays lower than
+  // the shared limit while OpenAlex and retraction checks keep the higher one.
+  const crossrefLimit = Math.max(1, Math.min(limit, 3));
 
-  const crossrefSettled = await mapWithConcurrency(refs, limit, (r) =>
+  const crossrefSettled = await mapWithConcurrency(refs, crossrefLimit, (r) =>
     expired() ? Promise.resolve(outOfTime("Crossref")) : validateReferenceWithCrossref(r)
   );
   const crossrefResults: JsonObject[] = crossrefSettled.map((r) =>
@@ -412,7 +473,8 @@ function buildReferenceResults(
   citationResults: JsonObject[],
   crossrefResults: JsonObject[],
   openalexResults: JsonObject[],
-  retractionResults: JsonObject[]
+  retractionResults: JsonObject[],
+  matchingChecked: boolean
 ): JsonObject[] {
   const matchedIndices = new Set<number>();
   for (const cr of citationResults) {
@@ -438,7 +500,13 @@ function buildReferenceResults(
       cleanCrVal["discrepancies"] = oaVal["discrepancies"] || [];
     }
 
-    let status = matchedIndices.has(i) ? "cited" : "orphaned";
+    // "orphaned" means no in-text citation exists. It may only be reported when
+    // the matching check ran; otherwise the reference is unchecked.
+    let status = matchedIndices.has(i)
+      ? "cited"
+      : matchingChecked
+        ? "orphaned"
+        : "unchecked";
     if (retVal["is_retracted"] || oaVal["is_retracted"]) status = "retracted";
 
     return {
@@ -456,6 +524,7 @@ function buildReferenceResults(
       reference_type: r.reference_type || "unknown",
       status,
       crossref_validation: cleanCrVal,
+      openalex_validation: oaVal,
       retraction_info: retVal,
     };
   });

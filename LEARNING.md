@@ -18,7 +18,7 @@ The AI analysis service was ported from Python/FastAPI (`citepilot-ai/`, Railway
 Two independent causes, both fixed 2026-10-22:
 
 1. **Stale Railway rewrite.** `citepilot-web/vercel.json` still proxied `/api/v1/:path*` to `citepilot-ai-production.up.railway.app` (the retired Python service). Every API call went to a dead origin and hung until the platform timeout. There must be **no** rewrite — the route handlers live in this app. If you see a Railway URL in `vercel.json`, delete it.
-2. **Unbounded pipeline work.** `maxDuration = 60` is the function cap, but the pipeline (Gemini extraction → matching → style → Crossref/OpenAlex/retraction fan-out) had no internal budget and no concurrency cap, so large manuscripts/reference lists overran it. `runAnalysisPipeline` now takes a deadline from `ANALYSIS_BUDGET_MS` (default 45s), Gemini calls get `GEMINI_TIMEOUT_MS` plus a hard wall-clock race, and provider verification uses `VERIFY_CONCURRENCY`. Past the deadline, stages are skipped and reported as `verification_unavailable`/`checks: skipped(budget)` rather than being killed mid-response.
+2. **Unbounded pipeline work.** `maxDuration = 60` is the function cap, but the pipeline (Gemini extraction → matching → style → Crossref/OpenAlex/retraction fan-out) had no internal budget and no concurrency cap, so large manuscripts/reference lists overran it. `runAnalysisPipeline` now takes a deadline from `ANALYSIS_BUDGET_MS` (default 52s), Gemini calls get `GEMINI_TIMEOUT_MS` (28s) plus a hard wall-clock race, and provider verification uses `VERIFY_CONCURRENCY`. Past the deadline, stages are skipped and reported as `verification_unavailable`/`checks: skipped(budget)` rather than being killed mid-response.
 
 ## Gemini DEADLINE_EXCEEDED with a valid key (fixed 2026-11-14)
 
@@ -38,6 +38,39 @@ Related contract changes:
 - Errors are classified (`timeout`, `rate_limit`, `invalid_config`, `provider_error`, `invalid_response`, `budget_exhausted`). Invalid credentials are **never** retried; transient errors only retry while budget and `MIN_ATTEMPT_MS` remain.
 - `/api/health` no longer equates "API key present" with "ready". `status` is liveness; `provider_readiness.state` is `unverified` until `?probe=1` performs a real (cached) provider call. `ai_engine_ready` is true only after that probe succeeds.
 - The analyse response now carries `request_id`, `status` (`completed`/`partial`), and per-stage `checks` with durations. A partial audit must never be rendered as a clean one.
+
+## Provider latency is the audit's real budget (2026-11-15)
+
+The remaining flakiness was never our code path — it was provider latency on a free-tier key.
+
+- A **trivial** prompt (`{"ok":true}`) on `gemini-3.1-flash-lite` measured **2.8s–27s**, and parallel calls can all stall in the same wave. The provider queues requests; the queued call burns its whole attempt window without being slow itself, so a 20s ceiling produced `timeout` on stages that had nothing wrong with them.
+- Budgets now assume that tail: `GEMINI_TIMEOUT_MS=28000`, `ANALYSIS_BUDGET_MS=52000` (platform cap 60s minus response headroom), per-stage ceiling 28s. Do **not** lower these to "tighten" latency — that converts stalls into missing checks.
+- **A timeout is terminal for its stage.** Retrying a timeout doubles the wait and starves every other stage, so `callGemini` and `callGeminiValidated` rethrow `kind === "timeout"` immediately. Only transient 5xx/429/network errors are retried.
+- **Global LLM gate.** `LLM_CONCURRENCY` (default 3) limits in-flight Gemini calls. Keep it at least the number of stages that start together — the three extraction stages. A lower gate makes the third call wait for a slot, and the wait is not free: the stage's window is already running.
+- **One bounded window per stage, no retry.** `withStageBudget` in `pipeline.ts` gives each stage `min(global deadline, start + 28s)` and nothing more. An earlier version retried a timed-out stage; that doubled the worst case (52s for one reference-parsing call) and starved every later check. Attempt-level retries for transient 5xx/429 still exist inside the provider client; a timeout does not.
+- **Keep prompts small.** The style and matching prompts used to serialize `JSON.stringify(citations, null, 2)` / `JSON.stringify(references, null, 2)` (60–80KB). That dominated latency and made `style` time out at ~20s on ordinary manuscripts. They now send raw text digests (8–20KB caps). When adding a stage, send only the fields the model must reason about.
+- **Verify provider health before blaming the pipeline.** The probe scripts live in the session temp dir (`gemini-probe.mjs`, `gemini-thinking.mjs`); they call `generateContent` directly with the key from `.env.local`. If they show multi-second tails on trivial prompts, the key/tier is the limit — a paid tier is the fix, not more retries.
+- Measured result after these changes: **six consecutive demo audits `completed`**, 6/6 checks, 9.8s–42.5s, with an unchanged finding set.
+
+## Never adopt a stranger's metadata (2026-11-15)
+
+Crossref's `query.bibliographic` search and OpenAlex's `search` **always return something**. Taking the top hit validated a fabricated reference against an unrelated paper ("discrepancies found" for a paper that does not exist).
+
+- `titlesRelated` (`crossref.ts`) gates every search hit: the candidate title must match exactly after stop-word normalization, or contain the reference title as a complete subtitle-style extension (at least two shared tokens).
+- No title match → `not_found`, never `verified`. Both providers use the same gate.
+- OpenAlex `404` on a DOI lookup means "no record", not an outage: return `null` and fall through to the title search. Anything else propagates.
+
+## Fail-closed billing (2026-11-15)
+
+Billing is the last priority in the task list but the easiest place to accidentally give away access. Every path fails closed:
+
+- No `NEXT_PUBLIC_PAYPAL_PLAN_ID` or missing PayPal credentials → `/api/subscription/activate` returns **503**. There is no "dev mode" grant.
+- Activation requires PayPal to report `status: ACTIVE` **and** `plan_id === NEXT_PUBLIC_PAYPAL_PLAN_ID`. A cheaper plan cannot be activated against a premium account.
+- Webhooks require signature verification. Missing `PAYPAL_WEBHOOK_ID` → 503; missing transmission headers → 401; `verification_status !== SUCCESS` → 401. The old `NODE_ENV !== "production"` unsigned path is gone.
+- `PAYMENT.SALE.COMPLETED` resolves the subscription from `billing_agreement_id` — the `resource.id` is the sale, not the subscription, and using it created phantom rows.
+- `current_period_end` is PayPal's `next_billing_time` or `null`. Never invent a 30-day period.
+- Cancellation keeps the paid tier until `current_period_end`; `resolveAuditEntitlement` and `AuthContext` apply expiry lazily so a stale `users.tier` cannot grant access after the period ends.
+- Entitlement is resolved **server-side** with the service role. The tier is never read from client-writable auth metadata, and any Supabase failure applies the free-tier limit.
 
 ## TOML: dependencies must be under `[project]`
 
@@ -122,6 +155,8 @@ The top-level `README.md` document index and directory tree previously did not m
 | `CROSSREF_MAILTO` | Optional contact email for the Crossref polite pool |
 | `API_KEY` | Optional — if set, clients must send `X-API-Key` or `Authorization: Bearer <key>` |
 | `MAX_UPLOAD_MB` / `MAX_TEXT_CHARS` / `RATE_LIMIT_PER_MINUTE` | Optional AI request limits |
+| `ANALYSIS_BUDGET_MS` / `GEMINI_TIMEOUT_MS` | Optional latency budgets — defaults 52000 / 28000; do not lower them below the provider's observed tail |
+| `LLM_CONCURRENCY` | Optional, default 2 — max in-flight Gemini calls. Raising it makes the provider queue the extras and times them out |
 | `NODE_ENV` | `production` |
 
 See `citepilot-web/.env.example` for the full list.

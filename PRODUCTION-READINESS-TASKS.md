@@ -1,0 +1,79 @@
+# Production Readiness — Task List
+
+Priority order is **delivery first**: the audit result a researcher sees must be
+truthful and complete before anything else. UI, platform hardening, then
+subscription last.
+
+Status key: `[x]` done and verified · `[~]` in progress · `[ ]` open · `[!]` blocked
+
+Last updated: 2026-11-15
+
+---
+
+## P0 — Delivery core: the audit itself
+
+| # | Task | Status | Evidence / acceptance |
+|---|---|---|---|
+| 1.1 | Audit completes all six checks inside the budget | `[x]` | Demo manuscript: six consecutive `completed` runs, 6/6 checks, 9.8s–42.5s. |
+| 1.2 | Retracted reference is detected and reported | `[x]` | Mehra et al. 2020 → `retraction_info.is_retracted = true`, status `retracted`, message cites Crossref's retraction relation. |
+| 1.3 | Orphaned reference is detected | `[x]` | Bishop (2006) → `status = orphaned` (no in-text citation). |
+| 1.4 | Unmatched in-text citations become findings | `[x]` | `no_match` → `UNMATCHED_CITATION` suggestions (`suggestionAdapter.ts:87`); `(Smith et al 2020)` and `(Johnson & Wang, 2022)` reported. |
+| 1.5 | Unverifiable references are not reported as clean | `[x]` | `not_found` maps to a finding; export counts `not_found` as unverified. |
+| 1.6 | Crossref field discrepancies: first author, journal, volume, page range | `[x]` | LeCunn entry → `author`, `journal`, `pages`, `title` discrepancies against Crossref. |
+| 1.7 | Style warnings: comma, page indicator, page range, capitalisation | `[x]` | `MISSING_COMMA_IN_CITATION`, `MISSING_PAGE_INDICATOR`, `INCONSISTENT_PAGE_RANGE` (`436-44`), `TITLE_CAPITALIZATION`. |
+| 1.8 | Uncited statistical claims are detected | `[x]` | Three claims (87%, 42%, 63%) returned. |
+| 1.9 | Recency reports source age | `[x]` | 16.7% within 5 years, average age 9.2 years, 2 sources older than 10 years. |
+| 1.10 | A partial audit never renders as clean | `[x]` | `pipeline-completeness` tests; widget prints "so far" / "not checked". |
+| 1.11 | Repeat runs are stable | `[x]` | Six consecutive `completed` runs with the same finding set. |
+| 1.12 | Stale exports are blocked; reports list only real findings | `[x]` | `0d6bb57`; export code unchanged by this pass. |
+| 1.13 | Crossref/OpenAlex may not adopt unrelated records | `[x]` | `titlesRelated` gate on both providers; fabricated DOIs now report `not_found` instead of inheriting a stranger's metadata. |
+| 1.14 | Transient HTTP failures are retried with backoff | `[x]` | `getJson`: one retry for 5xx/network, two bounded waits for 429 honouring `Retry-After`. |
+| 1.15 | One slow model call cannot starve the audit | `[x]` | One bounded window per stage (`min(global, start+28s)`, no stage retry), global LLM gate at 3 in-flight calls, timeout terminal at the provider client. |
+| 1.16 | Style stage payload is compact | `[x]` | Prompt carries raw citation/reference text (8KB cap) instead of up to 60KB of pretty-printed JSON; stage dropped from ~20s timeouts to 2–7s. |
+| 1.17 | A check that did not run never produces findings | `[x]` | When matching fails, citations report `unchecked` and references `unchecked` — not `no_match`/`orphaned`; covered by `pipeline-completeness.test.ts`. |
+
+## P1 — Delivery surface: what the researcher touches
+
+| # | Task | Status | Evidence / acceptance |
+|---|---|---|---|
+| 2.1 | Every finding kind reaches the suggestion list | `[x]` | Retraction, Crossref discrepancy, `not_found`, `no_match`, style, claims all mapped in `suggestionAdapter.ts`. |
+| 2.2 | Accept / dismiss actually changes the manuscript text | `[ ]` | Needs an interactive run; editor unit tests exist but do not cover the accept round-trip. |
+| 2.3 | History save and restore reflect the real audit | `[ ]` | `/api/audits/save` requires a configured Supabase project and a test account. |
+| 2.4 | No fabricated content in the product UI | `[x]` | Fabricated testimonials deleted; landing demo labelled "Example document". |
+| 2.5 | Accessibility: labels, focus order, `aria-live` on results | `[ ]` | Keyboard-only and screen-reader passes outstanding. |
+
+## P2 — Platform and security
+
+| # | Task | Status | Evidence / acceptance |
+|---|---|---|---|
+| 3.1 | No Supabase placeholder project fallback | `[x]` | `isSupabaseConfigured`; clients return null or throw a named error. |
+| 3.2 | Paid entitlement enforced server-side | `[x]` | 1,600-word request → `403 word_limit_exceeded` with the upgrade message; pro tiers unlimited. |
+| 3.3 | Tier cannot be self-granted via auth metadata | `[x]` | Fallback profile tier is always `free`. |
+| 3.4 | Rate limiting holds across serverless instances | `[x]` | Migration `016_create_rate_limits.sql` adds an atomic `consume_rate_limit` RPC (service-role only, RLS with no policies); `checkRateLimit` uses it and returns `429` + `Retry-After`. Per-instance window remains only as a logged degradation if the store is unreachable. 7 tests in `rate-limit.test.ts`. |
+| 3.5 | API-key comparison is timing-safe | `[x]` | `timingSafeEqual` with length check. |
+| 3.6 | Health and readiness endpoints are truthful | `[x]` | `/api/health`, `/health`, cached probes. |
+| 3.7 | Provider failures never discard the manuscript | `[x]` | Error bodies state the text is preserved. |
+
+## P3 — Subscription and billing (last)
+
+| # | Task | Status | Evidence / acceptance |
+|---|---|---|---|
+| 4.1 | Activation fails closed without PayPal credentials | `[x]` | 503 before any grant; test coverage in `billing.test.ts`. |
+| 4.2 | Plan identity is enforced | `[x]` | Client claim and PayPal `plan_id` must equal `NEXT_PUBLIC_PAYPAL_PLAN_ID`. |
+| 4.3 | Webhook signature is mandatory | `[x]` | Missing `PAYPAL_WEBHOOK_ID` → 503; no unsigned dev path. |
+| 4.4 | Sale events resolve the subscription, not the sale ID | `[x]` | `PAYMENT.SALE.COMPLETED` uses `billing_agreement_id`. |
+| 4.5 | Billing period is never invented | `[x]` | `current_period_end` is PayPal's `next_billing_time` or null. |
+| 4.6 | Checkout shows success only after server confirmation | `[x]` | Button awaits `/api/subscription/activate` and surfaces failures. |
+| 4.7 | No hardcoded plan/client IDs | `[x]` | Read from `NEXT_PUBLIC_PAYPAL_*`; unconfigured → "checkout is not configured". |
+| 4.8 | Cancellation keeps access until the paid period ends | `[x]` | Webhook keeps the tier when `current_period_end` is in the future; `resolveAuditEntitlement` and `AuthContext` apply expiry lazily. |
+| 4.9 | Production env vars set and redeployed | `[!]` | Needs Vercel access. See `citepilot-web/.env.example` and `BILLING-RUNBOOK.md` §0. |
+
+## P4 — Verification and documentation
+
+| # | Task | Status | Evidence / acceptance |
+|---|---|---|---|
+| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 28 files / 260 tests; typecheck and lint clean. |
+| 5.2 | Billing tests cover fail-closed paths | `[x]` | 9 tests: 503 (no plan, no creds), 401, plan mismatch, non-ACTIVE, happy path, webhook 503/401/bad signature. |
+| 5.3 | `AUDIT-FINDINGS-REGISTER.md` updated | `[x]` | §7 records this pass. |
+| 5.4 | `LEARNING.md` updated | `[x]` | Provider-latency, retry, and billing gotchas. |
+| 5.5 | Billing runbook | `[x]` | `BILLING-RUNBOOK.md` at the repo root: verify a subscription, replay a webhook, downgrade a user, common failures. |

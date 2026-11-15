@@ -2,13 +2,13 @@
 
 > **AI-Powered Academic Citation Consistency Checker**
 
-This repository contains the complete product, design, engineering, and operational documentation for CitePilot, alongside the working codebases (`citepilot-web`, `citepilot-ai`, `supabase/migrations`).
+This repository contains the complete product, design, engineering, and operational documentation for CitePilot, alongside the working codebase (`citepilot-web`, which also hosts the AI API routes) and `supabase/migrations`.
 
 CitePilot checks in-text citations against reference lists, validates sources against Crossref/DOI.org, detects hallucinated and retracted references, and reports style-rule and structural issues — with PDF and annotated-DOCX exports. It supports 10 citation styles (APA 7, APA 6, Harvard, Vancouver, Chicago Author-Date, Chicago Notes-Bibliography, MLA 9, IEEE, OSCOLA, Turabian).
 
-**System at a glance:** web on **Vercel** (Next.js 16.2) · gateway + AI service on **Railway** (Node 22/Express + Python 3.12/FastAPI) · **Vercel Postgres** (PostgreSQL 16, Drizzle) · **Google Gemini 2.5 Flash** as the sole LLM · **Crossref** validation · **PayPal** subscriptions. Sessionless, synchronous MVP (see `04-engineering-standards/18-architecture-decision-records.md` ADR-008–011).
+**System at a glance:** one **Vercel** project running Next.js 16.2 (UI + AI Route Handlers) · **Supabase** (PostgreSQL 16 + Auth + RLS) · **Google Gemini** (`gemini-3.1-flash-lite`) as the sole LLM · **Crossref/OpenAlex** verification · **PayPal** subscriptions. Sessionless, synchronous MVP (see `04-engineering-standards/18-architecture-decision-records.md` ADR-008–011).
 
-> **Note:** the working code is vendored in this monorepo (`citepilot-web/`, `citepilot-ai/`, `supabase/migrations/`) — not as git submodules. The `citepilot-gateway` referenced in older docs is not present as a separate checkout; AI calls go via `next.config.ts` rewrites to `NEXT_PUBLIC_API_URL` (Railway). See `AGENTS.md` and `LEARNING.md` for navigation rules and deployment quirks.
+> **Note:** the working code is vendored in this monorepo (`citepilot-web/`, `supabase/migrations/`) — not as git submodules. The Python AI service (`citepilot-ai/`) and `citepilot-gateway` were retired and now exist only in git history; the AI pipeline lives in `citepilot-web/src/lib/ai/` and is exposed as same-origin Route Handlers under `/api/v1`. See `AGENTS.md` and `LEARNING.md` for navigation rules and deployment quirks.
 
 ---
 
@@ -140,10 +140,9 @@ citepilot-docs/
 ├── 07-launch/
 │   ├── 28-launch-checklist.md
 │   └── 29-support-documentation.md
-├── citepilot-web/                     # Next.js 16.2 frontend (vendored)
-├── citepilot-ai/                      # Python 3.12 FastAPI AI service (vendored)
+├── citepilot-web/                     # Next.js 16.2 frontend + AI API routes (vendored)
 ├── supabase/
-│   └── migrations/                    # SQL schema (14 files) — DB source of truth
+│   └── migrations/                    # SQL schema (16 files) — DB source of truth
 └── brand/
     └── guidelines/
 ```

@@ -179,7 +179,8 @@ export function adaptAuditResponseToSuggestions(
 
     const isRetracted = ref.status === "retracted" || Boolean(ref.retraction_info);
     const hasDiscrepancies = Boolean(ref.crossref_validation?.discrepancies?.length);
-    if (!isRetracted && !hasDiscrepancies) return;
+    const notFound = ref.crossref_validation?.status === "not_found";
+    if (!isRetracted && !hasDiscrepancies && !notFound) return;
 
     const occurrences = findOccurrences(manuscriptText, raw.slice(0, 60));
     for (const match of occurrences) {
@@ -195,22 +196,35 @@ export function adaptAuditResponseToSuggestions(
         original: fullSnippet,
         replacement: fullSnippet,
         span: { start: match.start, end: endOffset },
-        title: isRetracted ? "Retracted Academic Paper Detected" : "Crossref Metadata Discrepancy",
+        title: isRetracted
+          ? "Retracted Academic Paper Detected"
+          : notFound
+            ? "Reference not found in Crossref"
+            : "Crossref Metadata Discrepancy",
         explanation: isRetracted
           ? "This cited source has been formally retracted in peer-reviewed literature. Remove or contextualize."
-          : (ref.crossref_validation?.discrepancies?.[0]?.message || "Metadata discrepancy with Crossref records."),
+          : notFound
+            ? (ref.crossref_validation?.message ||
+              "Reference metadata could not be found in the Crossref database.")
+            : (ref.crossref_validation?.discrepancies?.[0]?.message || "Metadata discrepancy with Crossref records."),
         educationalContext: isRetracted
           ? "Citing retracted publications compromises academic validity."
-          : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI and author spelling."),
-        severity: isRetracted ? "high" : "low",
-        impactScore: isRetracted ? 15 : 5,
+          : notFound
+            ? (ref.crossref_validation?.how_to_fix ||
+              "Check the author names, year, and title, or locate the official DOI at doi.org.")
+            : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI and author spelling."),
+        severity: isRetracted || notFound ? "high" : "low",
+        impactScore: isRetracted ? 15 : notFound ? 10 : 5,
         status: "active",
         metadata: {
           doi: ref.parsed_doi,
           crossrefVerified: ref.crossref_validation?.crossref_verified,
           guidelineRef: isRetracted
             ? "Citing retracted publications compromises academic validity."
-            : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI and author spelling."),
+            : notFound
+              ? (ref.crossref_validation?.how_to_fix ||
+                "Check the author names, year, and title, or locate the official DOI at doi.org.")
+              : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI and author spelling."),
         },
       });
 
