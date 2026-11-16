@@ -19,14 +19,14 @@ Last updated: 2026-11-15
 | 1.3 | Orphaned reference is detected | `[x]` | Bishop (2006) → `status = orphaned` (no in-text citation). |
 | 1.4 | Unmatched in-text citations become findings | `[x]` | `no_match` → `UNMATCHED_CITATION` suggestions (`suggestionAdapter.ts:87`); `(Smith et al 2020)` and `(Johnson & Wang, 2022)` reported. |
 | 1.5 | Unverifiable references are not reported as clean | `[x]` | `not_found` maps to a finding; export counts `not_found` as unverified. |
-| 1.6 | Crossref field discrepancies: first author, journal, volume, page range | `[x]` | LeCunn entry → `author`, `journal`, `pages`, `title` discrepancies against Crossref. |
+| 1.6 | Crossref field discrepancies: first author, journal, volume, page range | `[x]` | LeCunn entry → `author`, `journal`, `pages`, `title` discrepancies against Crossref. OpenAlex performs the same comparisons (`title`, `year`, `doi`, `journal`, `volume`, `pages`) as the fallback provider. |
 | 1.7 | Style warnings: comma, page indicator, page range, capitalisation | `[x]` | `MISSING_COMMA_IN_CITATION`, `MISSING_PAGE_INDICATOR`, `INCONSISTENT_PAGE_RANGE` (`436-44`), `TITLE_CAPITALIZATION`. |
 | 1.8 | Uncited statistical claims are detected | `[x]` | Three claims (87%, 42%, 63%) returned. |
 | 1.9 | Recency reports source age | `[x]` | 16.7% within 5 years, average age 9.2 years, 2 sources older than 10 years. |
 | 1.10 | A partial audit never renders as clean | `[x]` | `pipeline-completeness` tests; widget prints "so far" / "not checked". |
 | 1.11 | Repeat runs are stable | `[x]` | Six consecutive `completed` runs with the same finding set. |
 | 1.12 | Stale exports are blocked; reports list only real findings | `[x]` | `0d6bb57`; export code unchanged by this pass. |
-| 1.13 | Crossref/OpenAlex may not adopt unrelated records | `[x]` | `titlesRelated` gate on both providers; fabricated DOIs now report `not_found` instead of inheriting a stranger's metadata. |
+| 1.13 | Crossref/OpenAlex may not adopt unrelated records | `[x]` | `titlesRelated` gate on both providers (exact title, or prefix for subtitle/edition extensions — never containment, which falsely flagged Bishop 2006); OpenAlex uses `filter=title.search` and skips derivative records (book-review, paratext, erratum, peer-review, retraction) that merely describe the cited work; fabricated DOIs report `not_found` instead of inheriting a stranger's metadata; OpenAlex reports `not_consulted` when Crossref already verified. |
 | 1.14 | Transient HTTP failures are retried with backoff | `[x]` | `getJson`: one retry for 5xx/network, two bounded waits for 429 honouring `Retry-After`. |
 | 1.15 | One slow model call cannot starve the audit | `[x]` | One bounded window per stage (`min(global, start+28s)`, no stage retry), global LLM gate at 3 in-flight calls, timeout terminal at the provider client. |
 | 1.16 | Style stage payload is compact | `[x]` | Prompt carries raw citation/reference text (8KB cap) instead of up to 60KB of pretty-printed JSON; stage dropped from ~20s timeouts to 2–7s. |

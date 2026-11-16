@@ -142,16 +142,26 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 | A retried stage could consume two full provider windows | One reference-parsing call took 52s and starved style/matching | One bounded window per stage (28s, no retry); timeout is terminal |
 | `LLM_CONCURRENCY=2` made the third parallel stage wait out its window | One extraction stage timed out in every run | Gate default 3, matching the number of stages that start together |
 | A timed-out matching stage still labelled every citation `no_match` and every reference `orphaned` | A check that never ran produced definitive findings | `unchecked` status when matching did not complete |
+| OpenAlex compared only the publication year | A title/journal/volume/page mismatch passed as `verified` | Same field comparisons as Crossref (title, year, DOI, journal, volume, pages), sharing `titlesMatch`/`journalsMatch`/`volumesMatch`/`pagesMatch` |
+| OpenAlex returned `{}` when Crossref had already verified a reference | An empty object was indistinguishable from a real provider result | Explicit `status: "not_consulted"` with the reason; `openalex_validation` always states its outcome |
+| Title matching accepted containment anywhere in the string | Bishop 2006 was "discrepancies found" against an unrelated conference paper whose title happens to contain the book's words | The shorter title must be a *prefix* of the longer one (subtitle/edition extension only) |
+| OpenAlex free-text `search` ranked a book review above the book | A real, citable book (Bishop 2006, no DOI) came back `not_found` | `filter=title.search`, which returns the work itself |
+| A derivative OpenAlex record stood in for the work | The book verified against the Kybernetes *review* (2007, vol 36, p 275), so its own metadata would have produced false journal/volume/page discrepancies | Candidate types `book-review`, `paratext`, `erratum`, `peer-review`, `retraction`, `supplementary-materials` are skipped |
 
 ### 7.3 Verification for this pass
 
 - Demo manuscript `samples/citepilot-error-demo.txt`: **six consecutive `completed` audits**, 6/6 checks, 9.8s–42.5s, identical finding set.
 - Findings returned: 2 unmatched citations, 1 year mismatch, 1 spelling mismatch, 1 retracted reference (Mehra et al. 2020), 1 orphaned reference (Bishop 2006), Crossref discrepancies for 2 entries (author/journal/pages/title), 4 style warnings, 3 uncited statistical claims, recency 16.7% within 5 years.
 - Fabricated entries (`Doe 2020`, `Nguyen & Park 2023`) now report `not_found` from both providers instead of inheriting unrelated metadata.
+- Provider verification proved against the live APIs (demo manuscript plus targeted probes):
+  - Tampered LeCun entry (wrong title/journal/volume/pages, real DOI) → Crossref `discrepancies_found` with 4 discrepancies, each quoting Crossref's actual record (*Deep learning*, *Nature*, 521, 436–444).
+  - Fabricated Doe 2020 → `not_found` from both Crossref and OpenAlex.
+  - Bishop 2006 (book, no DOI) → Crossref `not_found`, OpenAlex `verified` against the Springer 2006 book record; retraction reported as `unknown`, not as a clean bill of health.
+  - Every reference Crossref verified → OpenAlex `not_consulted` with the reason, so no response implies a second opinion that did not happen.
 - Free-tier enforcement: 1,608-word request → `403 word_limit_exceeded`.
 - Billing: 9 route tests (`src/app/api/__tests__/billing.test.ts`) cover fail-closed activation and signature-required webhooks.
 - Rate limiting: 7 tests (`src/lib/ai/__tests__/rate-limit.test.ts`) cover the shared counter, `Retry-After`, and the logged degradation path.
-- `npm test` — **267 passed / 29 files**; `npm run typecheck` clean; `npm run lint` clean.
+- `npm test` — **275 passed / 30 files**; `npm run typecheck` clean; `npm run lint` clean.
 
 ### 7.4 Still open
 

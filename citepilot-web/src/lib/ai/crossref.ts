@@ -23,35 +23,41 @@ export function cleanDoi(doiStr: string | null | undefined): string {
   return result;
 }
 
-/** Normalized, stop-word-free tokens for title comparison. */
-function titleTokens(value: string): Set<string> {
-  return new Set(
-    value
-      .toLowerCase()
-      .replace(/[^\w\s]/g, " ")
-      .split(/\s+/)
-      .filter((w) => w && !STOP_WORDS.has(w))
-  );
+/** Normalized, stop-word-free tokens, in order. */
+function titleTokens(value: string): string[] {
+  return value
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w && !STOP_WORDS.has(w));
 }
 
 /**
- * Decides whether a Crossref search hit is the work the reference describes.
+ * Decides whether a provider search hit is the work the reference describes.
  *
- * Crossref's bibliographic search always returns *something*, so accepting the
- * top hit would validate a fabricated reference against an unrelated paper.
- * A candidate qualifies only when its title is the same title (see
- * `titlesMatch`) or contains it as a complete subtitle-style extension.
+ * Provider search always returns *something*, so accepting the top hit would
+ * validate a fabricated reference against an unrelated paper. A candidate
+ * qualifies only when:
+ *
+ * 1. its title is the same title after normalization (`titlesMatch`), or
+ * 2. the shorter title is a *prefix* of the longer one, which covers real
+ *    subtitle/edition extensions ("Attention is all you need" → "Attention is
+ *    all you need: a survey of transformers").
+ *
+ * Containment anywhere in the string is deliberately not enough: "Pattern
+ * recognition and machine learning" is a subset of the unrelated
+ * "...Benchmark for Machine Learning and Pattern Recognition Algorithms", and
+ * accepting that produced a title discrepancy against a legitimate book.
  */
 export function titlesRelated(a: string, b: string): boolean {
   if (titlesMatch(a, b)) return true;
-  const s1 = titleTokens(a);
-  const s2 = titleTokens(b);
-  if (s1.size === 0 || s2.size === 0) return false;
-  const [small, large] = s1.size <= s2.size ? [s1, s2] : [s2, s1];
-  // A single shared word is too weak a signal; two or more is a title stem.
-  if (small.size < 2) return false;
-  for (const word of small) if (!large.has(word)) return false;
-  return true;
+  const x = titleTokens(a);
+  const y = titleTokens(b);
+  if (x.length === 0 || y.length === 0) return false;
+  const [shorter, longer] = x.length <= y.length ? [x, y] : [y, x];
+  // A one-word overlap is too weak a signal to identify a work.
+  if (shorter.length < 2) return false;
+  return shorter.every((word, i) => longer[i] === word);
 }
 
 /**
@@ -60,8 +66,8 @@ export function titlesRelated(a: string, b: string): boolean {
  * title either matches the record or it is reported as a discrepancy.
  */
 export function titlesMatch(t1: string, t2: string): boolean {
-  const s1 = titleTokens(t1);
-  const s2 = titleTokens(t2);
+  const s1 = new Set(titleTokens(t1));
+  const s2 = new Set(titleTokens(t2));
   if (s1.size === 0 || s2.size === 0) return false;
   if (s1.size !== s2.size) return false;
   for (const word of s1) if (!s2.has(word)) return false;

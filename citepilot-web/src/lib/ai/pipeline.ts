@@ -436,7 +436,15 @@ async function verifyReferences(
     if (!cr["crossref_verified"] && (r.parsed_doi || r.parsed_title)) {
       return validateReferenceWithOpenalex(r);
     }
-    return Promise.resolve({});
+    // Crossref already produced the authoritative record; OpenAlex is a
+    // fallback, not a second opinion. State that explicitly instead of
+    // returning an empty object that reads like a verified result.
+    return Promise.resolve({
+      status: "not_consulted",
+      provider: "openalex",
+      message: "Crossref already verified this reference, so OpenAlex was not consulted.",
+      discrepancies: [],
+    });
   });
   const openalexResults: JsonObject[] = openalexSettled.map((r) =>
     r.status === "fulfilled" ? r.value : unavailable("OpenAlex", r.reason)

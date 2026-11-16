@@ -52,13 +52,16 @@ The remaining flakiness was never our code path — it was provider latency on a
 - **Verify provider health before blaming the pipeline.** The probe scripts live in the session temp dir (`gemini-probe.mjs`, `gemini-thinking.mjs`); they call `generateContent` directly with the key from `.env.local`. If they show multi-second tails on trivial prompts, the key/tier is the limit — a paid tier is the fix, not more retries.
 - Measured result after these changes: **six consecutive demo audits `completed`**, 6/6 checks, 9.8s–42.5s, with an unchanged finding set.
 
-## Never adopt a stranger's metadata (2026-11-15)
+## Never adopt a stranger's metadata (2026-11-15, refined)
 
 Crossref's `query.bibliographic` search and OpenAlex's `search` **always return something**. Taking the top hit validated a fabricated reference against an unrelated paper ("discrepancies found" for a paper that does not exist).
 
-- `titlesRelated` (`crossref.ts`) gates every search hit: the candidate title must match exactly after stop-word normalization, or contain the reference title as a complete subtitle-style extension (at least two shared tokens).
+- `titlesRelated` (`crossref.ts`) gates every search hit: the shorter title must be the *prefix* of the longer one after stop-word normalization. Prefix, not containment: "Pattern recognition and machine learning" is a token subset of an unrelated conference paper's title, which produced a false title discrepancy against a legitimate book (Bishop 2006).
 - No title match → `not_found`, never `verified`. Both providers use the same gate.
 - OpenAlex `404` on a DOI lookup means "no record", not an outage: return `null` and fall through to the title search. Anything else propagates.
+- OpenAlex lookups use `filter=title.search`, **not** free-text `search=`: for Bishop 2006, `search` ranked a 2007 book review above the 2006 book, so a real citable work came back `not_found`.
+- Skip OpenAlex `type` values that describe another work (`book-review`, `paratext`, `erratum`, `peer-review`, `retraction`, `supplementary-materials`). A book review carries the book's title but the review's own venue/volume/pages.
+- OpenAlex is a fallback only: when Crossref verified a reference, OpenAlex results say `not_consulted` rather than returning `{}`, so the response never implies a second opinion that did not happen.
 
 ## Fail-closed billing (2026-11-15)
 

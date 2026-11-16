@@ -54,6 +54,21 @@ describe("AI service port — pure helpers", () => {
         titlesRelated("Automated citation auditing: A Review", "ImageNet classification with deep convolutional neural networks")
       ).toBe(false);
     });
+
+    it("rejects a longer title that merely contains the reference's words", () => {
+      // Observed live: Bishop's book title is a token subset of an unrelated
+      // conference paper, which produced a false title discrepancy.
+      expect(
+        titlesRelated(
+          "Pattern recognition and machine learning",
+          "Offline Cursive Character Challenge: a New Benchmark for Machine Learning and Pattern Recognition Algorithms."
+        )
+      ).toBe(false);
+    });
+
+    it("rejects a single shared word", () => {
+      expect(titlesRelated("Deep learning", "Learning to rank")).toBe(false);
+    });
   });
 
   describe("crossref metadata comparisons", () => {
