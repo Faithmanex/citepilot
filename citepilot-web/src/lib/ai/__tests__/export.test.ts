@@ -96,6 +96,38 @@ Smith, J. (2020). Testing citation systems. Journal of Tests.`;
     expect(text).toContain("Unmatched citations: 1");
   });
 
+  it("PDF report tells the author what to do when retraction status is unconfirmed", async () => {
+    const buffer = await generatePdfReport({
+      status: "completed",
+      citation_style: "apa7",
+      references: [
+        {
+          raw_entry: "Bishop, C. M. (2006). Pattern recognition and machine learning. Springer.",
+          status: "cited",
+          crossref_validation: { crossref_verified: true, status: "verified" },
+          retraction_info: {
+            is_retracted: false,
+            status: "unknown",
+            action_required: true,
+            how_to_fix: "Verify this source manually before submission.",
+          },
+        },
+      ],
+      citations: [],
+      style_warnings: [],
+      uncited_claims: [],
+    });
+
+    const text = await pdfText(buffer);
+    // Unconfirmed is neither retracted nor clean: the report must name the
+    // source and state the action, and must not list it as a retraction.
+    expect(text).toContain("Retraction Status Not Confirmed");
+    expect(text).toContain("Action Required");
+    expect(text).toContain("Verify each one on the publisher's page");
+    expect(text).toContain("Bishop, C. M. (2006)");
+    expect(text).not.toContain("RETRACTED: Bishop");
+  });
+
   it("PDF generation survives non-Latin reference text instead of failing the export", async () => {
     const buffer = await generatePdfReport({
       references: [{ raw_entry: "李, 王. (2021). 引用完整性.", status: "retracted" }],

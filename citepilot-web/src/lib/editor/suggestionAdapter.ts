@@ -171,16 +171,85 @@ export function adaptAuditResponseToSuggestions(
     }
   });
 
-  // 4. Retracted References & Discrepancies -> category: "reference"
+  // 4. Retracted references, metadata mismatches, and unconfirmed retraction status
   const references = audit.references || [];
   references.forEach((ref: Reference, idx: number) => {
     const raw = (ref.raw_entry || "").trim();
     if (!raw) return;
 
-    const isRetracted = ref.status === "retracted" || Boolean(ref.retraction_info);
-    const hasDiscrepancies = Boolean(ref.crossref_validation?.discrepancies?.length);
-    const notFound = ref.crossref_validation?.status === "not_found";
-    if (!isRetracted && !hasDiscrepancies && !notFound) return;
+    const retraction = ref.retraction_info;
+    const validation = ref.crossref_validation;
+    // An object being present means the check ran, not that the paper was
+    // retracted: `normal` and `unknown` both carry one. Only an explicit flag or
+    // the retracted status may be reported as a retraction.
+    const isRetracted =
+      ref.status === "retracted" || retraction?.is_retracted === true;
+    // The check ran and produced no answer (no DOI/title, provider failure, or no
+    // Crossref record). That is an action for the author, never a clean result —
+    // and it must not be dressed up as a retraction finding either.
+    const retractionUnconfirmed = !isRetracted && retraction?.status === "unknown";
+    const hasDiscrepancies = Boolean(validation?.discrepancies?.length);
+    const notFound = !validation?.crossref_verified && validation?.status === "not_found";
+    if (!isRetracted && !retractionUnconfirmed && !hasDiscrepancies && !notFound) return;
+
+    const provider =
+      validation?.provider === "openalex"
+        ? "OpenAlex"
+        : validation?.provider === "openlibrary"
+          ? "Open Library"
+          : "Crossref";
+
+    const finding = isRetracted
+      ? {
+          fixType: "replace" as const,
+          title: "Retracted Academic Paper Detected",
+          explanation:
+            retraction?.message ||
+            "This cited source has been formally retracted in peer-reviewed literature. Remove or contextualize.",
+          educationalContext:
+            retraction?.how_to_fix ||
+            "Citing retracted publications compromises academic validity.",
+          severity: "high" as const,
+          impactScore: 15,
+        }
+      : notFound
+        ? {
+            fixType: "correct_reference" as const,
+            title: "Reference not found in Crossref",
+            explanation:
+              validation?.message ||
+              "Reference metadata could not be found in the Crossref database.",
+            educationalContext:
+              validation?.how_to_fix ||
+              "Check the author names, year, and title, or locate the official DOI at doi.org.",
+            severity: "high" as const,
+            impactScore: 10,
+          }
+        : hasDiscrepancies
+          ? {
+              fixType: "correct_reference" as const,
+              title: `Metadata Discrepancy Found in ${provider}`,
+              explanation:
+                validation?.discrepancies?.[0]?.message ||
+                `Metadata discrepancy with ${provider} records.`,
+              educationalContext:
+                validation?.discrepancies?.[0]?.how_to_fix ||
+                "Verify the DOI and author spelling.",
+              severity: "low" as const,
+              impactScore: 5,
+            }
+          : {
+              fixType: "correct_reference" as const,
+              title: "Retraction status not confirmed",
+              explanation:
+                retraction?.message ||
+                "CitePilot could not confirm whether this source has been retracted.",
+              educationalContext:
+                retraction?.how_to_fix ||
+                "Verify the source on the publisher's page before submission; check for retraction or expression-of-concern notices.",
+              severity: "medium" as const,
+              impactScore: 7,
+            };
 
     const occurrences = findOccurrences(manuscriptText, raw.slice(0, 60));
     for (const match of occurrences) {
@@ -192,39 +261,23 @@ export function adaptAuditResponseToSuggestions(
       suggestions.push({
         id: `ref-${idx}`,
         category: "reference",
-        fixType: isRetracted ? "replace" : "correct_reference",
+        fixType: finding.fixType,
         original: fullSnippet,
         replacement: fullSnippet,
         span: { start: match.start, end: endOffset },
-        title: isRetracted
-          ? "Retracted Academic Paper Detected"
-          : notFound
-            ? "Reference not found in Crossref"
-            : "Crossref Metadata Discrepancy",
-        explanation: isRetracted
-          ? "This cited source has been formally retracted in peer-reviewed literature. Remove or contextualize."
-          : notFound
-            ? (ref.crossref_validation?.message ||
-              "Reference metadata could not be found in the Crossref database.")
-            : (ref.crossref_validation?.discrepancies?.[0]?.message || "Metadata discrepancy with Crossref records."),
-        educationalContext: isRetracted
-          ? "Citing retracted publications compromises academic validity."
-          : notFound
-            ? (ref.crossref_validation?.how_to_fix ||
-              "Check the author names, year, and title, or locate the official DOI at doi.org.")
-            : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI and author spelling."),
-        severity: isRetracted || notFound ? "high" : "low",
-        impactScore: isRetracted ? 15 : notFound ? 10 : 5,
+        title: finding.title,
+        explanation: finding.explanation,
+        educationalContext: finding.educationalContext,
+        severity: finding.severity,
+        impactScore: finding.impactScore,
         status: "active",
         metadata: {
           doi: ref.parsed_doi,
-          crossrefVerified: ref.crossref_validation?.crossref_verified,
-          guidelineRef: isRetracted
-            ? "Citing retracted publications compromises academic validity."
-            : notFound
-              ? (ref.crossref_validation?.how_to_fix ||
-                "Check the author names, year, and title, or locate the official DOI at doi.org.")
-              : (ref.crossref_validation?.discrepancies?.[0]?.how_to_fix || "Verify the DOI and author spelling."),
+          crossrefVerified: validation?.crossref_verified,
+          // The author has to act, but not by editing prose: no automated fix
+          // can substitute for checking the publisher's record.
+          actionRequired: retraction?.action_required === true,
+          guidelineRef: finding.educationalContext,
         },
       });
 

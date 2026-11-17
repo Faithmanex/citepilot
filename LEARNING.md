@@ -63,6 +63,16 @@ Crossref's `query.bibliographic` search and OpenAlex's `search` **always return 
 - Skip OpenAlex `type` values that describe another work (`book-review`, `paratext`, `erratum`, `peer-review`, `retraction`, `supplementary-materials`). A book review carries the book's title but the review's own venue/volume/pages.
 - OpenAlex is a fallback only: when Crossref verified a reference, OpenAlex results say `not_consulted` rather than returning `{}`, so the response never implies a second opinion that did not happen.
 
+## Retraction checks: three states, not two (2026-11-17)
+
+`retraction_info` is present on every reference, so it must never be tested for existence. The only retraction signal is `is_retracted === true` or `status === "retracted"`.
+
+- `normal` — Crossref had a record with no retraction relation. No finding.
+- `retracted` / `expression_of_concern` — a finding, with the notice DOI and the removal guidance.
+- `unknown` — the check ran and produced no answer (no DOI/title, provider failure, or no Crossref record). This is **not** a clean result and **not** a retraction: it carries `action_required: true` plus the manual-verification guidance, and both the editor and the PDF list it under an explicit action heading. Presenting it as clean is what the audit exists to prevent.
+
+Related: when a fallback provider verifies a reference, its verdict must replace Crossref's `not_found` in `crossref_validation` (`status` + `provider`). Otherwise the PDF totals a verified book as unverified and the editor says "not found in Crossref" about a reference OpenAlex/OpenLibrary just confirmed.
+
 ## Fail-closed billing (2026-11-15)
 
 Billing is the last priority in the task list but the easiest place to accidentally give away access. Every path fails closed:

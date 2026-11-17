@@ -46,6 +46,8 @@ export interface Reference {
 
 export interface CrossrefValidation {
   crossref_verified: boolean;
+  /** Which provider produced this record: Crossref, or a fallback. */
+  provider?: "crossref" | "openalex" | "openlibrary";
   status?: "verified" | "discrepancies_found" | "not_found" | "verification_unavailable";
   message?: string;
   how_to_fix?: string;
@@ -59,7 +61,14 @@ export interface CrossrefDiscrepancy {
 }
 
 export interface RetractionInfo {
-  how_to_fix?: string;
+  is_retracted?: boolean;
+  status?: "normal" | "retracted" | "expression_of_concern" | "unknown";
+  severity?: string;
+  /** True only when the author has to act: the check did not produce an answer. */
+  action_required?: boolean;
+  notice_doi?: string;
+  message?: string | null;
+  how_to_fix?: string | null;
 }
 
 export interface StyleWarning {

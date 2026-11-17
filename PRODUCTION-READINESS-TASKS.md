@@ -31,6 +31,9 @@ Last updated: 2026-11-15
 | 1.15 | One slow model call cannot starve the audit | `[x]` | One bounded window per stage (`min(global, start+28s)`, no stage retry), global LLM gate at 3 in-flight calls, timeout terminal at the provider client. |
 | 1.16 | Style stage payload is compact | `[x]` | Prompt carries raw citation/reference text (8KB cap) instead of up to 60KB of pretty-printed JSON; stage dropped from ~20s timeouts to 2–7s. |
 | 1.17 | A check that did not run never produces findings | `[x]` | When matching fails, citations report `unchecked` and references `unchecked` — not `no_match`/`orphaned`; covered by `pipeline-completeness.test.ts`. |
+| 1.18 | An unconfirmed retraction check states why and what the author must do | `[x]` | `unknown` results carry the reason, `action_required: true`, and manual-verification guidance; the editor shows "Retraction status not confirmed" (medium, not an accusation) and the PDF lists those sources under "Retraction Status Not Confirmed — Action Required". Verified live: Bishop 2006, Doe 2020, Nguyen & Park 2023 → `unknown` + guidance; Krizhevsky/LeCunn/Mehra → `normal`/`retracted` with no action. |
+| 1.19 | A clean reference is never reported as retracted | `[x]` | Regression fixed: the editor tested for the presence of `retraction_info`, which every reference has, so every clean reference rendered "Retracted Academic Paper Detected"; now only `status: "retracted"` or `is_retracted: true` does. |
+| 1.20 | A fallback-verified reference is not also reported as unverified | `[x]` | `crossref_validation.status` now takes the fallback provider's verdict (`verified` / `discrepancies_found`) with `provider: "openalex" \| "openlibrary"`, so Bishop 2006 is no longer counted as "could not be verified" nor shown as "not found in Crossref". |
 
 ## P1 — Delivery surface: what the researcher touches
 

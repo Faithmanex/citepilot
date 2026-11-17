@@ -263,6 +263,32 @@ export async function generatePdfReport(analysisData: JsonObject): Promise<Buffe
     }
   }
 
+  const unconfirmedRetraction = refs.filter((r) => {
+    const info = r["retraction_info"] as JsonObject | undefined;
+    return info?.["status"] === "unknown" && info?.["is_retracted"] !== true;
+  });
+
+  if (unconfirmedRetraction.length > 0) {
+    writeParagraph("Retraction Status Not Confirmed — Action Required", {
+      size: 14,
+      font: helvBold,
+      color: h2Color,
+      gapAfter: 6,
+    });
+    writeParagraph(
+      "These sources were not reported as retracted: the check simply produced no answer (no DOI or title, a provider failure, or no Crossref record). Verify each one on the publisher's page before submission, and add its DOI so future audits can check it automatically.",
+      { size: 9, font: helv, color: rgb(0.576, 0.396, 0.059), gapAfter: 6 }
+    );
+    for (const r of unconfirmedRetraction) {
+      writeParagraph(`- ${r["raw_entry"] || ""}`, {
+        size: 10,
+        font: helv,
+        color: bodyColor,
+        gapAfter: 2,
+      });
+    }
+  }
+
   const retracted = refs.filter(
     (r) =>
       r["status"] === "retracted" ||

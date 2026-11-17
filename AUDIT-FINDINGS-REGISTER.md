@@ -147,6 +147,10 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 | Title matching accepted containment anywhere in the string | Bishop 2006 was "discrepancies found" against an unrelated conference paper whose title happens to contain the book's words | The shorter title must be a *prefix* of the longer one (subtitle/edition extension only) |
 | OpenAlex free-text `search` ranked a book review above the book | A real, citable book (Bishop 2006, no DOI) came back `not_found` | `filter=title.search`, which returns the work itself |
 | A derivative OpenAlex record stood in for the work | The book verified against the Kybernetes *review* (2007, vol 36, p 275), so its own metadata would have produced false journal/volume/page discrepancies | Candidate types `book-review`, `paratext`, `erratum`, `peer-review`, `retraction`, `supplementary-materials` are skipped |
+| Every reference carried `retraction_info`, and the editor treated its presence as a retraction | Every clean reference rendered "Retracted Academic Paper Detected" with `fixType: replace` | Only `status: "retracted"` or `is_retracted: true` is a retraction; `normal` produces no finding |
+| An unconfirmed retraction check produced no finding at all | Sources whose status could not be checked were silently absent, so a clean-looking report implied they were fine | `unknown` results carry the reason, `action_required: true`, and manual-verification guidance; the editor shows it at medium severity and the PDF lists those sources with the required action |
+| A reference verified by the fallback provider kept Crossref's `not_found` | Bishop 2006 was counted in "metadata could not be verified" and the editor said "Reference not found in Crossref" even though OpenAlex had verified it | Promotion now copies the fallback's `status` and `provider`, so totals and findings reflect the provider that actually answered |
+| OpenLibrary was imported and queried but not wired into the result type or call site | The tree did not typecheck; book-only references had no third fallback | Return type and call site include `openlibraryResults`; `provider` added to `CrossrefValidation` |
 
 ### 7.3 Verification for this pass
 
@@ -161,7 +165,7 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 - Free-tier enforcement: 1,608-word request → `403 word_limit_exceeded`.
 - Billing: 9 route tests (`src/app/api/__tests__/billing.test.ts`) cover fail-closed activation and signature-required webhooks.
 - Rate limiting: 7 tests (`src/lib/ai/__tests__/rate-limit.test.ts`) cover the shared counter, `Retry-After`, and the logged degradation path.
-- `npm test` — **275 passed / 30 files**; `npm run typecheck` clean; `npm run lint` clean.
+- `npm test` — **283 passed / 31 files**; `npm run typecheck` clean; `npm run lint` clean.
 
 ### 7.4 Still open
 

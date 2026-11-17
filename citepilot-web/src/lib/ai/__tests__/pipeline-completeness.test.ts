@@ -38,6 +38,61 @@ describe("verification completeness", () => {
     expect(result.status).toBe("completed");
   });
 
+  it("uses the fallback provider's verdict instead of reporting not_found", async () => {
+    // Crossref has no record for a book, OpenAlex does. The reference must count
+    // as verified; otherwise the PDF totals it as unverified and the editor
+    // tells the author it was not found.
+    vi.mocked(validateReferenceWithCrossref).mockResolvedValue({
+      crossref_verified: false,
+      status: "not_found",
+      message:
+        "Reference metadata could not be found in the Crossref database.",
+    });
+    vi.mocked(validateReferenceWithOpenalex).mockResolvedValue({
+      verified: true,
+      status: "verified",
+      provider: "openalex",
+      canonical_title: "Pattern Recognition and Machine Learning",
+      canonical_year: 2006,
+      discrepancies: [],
+    });
+
+    const result = await runAnalysisPipeline("Body", "References", [], "apa7");
+
+    for (const r of result.references) {
+      const validation = r["crossref_validation"] as Record<string, unknown>;
+      expect(validation["status"]).toBe("verified");
+      expect(validation["provider"]).toBe("openalex");
+      expect(String(validation["message"])).not.toContain(
+        "could not be found in the Crossref database"
+      );
+    }
+  });
+
+  it("keeps the fallback provider's discrepancies and states the provider", async () => {
+    vi.mocked(validateReferenceWithCrossref).mockResolvedValue({
+      crossref_verified: false,
+      status: "not_found",
+    });
+    vi.mocked(validateReferenceWithOpenalex).mockResolvedValue({
+      verified: true,
+      status: "discrepancies_found",
+      provider: "openalex",
+      discrepancies: [
+        { field: "title", message: "Title discrepancy detected." },
+      ],
+    });
+
+    const result = await runAnalysisPipeline("Body", "References", [], "apa7");
+
+    for (const r of result.references) {
+      const validation = r["crossref_validation"] as Record<string, unknown>;
+      expect(validation["status"]).toBe("discrepancies_found");
+      expect(validation["provider"]).toBe("openalex");
+      expect(validation["discrepancies"]).toHaveLength(1);
+    }
+  });
+
   it("does not claim citations are unmatched or references orphaned when matching never ran", async () => {
     vi.mocked(extractCitations).mockResolvedValueOnce([
       { raw_text: "(Smith, 2020)" } as never,

@@ -4,18 +4,40 @@
 import { cleanDoi, fetchByDoi, searchByQuery } from "./crossref";
 import type { JsonObject } from "./types";
 
+/**
+ * What the author has to do when CitePilot could not confirm retraction status.
+ *
+ * This is the only honest answer: no provider record means the check did not
+ * happen, so the author must look at the publisher's own record. It is stated
+ * as an action because a reference whose retraction status is unknown cannot be
+ * cleared by the audit, and submitting a retracted source is the author's risk.
+ */
+const UNCONFIRMED_ACTION =
+  "Verify this source manually before submission: open the article's page on the publisher's site (or look up the DOI at doi.org) and check for a retraction or expression-of-concern notice; if the publisher page is unclear, search the title at retractionwatch.com. Adding the article DOI to the reference entry lets CitePilot run this check automatically on the next audit.";
+
+const UNCONFIRMED_SEVERITY = "warning";
+
+/** Shared shape for every "could not be confirmed" outcome. */
+function unconfirmed(reason: string): JsonObject {
+  return {
+    is_retracted: false,
+    status: "unknown",
+    severity: UNCONFIRMED_SEVERITY,
+    action_required: true,
+    message: `${reason} Retraction status is unconfirmed — this is not a finding that the paper was retracted.`,
+    how_to_fix: UNCONFIRMED_ACTION,
+  };
+}
+
 export async function checkRetractionStatus(
   doi?: string | null,
   title?: string | null,
   crossrefWork?: JsonObject | null
 ): Promise<JsonObject> {
   if (!doi && !title && !crossrefWork) {
-    return {
-      is_retracted: false,
-      status: "unknown",
-      message: "No DOI or title was available, so retraction status could not be checked.",
-      how_to_fix: null,
-    };
+    return unconfirmed(
+      "No DOI or title was available for this reference, so retraction status could not be checked."
+    );
   }
 
   let work: JsonObject | null = crossrefWork || null;
@@ -24,23 +46,16 @@ export async function checkRetractionStatus(
     if (!work && doi) work = await fetchByDoi(cleanDoi(doi));
     if (!work && title) work = await searchByQuery(title, "");
   } catch (error) {
-    return {
-      is_retracted: false,
-      status: "unknown",
-      message: `Retraction status could not be checked: ${(error as Error).message}`,
-      how_to_fix: null,
-    };
+    return unconfirmed(
+      `Retraction status could not be checked because the provider request failed: ${(error as Error).message}.`
+    );
   }
 
   if (work) return analyzeCrossrefRetraction(work);
 
-  return {
-    is_retracted: false,
-    status: "unknown",
-    message:
-      "No matching record was found in Crossref, so retraction status could not be confirmed.",
-    how_to_fix: null,
-  };
+  return unconfirmed(
+    "No matching record was found in Crossref for this reference, so retraction status could not be confirmed."
+  );
 }
 
 export function analyzeCrossrefRetraction(work: JsonObject): JsonObject {

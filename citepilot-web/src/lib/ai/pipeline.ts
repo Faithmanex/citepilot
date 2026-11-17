@@ -15,6 +15,7 @@ import {
 import { mapWithConcurrency } from "./llm";
 import { validateReferenceWithCrossref } from "./crossref";
 import { validateReferenceWithOpenalex } from "./openalex";
+import { validateReferenceWithOpenLibrary } from "./openlibrary";
 import { detectUncitedClaims } from "./uncited-claims";
 import { calculatePublicationRecency } from "./recency";
 import { checkRetractionStatus } from "./retraction";
@@ -195,14 +196,15 @@ export async function runAnalysisPipeline(
     };
   };
 
-  const [citationsStage, refsStage, claimsStage] = await Promise.all([
-    runStage(
-      "citations",
-      Boolean(bodyText),
-      withStageBudget((attemptDeadline) =>
-        extractCitations(bodyText, citationStyle, attemptDeadline)
-      )
-    ),
+  const citationsStage = await runStage(
+    "citations",
+    Boolean(bodyText),
+    withStageBudget((attemptDeadline) =>
+      extractCitations(bodyText, citationStyle, attemptDeadline)
+    )
+  );
+
+  const [refsStage, claimsStage] = await Promise.all([
     runStage(
       "references",
       Boolean(refText),
@@ -255,23 +257,22 @@ export async function runAnalysisPipeline(
   // Matching, style checking, and metadata verification are independent once
   // citations and references exist. Running them concurrently keeps the audit
   // inside its budget instead of paying for each stage serially.
-  const [matchStage, styleStage, verification] = await Promise.all([
-    runStage(
-      "matching",
-      Boolean(citations.length && refs.length),
-      withStageBudget((attemptDeadline) =>
-        matchCitationsToReferences(citations, refs, attemptDeadline)
-      )
-    ),
-    runStage(
-      "style",
-      Boolean(bodyText),
-      withStageBudget((attemptDeadline) =>
-        checkStyle(bodyText, citationStyle, citations, refs, attemptDeadline)
-      )
-    ),
-    runVerification(),
-  ]);
+  const verificationPromise = runVerification();
+  const matchStage = await runStage(
+    "matching",
+    Boolean(citations.length && refs.length),
+    withStageBudget((attemptDeadline) =>
+      matchCitationsToReferences(citations, refs, attemptDeadline)
+    )
+  );
+  const styleStage = await runStage(
+    "style",
+    Boolean(bodyText),
+    withStageBudget((attemptDeadline) =>
+      checkStyle(bodyText, citationStyle, citations, refs, attemptDeadline)
+    )
+  );
+  const verification = await verificationPromise;
   const matches = matchStage.value ?? [];
   const styleWarnings = styleStage.value ?? [];
   // A failed matching stage yields no matches; that must not be read as "no
@@ -284,6 +285,7 @@ export async function runAnalysisPipeline(
     citationResults,
     verification.crossrefResults,
     verification.openalexResults,
+    verification.openlibraryResults,
     verification.retractionResults,
     matchingChecked
   );
@@ -387,6 +389,7 @@ async function verifyReferences(
 ): Promise<{
   crossrefResults: JsonObject[];
   openalexResults: JsonObject[];
+  openlibraryResults: JsonObject[];
   retractionResults: JsonObject[];
   unavailableCount: number;
 }> {
@@ -450,6 +453,27 @@ async function verifyReferences(
     r.status === "fulfilled" ? r.value : unavailable("OpenAlex", r.reason)
   );
 
+  const openlibrarySettled = await mapWithConcurrency(refs, limit, (r, i) => {
+    const cr = crossrefResults[i];
+    const oa = openalexResults[i];
+    if (expired()) return Promise.resolve(outOfTime("OpenLibrary"));
+    const alreadyVerified = Boolean(cr["crossref_verified"] || oa["verified"]);
+    if (!alreadyVerified && r.parsed_title) {
+      return validateReferenceWithOpenLibrary(r);
+    }
+    return Promise.resolve({
+      status: "not_consulted",
+      provider: "openlibrary",
+      message: alreadyVerified
+        ? "Reference was already verified by Crossref or OpenAlex."
+        : "No title was available to query OpenLibrary.",
+      discrepancies: [],
+    });
+  });
+  const openlibraryResults: JsonObject[] = openlibrarySettled.map((r) =>
+    r.status === "fulfilled" ? r.value : unavailable("OpenLibrary", r.reason)
+  );
+
   const retractionSettled = await mapWithConcurrency(refs, limit, (r, i) => {
     if (expired()) return Promise.resolve(outOfTime("Retraction check"));
     return checkRetractionStatus(
@@ -463,7 +487,7 @@ async function verifyReferences(
   );
 
   const unavailableCount = refs.filter((_, i) =>
-    [crossrefResults[i], openalexResults[i], retractionResults[i]].some(
+    [crossrefResults[i], openalexResults[i], openlibraryResults[i], retractionResults[i]].some(
       (r) => r["status"] === "verification_unavailable"
     )
   ).length;
@@ -471,6 +495,7 @@ async function verifyReferences(
   return {
     crossrefResults,
     openalexResults,
+    openlibraryResults,
     retractionResults,
     unavailableCount,
   };
@@ -481,6 +506,7 @@ function buildReferenceResults(
   citationResults: JsonObject[],
   crossrefResults: JsonObject[],
   openalexResults: JsonObject[],
+  openlibraryResults: JsonObject[],
   retractionResults: JsonObject[],
   matchingChecked: boolean
 ): JsonObject[] {
@@ -493,6 +519,7 @@ function buildReferenceResults(
   return refs.map((r, i) => {
     const crVal = crossrefResults[i] || {};
     const oaVal = openalexResults[i] || {};
+    const olVal = openlibraryResults[i] || {};
     const retVal = retractionResults[i] || {};
 
     const cleanCrVal: JsonObject = {};
@@ -503,9 +530,30 @@ function buildReferenceResults(
     if (!cleanCrVal["crossref_verified"] && oaVal["verified"]) {
       cleanCrVal["crossref_verified"] = true;
       cleanCrVal["provider"] = "openalex";
+      // The fallback's own outcome replaces Crossref's `not_found`; otherwise a
+      // reference OpenAlex did verify is still counted and shown as unverified.
+      cleanCrVal["status"] = oaVal["status"] || "verified";
+      cleanCrVal["message"] =
+        cleanCrVal["status"] === "verified"
+          ? "Verified with OpenAlex because Crossref has no record for this reference."
+          : "OpenAlex records different metadata for this reference.";
+      cleanCrVal["how_to_fix"] = null;
       cleanCrVal["canonical_title"] = oaVal["canonical_title"];
       cleanCrVal["canonical_doi"] = oaVal["canonical_doi"];
+      cleanCrVal["canonical_year"] = oaVal["canonical_year"];
+      cleanCrVal["canonical_venue"] = oaVal["canonical_venue"];
       cleanCrVal["discrepancies"] = oaVal["discrepancies"] || [];
+    }
+
+    if (!cleanCrVal["crossref_verified"] && olVal["verified"]) {
+      cleanCrVal["crossref_verified"] = true;
+      cleanCrVal["provider"] = "openlibrary";
+      cleanCrVal["canonical_title"] = olVal["canonical_title"];
+      cleanCrVal["canonical_isbn"] = olVal["canonical_isbn"];
+      cleanCrVal["discrepancies"] = olVal["discrepancies"] || [];
+      cleanCrVal["status"] = olVal["status"] || "verified";
+      cleanCrVal["message"] = "Verified with Open Library because Crossref has no record for this reference.";
+      cleanCrVal["how_to_fix"] = null;
     }
 
     // "orphaned" means no in-text citation exists. It may only be reported when
@@ -533,6 +581,7 @@ function buildReferenceResults(
       status,
       crossref_validation: cleanCrVal,
       openalex_validation: oaVal,
+      openlibrary_validation: olVal,
       retraction_info: retVal,
     };
   });
