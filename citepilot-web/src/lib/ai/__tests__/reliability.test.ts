@@ -1,9 +1,10 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { normalizeCitationStyle } from "../config";
 import { classifyProviderError, AIServiceError } from "../llm";
 import { rtfToPlainText, bibtexToPlainText } from "../document-parser";
 import { getConfigurationReadiness } from "../readiness";
 import { buildHealthPayload } from "../health";
+import { getJson, HttpError } from "../http";
 
 describe("provider error classification", () => {
   it("does not retry rejected credentials", () => {
@@ -61,6 +62,62 @@ describe("provider error classification", () => {
       retryable: false,
     });
     expect(classifyProviderError(original)).toBe(original);
+  });
+});
+
+describe("provider HTTP failures", () => {
+  it("never leaks an API key from the request URL into the error message", async () => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ error: "over budget", reason: "daily_budget", message: "Daily budget spent." }),
+          { status: 429, headers: { "content-type": "application/json" } }
+        )
+    ) as unknown as typeof fetch;
+
+    try {
+      const error = await getJson(
+        "https://api.openalex.org/works?api_key=secret-openalex-key&filter=x"
+      ).catch((caught) => caught);
+
+      expect(error).toBeInstanceOf(HttpError);
+      expect(String(error.message)).not.toContain("secret-openalex-key");
+      expect(String(error.message)).toContain("api_key=***");
+      expect(String(error.message)).toContain("Daily budget spent.");
+      expect(error.reason).toBe("daily_budget");
+      // A spent daily budget will not clear inside a retry window.
+      expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  it("retries a per-second rate limit and honours Retry-After", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({ reason: "requests_per_second", message: "Slow down." }),
+          { status: 429, headers: { "content-type": "application/json", "retry-after": "0" } }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    try {
+      const data = await getJson("https://api.openalex.org/works?api_key=k");
+      expect(data).toEqual({ ok: true });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 });
 

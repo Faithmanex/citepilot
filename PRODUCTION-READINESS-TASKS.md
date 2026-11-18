@@ -6,7 +6,7 @@ subscription last.
 
 Status key: `[x]` done and verified · `[~]` in progress · `[ ]` open · `[!]` blocked
 
-Last updated: 2026-11-15
+Last updated: 2026-11-18
 
 ---
 
@@ -34,6 +34,8 @@ Last updated: 2026-11-15
 | 1.18 | An unconfirmed retraction check states why and what the author must do | `[x]` | `unknown` results carry the reason, `action_required: true`, and manual-verification guidance; the editor shows "Retraction status not confirmed" (medium, not an accusation) and the PDF lists those sources under "Retraction Status Not Confirmed — Action Required". Verified live: Bishop 2006, Doe 2020, Nguyen & Park 2023 → `unknown` + guidance; Krizhevsky/LeCunn/Mehra → `normal`/`retracted` with no action. |
 | 1.19 | A clean reference is never reported as retracted | `[x]` | Regression fixed: the editor tested for the presence of `retraction_info`, which every reference has, so every clean reference rendered "Retracted Academic Paper Detected"; now only `status: "retracted"` or `is_retracted: true` does. |
 | 1.20 | A fallback-verified reference is not also reported as unverified | `[x]` | `crossref_validation.status` now takes the fallback provider's verdict (`verified` / `discrepancies_found`) with `provider: "openalex" \| "openlibrary"`, so Bishop 2006 is no longer counted as "could not be verified" nor shown as "not found in Crossref". |
+| 1.21 | A partly checked stage reports `partial`, not `unavailable` | `[x]` | Live preview run: 5 of 6 references verified, one OpenAlex lookup failed → verification is `partial` ("1 of 6 references could not be checked by every provider"), the audit is `partial`, the summary says "incomplete coverage" and the count is not replaced by a fake zero. `pipeline-completeness` + `auditState` + widget tests. |
+| 1.22 | A rate-limited provider is reported as unverified with an action, not as a clean miss | `[x]` | OpenAlex 429 → `verification_unavailable` with "rate-limited … unverified, not confirmed correct" and the retry/manual-check guidance; `HttpError` carries the provider's `reason`, so a spent daily budget is not retried three times; `api_key` is redacted from every surfaced message. |
 
 ## P1 — Delivery surface: what the researcher touches
 
@@ -56,6 +58,7 @@ Last updated: 2026-11-15
 | 3.5 | API-key comparison is timing-safe | `[x]` | `timingSafeEqual` with length check. |
 | 3.6 | Health and readiness endpoints are truthful | `[x]` | `/api/health`, `/health`, cached probes. |
 | 3.7 | Provider failures never discard the manuscript | `[x]` | Error bodies state the text is preserved. |
+| 3.8 | OpenAlex API key configured in production | `[!]` | OpenAlex dropped the `mailto` polite pool in February 2026; keyless traffic shares a small budget per egress IP and returns HTTP 429 from Vercel. `OPENALEX_API_KEY` is now read from the environment and sent as `api_key`; `/api/health` reports `openalex_key_configured`. Needs a free key (openalex.org/settings/api) set in Vercel, then a redeploy. |
 
 ## P3 — Subscription and billing (last)
 
@@ -75,8 +78,9 @@ Last updated: 2026-11-15
 
 | # | Task | Status | Evidence / acceptance |
 |---|---|---|---|
-| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 28 files / 260 tests; typecheck and lint clean. |
+| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 32 files / 293 tests; typecheck and lint clean. |
 | 5.2 | Billing tests cover fail-closed paths | `[x]` | 9 tests: 503 (no plan, no creds), 401, plan mismatch, non-ACTIVE, happy path, webhook 503/401/bad signature. |
 | 5.3 | `AUDIT-FINDINGS-REGISTER.md` updated | `[x]` | §7 records this pass. |
 | 5.4 | `LEARNING.md` updated | `[x]` | Provider-latency, retry, and billing gotchas. |
 | 5.5 | Billing runbook | `[x]` | `BILLING-RUNBOOK.md` at the repo root: verify a subscription, replay a webhook, downgrade a user, common failures. |
+| 5.6 | A Vercel preview is deployed and smoke-tested | `[x]` | `https://citepilot-4hn2hlre9-echelnet.vercel.app` (target `preview`): `/` serves the landing page, `POST /api/v1/analyse` returned `partial` in 26.7s with all six checks present, and `POST /api/v1/export/pdf` returned a PDF. Production promotion and the Supabase/PayPal vars remain (3.8, 4.9). |

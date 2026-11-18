@@ -41,7 +41,24 @@ export interface Reference {
   status: "cited" | "orphaned" | "retracted" | "unchecked";
   parsed_doi?: string;
   crossref_validation?: CrossrefValidation;
+  /** Fallback provider results, kept so an incomplete lookup can be explained. */
+  openalex_validation?: ProviderValidation;
+  openlibrary_validation?: ProviderValidation;
   retraction_info?: RetractionInfo;
+}
+
+export interface ProviderValidation {
+  verified?: boolean;
+  provider?: "crossref" | "openalex" | "openlibrary";
+  status?:
+    | "verified"
+    | "discrepancies_found"
+    | "not_found"
+    | "verification_unavailable"
+    | "not_consulted";
+  message?: string;
+  how_to_fix?: string;
+  discrepancies?: CrossrefDiscrepancy[];
 }
 
 export interface CrossrefValidation {
@@ -111,7 +128,7 @@ export interface StructureIssue {
 export interface AnalysisCheck {
   name: string;
   label: string;
-  status: "completed" | "unavailable" | "skipped";
+  status: "completed" | "partial" | "unavailable" | "skipped";
   reason?: "not_applicable" | "budget";
   message?: string;
   duration_ms?: number;

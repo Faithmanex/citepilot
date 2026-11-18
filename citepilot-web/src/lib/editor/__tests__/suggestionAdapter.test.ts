@@ -115,4 +115,35 @@ describe("reference findings from verification results", () => {
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0].title).toBe("Metadata Discrepancy Found in OpenAlex");
   });
+
+  it("states which fallback provider could not be checked for a not-found reference", () => {
+    const suggestions = adapt({
+      raw_entry: entry,
+      status: "cited",
+      crossref_validation: {
+        crossref_verified: false,
+        status: "not_found",
+        message: "Reference metadata could not be found in the Crossref database.",
+        how_to_fix: "Verify the title, or search doi.org.",
+      },
+      openalex_validation: {
+        provider: "openalex",
+        status: "verification_unavailable",
+        message: "OpenAlex rate-limited this lookup (HTTP 429).",
+        how_to_fix:
+          "Re-run the audit in a minute; if this reference still cannot be checked, verify it manually on the publisher's site or at doi.org.",
+      },
+      openlibrary_validation: {
+        provider: "openlibrary",
+        status: "not_found",
+      },
+      retraction_info: { is_retracted: false, status: "normal" },
+    });
+
+    expect(suggestions).toHaveLength(1);
+    // The author must learn that "not found" is still an open question because
+    // one provider never answered, not a final negative.
+    expect(suggestions[0].explanation).toContain("OpenAlex could not be checked");
+    expect(suggestions[0].educationalContext).toContain("Re-run the audit in a minute");
+  });
 });

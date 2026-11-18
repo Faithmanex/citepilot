@@ -233,9 +233,11 @@ export async function runAnalysisPipeline(
       name: "verification",
       label: STAGE_LABELS.verification,
       status: verificationAttempted
-        ? verification.unavailableCount > 0
+        ? verification.unavailableCount === refs.length
           ? "unavailable"
-          : "completed"
+          : verification.unavailableCount > 0
+            ? "partial"
+            : "completed"
         : "skipped",
       ...(verificationAttempted && verification.unavailableCount === refs.length
         ? {
@@ -244,7 +246,7 @@ export async function runAnalysisPipeline(
           }
         : verificationAttempted && verification.unavailableCount > 0
           ? {
-              message: `${verification.unavailableCount} of ${refs.length} references could not be verified.`,
+              message: `${verification.unavailableCount} of ${refs.length} references could not be checked by every provider (a lookup failed or was rate-limited). Those references are unverified, not confirmed correct.`,
             }
           : !verificationAttempted
             ? { reason: "not_applicable", message: "No reference entries were available to verify." }
@@ -294,6 +296,7 @@ export async function runAnalysisPipeline(
   const failed = checks.filter(
     (c) =>
       c.status === "unavailable" ||
+      c.status === "partial" ||
       (c.status === "skipped" && c.reason === "budget")
   );
 
@@ -425,6 +428,11 @@ async function verifyReferences(
   // Crossref rate-limits bursts (HTTP 429), so its fan-out stays lower than
   // the shared limit while OpenAlex and retraction checks keep the higher one.
   const crossrefLimit = Math.max(1, Math.min(limit, 3));
+  // OpenAlex now allows 10 req/s keyless (counted per egress IP, shared with
+  // every other Vercel tenant) and 30 with a free key. Six concurrent lookups
+  // plus retries exceeded that on a live audit and returned HTTP 429 for a
+  // reference that a sequential lookup resolves, so its fan-out stays at 3.
+  const secondaryLimit = Math.max(1, Math.min(limit, 3));
 
   const crossrefSettled = await mapWithConcurrency(refs, crossrefLimit, (r) =>
     expired() ? Promise.resolve(outOfTime("Crossref")) : validateReferenceWithCrossref(r)
@@ -433,7 +441,7 @@ async function verifyReferences(
     r.status === "fulfilled" ? r.value : unavailable("Crossref", r.reason)
   );
 
-  const openalexSettled = await mapWithConcurrency(refs, limit, (r, i) => {
+  const openalexSettled = await mapWithConcurrency(refs, secondaryLimit, (r, i) => {
     const cr = crossrefResults[i];
     if (expired()) return Promise.resolve(outOfTime("OpenAlex"));
     if (!cr["crossref_verified"] && (r.parsed_doi || r.parsed_title)) {
@@ -453,7 +461,7 @@ async function verifyReferences(
     r.status === "fulfilled" ? r.value : unavailable("OpenAlex", r.reason)
   );
 
-  const openlibrarySettled = await mapWithConcurrency(refs, limit, (r, i) => {
+  const openlibrarySettled = await mapWithConcurrency(refs, secondaryLimit, (r, i) => {
     const cr = crossrefResults[i];
     const oa = openalexResults[i];
     if (expired()) return Promise.resolve(outOfTime("OpenLibrary"));
@@ -474,7 +482,7 @@ async function verifyReferences(
     r.status === "fulfilled" ? r.value : unavailable("OpenLibrary", r.reason)
   );
 
-  const retractionSettled = await mapWithConcurrency(refs, limit, (r, i) => {
+  const retractionSettled = await mapWithConcurrency(refs, crossrefLimit, (r, i) => {
     if (expired()) return Promise.resolve(outOfTime("Retraction check"));
     return checkRetractionStatus(
       r.parsed_doi,

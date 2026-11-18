@@ -39,6 +39,29 @@ beforeEach(() => {
   vi.mocked(getJson).mockReset();
 });
 
+describe("OpenAlex API access", () => {
+  it("does not append an empty api_key when no key is configured", async () => {
+    // Keyless requests are rate-limited per egress IP, but sending
+    // `api_key=` (empty) would be rejected as a malformed key instead.
+    vi.mocked(getJson).mockResolvedValueOnce(work);
+    await validateReferenceWithOpenalex(reference as never);
+    const url = String(vi.mocked(getJson).mock.calls[0][0]);
+    expect(url).not.toContain("api_key");
+  });
+
+  it("reports a rate limit as unverified with an action, not as a clean miss", async () => {
+    vi.mocked(getJson).mockRejectedValue(new HttpError(429, "HTTP 429"));
+
+    const result = await validateReferenceWithOpenalex(reference as never);
+
+    expect(result.status).toBe("verification_unavailable");
+    expect(result.verified).toBe(false);
+    expect(String(result.message)).toContain("rate-limited");
+    expect(String(result.message)).toContain("unverified, not confirmed correct");
+    expect(String(result.how_to_fix)).toContain("Re-run the audit in a minute");
+  });
+});
+
 describe("OpenAlex verification compares metadata, not just presence", () => {
   it("reports verified when every field agrees with the record", async () => {
     vi.mocked(getJson).mockResolvedValueOnce(work);

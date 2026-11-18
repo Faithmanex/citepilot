@@ -27,6 +27,10 @@ export const aiConfig = {
   geminiModel: (process.env.GEMINI_MODEL || "gemini-3.1-flash-lite").trim(),
   logLevel: (process.env.LOG_LEVEL || "info").toLowerCase(),
   crossrefMailto: (process.env.CROSSREF_MAILTO || "support@citepilot.ai").trim(),
+  // OpenAlex dropped the `mailto` polite pool in February 2026; a free key is
+  // now the only way past 10 req/s and the tiny keyless daily budget. Keyless
+  // requests from a shared cloud IP (Vercel) are routinely 429'd.
+  openalexApiKey: (process.env.OPENALEX_API_KEY || "").trim(),
   // Security / limits
   apiKey: (process.env.API_KEY || "").trim(),
   maxUploadMb: num(process.env.MAX_UPLOAD_MB, 10),

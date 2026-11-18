@@ -73,6 +73,17 @@ Crossref's `query.bibliographic` search and OpenAlex's `search` **always return 
 
 Related: when a fallback provider verifies a reference, its verdict must replace Crossref's `not_found` in `crossref_validation` (`status` + `provider`). Otherwise the PDF totals a verified book as unverified and the editor says "not found in Crossref" about a reference OpenAlex/OpenLibrary just confirmed.
 
+## OpenAlex now needs an API key (2026-11-18)
+
+OpenAlex removed the `mailto` polite pool in February 2026 and moved to API keys. Keyless traffic still works but shares a small daily budget **per egress IP** with a 10 req/s ceiling — and Vercel's egress IP is shared with every other tenant, so keyless lookups from a deployed function return `429` in waves while the same lookup succeeds from a laptop.
+
+- Set `OPENALEX_API_KEY` (free: openalex.org/settings/api) in Vercel. `openalex.ts` sends it as `api_key`; `/api/health` reports `openalex_key_configured`.
+- Never put `api_key` in an error message: `http.ts` redacts it (`api_key=***`), because provider errors end up in audit results, saved history, and PDFs.
+- `HttpError` carries the provider's `reason`. A 429 with `reason: "daily_budget"` is terminal — retrying it three times only burns the audit budget.
+- OpenAlex/OpenLibrary/retraction fan-out is capped at 3 (same as Crossref), not `VERIFY_CONCURRENCY`: 6 concurrent lookups plus retries tripped the per-second limit on a live audit.
+
+**Check statuses:** a stage that ran but could not cover every item is `partial`, not `unavailable`. One rate-limited OpenAlex lookup out of six references used to mark the whole verification stage `unavailable`, which read as "verification never ran" in the UI and the PDF. `partial` keeps the stage visible as incomplete in `auditSummary`, the findings widget, and the exported report without claiming the check failed.
+
 ## Fail-closed billing (2026-11-15)
 
 Billing is the last priority in the task list but the easiest place to accidentally give away access. Every path fails closed:

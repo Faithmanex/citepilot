@@ -41,8 +41,9 @@ const COMPLETED: AuditSummary = {
 const PARTIAL: AuditSummary = {
   phase: "completed",
   freshness: "current",
-  headline: "Audit completed with unavailable checks",
-  description: "Some checks could not complete.",
+  headline: "Audit completed with incomplete checks",
+  description:
+    "Some checks could not cover every item, or could not run. Missing findings for those checks do not mean the document is clean.",
   tone: "warning",
   showsResult: true,
   isClean: false,
@@ -225,11 +226,32 @@ describe("audit-state-aware findings summary", () => {
   it("discloses unavailable checks instead of implying the document is clean", () => {
     render(<FindingsSummaryWidget summary={EMPTY_SUMMARY} audit={PARTIAL} />);
     expect(screen.queryByText("Nothing flagged")).not.toBeInTheDocument();
-    expect(screen.getByText(/Checks that could not complete/i)).toBeInTheDocument();
+    expect(screen.getByText(/Checks with incomplete coverage/i)).toBeInTheDocument();
     expect(screen.getByText(/Verification timed out/i)).toBeInTheDocument();
     expect(
       screen.getByText(/Missing findings for these checks do not mean the document is clean/i)
     ).toBeInTheDocument();
+  });
+
+  it("distinguishes partial coverage from a check that never ran", () => {
+    const partialCoverage: AuditSummary = {
+      ...PARTIAL,
+      incompleteChecks: [
+        {
+          name: "verification",
+          label: "Crossref / OpenAlex verification",
+          status: "partial",
+          message:
+            "1 of 6 references could not be checked by every provider (a lookup failed or was rate-limited). Those references are unverified, not confirmed correct.",
+        },
+      ],
+    };
+
+    render(<FindingsSummaryWidget summary={EMPTY_SUMMARY} audit={partialCoverage} />);
+
+    expect(screen.queryByText("Nothing flagged")).not.toBeInTheDocument();
+    expect(screen.getByText(/1 of 6 references/i)).toBeInTheDocument();
+    expect(screen.getByText(/unverified, not confirmed correct/i)).toBeInTheDocument();
   });
 
   it("qualifies finding counts and marks categories whose checks did not run", () => {

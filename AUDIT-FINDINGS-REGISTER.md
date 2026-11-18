@@ -165,8 +165,16 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 - Free-tier enforcement: 1,608-word request → `403 word_limit_exceeded`.
 - Billing: 9 route tests (`src/app/api/__tests__/billing.test.ts`) cover fail-closed activation and signature-required webhooks.
 - Rate limiting: 7 tests (`src/lib/ai/__tests__/rate-limit.test.ts`) cover the shared counter, `Retry-After`, and the logged degradation path.
-- `npm test` — **283 passed / 31 files**; `npm run typecheck` clean; `npm run lint` clean.
+- `npm test` — **293 passed / 32 files**; `npm run typecheck` clean; `npm run lint` clean.
 
-### 7.4 Still open
+### 7.4 Deployed preview and provider rate limits - 2026-11-18
 
-The production env values, a deployed preview, a real screen-reader pass, an interactive accept/dismiss round-trip, history save/restore with a test account, and a sandbox PayPal journey still require access this environment does not have. Every one of them needs credentials or a browser session rather than code.
+- **Vercel project re-linked** to `echelnet/citepilot` (the previous link pointed at an organisation the CLI could not access). Root Directory is `citepilot-web`, so deployments must start from the repo root. Preview: `https://citepilot-4hn2hlre9-echelnet.vercel.app`.
+- `GEMINI_MODEL` in Vercel was `gemini-3.8-flash` — the model that failed to answer within 90s on 2026-11-14. Replaced with `gemini-3.1-flash-lite` in Production, Preview and Development.
+- **Defect: one unavailable lookup marked the whole stage `unavailable`.** The first preview audit verified 5 of 6 references; the sixth OpenAlex lookup returned HTTP 429, and the verification stage — plus every UI surface — reported "unavailable", which reads as "verification never ran". A new `partial` check status now distinguishes incomplete coverage from a failed check, and the summary says "incomplete coverage" instead of "could not complete".
+- **Root cause of the 429:** OpenAlex removed the `mailto` polite pool in February 2026 and now needs a free API key; keyless traffic is counted per egress IP, and Vercel's is shared. Fixes: send `OPENALEX_API_KEY` when configured, cap OpenAlex/OpenLibrary/retraction fan-out at 3, surface 429 as "rate-limited … unverified, not confirmed correct", stop retrying a spent daily budget, and redact `api_key` from every surfaced error. Setting the key in Vercel is still open (task 3.8).
+- The reference-level finding for a `not_found` reference now names the fallback provider that could not be checked and carries its fix guidance, so the author knows the negative is not final.
+
+### 7.5 Still open
+
+The production env values (Supabase, PayPal, `OPENALEX_API_KEY`), a production promotion, a real screen-reader pass, an interactive accept/dismiss round-trip, history save/restore with a test account, and a sandbox PayPal journey still require access this environment does not have. Every one of them needs credentials or a browser session rather than code.

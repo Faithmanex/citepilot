@@ -7,6 +7,7 @@
  * journal, volume, or page range.
  */
 import { getJson, HttpError } from "./http";
+import { aiConfig } from "./config";
 import {
   cleanDoi,
   journalsMatch,
@@ -36,13 +37,28 @@ const DERIVATIVE_TYPES = new Set([
   "supplementary-materials",
 ]);
 
+/**
+ * OpenAlex ignored `mailto` from February 2026 onward and requires an API key
+ * for anything beyond demo traffic. Keyless requests from a shared cloud egress
+ * (Vercel) share one small daily budget and a 10 req/s ceiling, which is why a
+ * keyless audit intermittently failed verification with HTTP 429.
+ */
+function withApiKey(params: URLSearchParams): URLSearchParams {
+  if (aiConfig.openalexApiKey) params.set("api_key", aiConfig.openalexApiKey);
+  return params;
+}
+
 export async function lookupOpenalexByDoi(
   doi: string
 ): Promise<JsonObject | null> {
   if (!doi) return null;
   try {
+    const params = withApiKey(new URLSearchParams());
+    const query = params.toString();
     const data = await getJson(
-      `${OPENALEX_API_BASE}/works/https://doi.org/${encodeURIComponent(doi)}`
+      `${OPENALEX_API_BASE}/works/https://doi.org/${encodeURIComponent(doi)}${
+        query ? `?${query}` : ""
+      }`
     );
     return data;
   } catch (error) {
@@ -70,10 +86,12 @@ export async function lookupOpenalexByTitle(
 ): Promise<JsonObject | null> {
   if (!title || title.trim().length < 5) return null;
 
-  const params = new URLSearchParams({
-    filter: `title.search:${title.trim()}`,
-    per_page: "10",
-  });
+  const params = withApiKey(
+    new URLSearchParams({
+      filter: `title.search:${title.trim()}`,
+      per_page: "10",
+    })
+  );
 
   const data = await getJson(`${OPENALEX_API_BASE}/works?${params.toString()}`);
   const results = data?.results as unknown[] | undefined;
@@ -107,11 +125,17 @@ export async function validateReferenceWithOpenalex(
     if (doi) work = await lookupOpenalexByDoi(doi);
     if (!work && title) work = await lookupOpenalexByTitle(title);
   } catch (error) {
+    const rateLimited = error instanceof HttpError && error.status === 429;
     return {
       verified: false,
       provider: "openalex",
       status: "verification_unavailable",
-      message: `OpenAlex could not be reached to verify this reference: ${(error as Error).message}`,
+      message: rateLimited
+        ? "OpenAlex rate-limited this lookup (HTTP 429), so this reference is unverified, not confirmed correct."
+        : `OpenAlex could not be reached to verify this reference: ${(error as Error).message}`,
+      how_to_fix: rateLimited
+        ? "OpenAlex limits how many lookups can run per second and per day. Re-run the audit in a minute; if this reference still cannot be checked, verify it manually on the publisher's site or at doi.org."
+        : "Retry the audit. If OpenAlex stays unavailable, verify this reference manually on the publisher's site or at doi.org.",
       discrepancies: [],
     };
   }

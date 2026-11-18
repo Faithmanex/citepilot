@@ -236,7 +236,7 @@ export interface AuditSummary {
   showsResult: boolean;
   /** True only for a current, fully completed audit with no open findings. */
   isClean: boolean;
-  /** Checks that could not run, or were skipped, in the latest result. */
+  /** Checks that could not run, or could not cover every item, in the latest result. */
   incompleteChecks: AnalysisCheck[];
 }
 
@@ -244,6 +244,7 @@ export function incompleteChecks(checks: AnalysisCheck[] | undefined): AnalysisC
   return (checks || []).filter(
     (c) =>
       c.status === "unavailable" ||
+      c.status === "partial" ||
       (c.status === "skipped" && c.reason === "budget")
   );
 }
@@ -308,9 +309,9 @@ export function auditSummary(state: AuditState): AuditSummary {
       return {
         phase: "completed",
         freshness: "current",
-        headline: "Audit completed with unavailable checks",
+        headline: "Audit completed with incomplete checks",
         description:
-          "Some checks could not complete. Missing findings for those checks do not mean the document is clean.",
+          "Some checks could not cover every item, or could not run. Missing findings for those checks do not mean the document is clean.",
         tone: "warning",
         showsResult: true,
         isClean: false,

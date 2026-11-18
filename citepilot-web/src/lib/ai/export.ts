@@ -208,7 +208,7 @@ export async function generatePdfReport(analysisData: JsonObject): Promise<Buffe
     }
     writeParagraph(
       auditStatus === "partial"
-        ? "This audit is PARTIAL. Findings for unavailable checks are missing, not clean."
+        ? "This audit is PARTIAL. Findings for checks with incomplete coverage are missing, not clean."
         : "Every requested check completed.",
       {
         size: 9,

@@ -103,6 +103,38 @@ describe("audit state model", () => {
     expect(summary.incompleteChecks).toHaveLength(1);
   });
 
+  it("treats a check with partial coverage as incomplete, not clean", () => {
+    // Regression: one rate-limited provider marked the whole verification stage
+    // `unavailable` even though five of six references were verified, and the
+    // summary read as "checks could not complete" instead of "coverage".
+    const checks: AnalysisCheck[] = [
+      ...COMPLETED_CHECKS.slice(0, 2),
+      {
+        name: "verification",
+        label: "Crossref / OpenAlex verification",
+        status: "partial",
+        message: "1 of 6 references could not be checked by every provider.",
+      },
+    ];
+    const state = apply(
+      createAuditState({ hasDocument: true }),
+      { type: "audit/started", style: "apa7", mode: "full", requestId: "r", at: 1 },
+      {
+        type: "audit/succeeded",
+        requestId: "r",
+        data: EMPTY_RESULT,
+        checks,
+        status: "partial",
+        at: 2,
+      }
+    );
+    const summary = auditSummary(state);
+
+    expect(summary.isClean).toBe(false);
+    expect(summary.incompleteChecks.map((c) => c.status)).toEqual(["partial"]);
+    expect(summary.headline).toContain("incomplete checks");
+  });
+
   it("marks results stale when the text, style, or mode changes", () => {
     const afterText = apply(completedState(), { type: "document/changed" });
     expect(auditSummary(afterText).phase).toBe("stale");

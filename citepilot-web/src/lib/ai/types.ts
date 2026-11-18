@@ -61,8 +61,10 @@ export type JsonObject = Record<string, unknown>;
  * Outcome of one analysis stage. Reported to the client so an audit can never
  * present an incomplete run as a clean result.
  *
- * - `completed`   the stage ran and produced usable output
- * - `unavailable` the stage was attempted but failed
+ * - `completed`   the stage ran and produced usable output for every item
+ * - `partial`     the stage ran, but some items could not be checked (a
+ *                 provider failed or rate-limited one of several lookups)
+ * - `unavailable` the stage was attempted but failed entirely
  * - `skipped`     the stage was not run (no input, or the budget ran out)
  */
 export interface CheckStatus {
@@ -74,7 +76,7 @@ export interface CheckStatus {
     | "style"
     | "verification";
   label: string;
-  status: "completed" | "unavailable" | "skipped";
+  status: "completed" | "partial" | "unavailable" | "skipped";
   /** Why a check was skipped: not applicable, or the time budget ran out. */
   reason?: "not_applicable" | "budget";
   message?: string;

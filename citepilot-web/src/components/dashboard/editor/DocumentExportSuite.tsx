@@ -208,7 +208,7 @@ export const DocumentExportSuite: React.FC<DocumentExportSuiteProps> = ({
                   ? "These exports match the current manuscript revision."
                   : "The manuscript was edited after this audit, so annotated files describe an earlier revision."}
                 {audit.incompleteChecks.length > 0
-                  ? " Some checks could not complete and are marked unavailable in the report."
+                  ? " Some checks have incomplete coverage and are marked as such in the report."
                   : ""}
               </>
             ) : (

@@ -24,6 +24,9 @@ export async function buildHealthPayload(request: Request) {
     ai_engine_ready: readiness.state === "ready",
     ai_configured: Boolean(aiConfig.googleApiKey),
     analysis_available: readiness.state === "ready",
+    // Not a readiness gate: keyless OpenAlex lookups still work, they are just
+    // rate-limited hard enough that references come back unverified.
+    openalex_key_configured: Boolean(aiConfig.openalexApiKey),
     provider_readiness: readiness,
     model: aiConfig.geminiModel,
     budgets: {

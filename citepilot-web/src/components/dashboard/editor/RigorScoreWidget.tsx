@@ -142,7 +142,7 @@ export const FindingsSummaryWidget: React.FC<FindingsSummaryWidgetProps> = ({
       {audit.incompleteChecks.length > 0 && (
         <div className="pt-3 border-t border-[#d9cfb8]">
           <h4 className="text-[11px] font-mono font-bold uppercase tracking-wider text-[#7a530c]">
-            Checks that could not complete
+            Checks with incomplete coverage
           </h4>
           <ul className="mt-1.5 space-y-1.5">
             {audit.incompleteChecks.map((check) => (
@@ -151,7 +151,9 @@ export const FindingsSummaryWidget: React.FC<FindingsSummaryWidgetProps> = ({
                 {check.message ||
                   (check.status === "skipped"
                     ? "Skipped for this audit."
-                    : "Unavailable for this audit.")}
+                    : check.status === "partial"
+                      ? "Some items in this check could not be verified."
+                      : "Unavailable for this audit.")}
               </li>
             ))}
           </ul>

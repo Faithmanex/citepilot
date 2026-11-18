@@ -216,7 +216,7 @@ export function useAudit({
 
       if (status === "partial") {
         showToast(
-          "Audit finished, but some checks could not complete. Review the unavailable checks."
+          "Audit finished, but some checks have incomplete coverage. Review the listed checks before treating the result as clean."
         );
       } else {
         showToast("Manuscript audit completed successfully!");

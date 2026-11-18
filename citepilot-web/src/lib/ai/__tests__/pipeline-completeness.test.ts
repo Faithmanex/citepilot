@@ -3,6 +3,7 @@ import { runAnalysisPipeline } from "../pipeline";
 import { extractCitations, matchCitationsToReferences } from "../citation-extractor";
 import { validateReferenceWithCrossref } from "../crossref";
 import { validateReferenceWithOpenalex } from "../openalex";
+import { validateReferenceWithOpenLibrary } from "../openlibrary";
 import { checkRetractionStatus } from "../retraction";
 
 vi.mock("../citation-extractor", () => ({
@@ -14,12 +15,14 @@ vi.mock("../citation-extractor", () => ({
 vi.mock("../uncited-claims", () => ({ detectUncitedClaims: vi.fn().mockResolvedValue([]) }));
 vi.mock("../crossref", () => ({ validateReferenceWithCrossref: vi.fn() }));
 vi.mock("../openalex", () => ({ validateReferenceWithOpenalex: vi.fn() }));
+vi.mock("../openlibrary", () => ({ validateReferenceWithOpenLibrary: vi.fn() }));
 vi.mock("../retraction", () => ({ checkRetractionStatus: vi.fn() }));
 
 describe("verification completeness", () => {
   beforeEach(() => {
     vi.mocked(validateReferenceWithCrossref).mockReset().mockResolvedValue({ crossref_verified: true });
     vi.mocked(validateReferenceWithOpenalex).mockReset().mockResolvedValue({ verified: true });
+    vi.mocked(validateReferenceWithOpenLibrary).mockReset().mockResolvedValue({ status: "not_found" });
     vi.mocked(checkRetractionStatus).mockReset().mockResolvedValue({ is_retracted: false });
   });
   it.each(["crossref", "openalex", "retraction"])("reports partial when one %s check fails", async (provider) => {
@@ -31,7 +34,24 @@ describe("verification completeness", () => {
     if (provider === "retraction") vi.mocked(checkRetractionStatus).mockRejectedValueOnce(new Error("offline"));
     const result = await runAnalysisPipeline("Body", "References", [], "apa7");
     expect(result.status).toBe("partial");
-    expect(result.checks.find(c => c.name === "verification")?.status).toBe("unavailable");
+    // One of two references could not be checked: the stage ran, so it is
+    // `partial` — not `unavailable`, which would say the whole check failed.
+    expect(result.checks.find(c => c.name === "verification")?.status).toBe("partial");
+    expect(result.checks.find(c => c.name === "verification")?.message).toContain(
+      "1 of 2 references"
+    );
+  });
+
+  it("reports unavailable only when no reference could be verified", async () => {
+    vi.mocked(validateReferenceWithCrossref).mockRejectedValue(new Error("offline"));
+    vi.mocked(validateReferenceWithOpenalex).mockRejectedValue(new Error("offline"));
+
+    const result = await runAnalysisPipeline("Body", "References", [], "apa7");
+
+    const verification = result.checks.find((c) => c.name === "verification");
+    expect(verification?.status).toBe("unavailable");
+    expect(verification?.message).toContain("unverified, not confirmed correct");
+    expect(result.status).toBe("partial");
   });
   it("reports completed when every required check succeeds", async () => {
     const result = await runAnalysisPipeline("Body", "References", [], "apa7");

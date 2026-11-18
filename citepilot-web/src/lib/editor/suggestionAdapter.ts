@@ -1,4 +1,11 @@
-import type { AuditResponse, Citation, StyleWarning, UncitedClaim, Reference } from "@/lib/types";
+import type {
+  AuditResponse,
+  Citation,
+  StyleWarning,
+  UncitedClaim,
+  Reference,
+  ProviderValidation,
+} from "@/lib/types";
 import type { EditorSuggestion, FindingsSummary } from "./types";
 
 /**
@@ -190,7 +197,26 @@ export function adaptAuditResponseToSuggestions(
     const retractionUnconfirmed = !isRetracted && retraction?.status === "unknown";
     const hasDiscrepancies = Boolean(validation?.discrepancies?.length);
     const notFound = !validation?.crossref_verified && validation?.status === "not_found";
+    // A fallback that failed is the reason a "not found" result is not final.
+    // Reporting it only in the aggregate check list would hide which reference
+    // the author still has to check by hand.
+    const incompleteFallbacks = (
+      [
+        { label: "OpenAlex", result: ref.openalex_validation },
+        { label: "Open Library", result: ref.openlibrary_validation },
+      ] as { label: string; result?: ProviderValidation }[]
+    ).filter(
+      (entry): entry is { label: string; result: ProviderValidation } =>
+        entry.result?.status === "verification_unavailable"
+    );
     if (!isRetracted && !retractionUnconfirmed && !hasDiscrepancies && !notFound) return;
+
+    const incompleteFallbackNote = incompleteFallbacks.length
+      ? `${incompleteFallbacks.map((f) => f.label).join(" and ")} could not be checked for this reference, so it may still be verifiable elsewhere.`
+      : "";
+    const incompleteFallbackFixes = incompleteFallbacks
+      .map((f) => f.result.how_to_fix)
+      .filter((fix): fix is string => Boolean(fix));
 
     const provider =
       validation?.provider === "openalex"
@@ -217,11 +243,14 @@ export function adaptAuditResponseToSuggestions(
             fixType: "correct_reference" as const,
             title: "Reference not found in Crossref",
             explanation:
-              validation?.message ||
-              "Reference metadata could not be found in the Crossref database.",
-            educationalContext:
+              (validation?.message ||
+                "Reference metadata could not be found in the Crossref database.") +
+              (incompleteFallbackNote ? ` ${incompleteFallbackNote}` : ""),
+            educationalContext: [
               validation?.how_to_fix ||
-              "Check the author names, year, and title, or locate the official DOI at doi.org.",
+                "Check the author names, year, and title, or locate the official DOI at doi.org.",
+              ...incompleteFallbackFixes,
+            ].join(" "),
             severity: "high" as const,
             impactScore: 10,
           }

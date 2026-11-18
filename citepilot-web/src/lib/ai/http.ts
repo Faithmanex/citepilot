@@ -7,12 +7,15 @@ export class HttpError extends Error {
   readonly status: number;
   /** Server-requested wait before retrying, when the response specifies one. */
   readonly retryAfterMs?: number;
+  /** Provider-reported reason from a JSON error body (e.g. `daily_budget`). */
+  readonly reason?: string;
 
-  constructor(status: number, message: string, retryAfterMs?: number) {
+  constructor(status: number, message: string, retryAfterMs?: number, reason?: string) {
     super(message);
     this.name = "HttpError";
     this.status = status;
     this.retryAfterMs = retryAfterMs;
+    this.reason = reason;
   }
 }
 
@@ -21,11 +24,25 @@ function userAgent(): string {
 }
 
 /**
+ * Provider URLs may carry an API key in the query string. Error messages end up
+ * in audit results and saved history, so the key must never survive in them.
+ */
+function redact(url: string): string {
+  return url.replace(/([?&]api_key=)[^&]*/gi, "$1***");
+}
+
+/**
  * A failure worth retrying: a rate limit, a server error, a network error, or a
  * timeout. A 404 or any other 4xx is an answer, not an outage.
+ *
+ * A 429 whose reason is `daily_budget` (OpenAlex) will not clear inside a retry,
+ * so waiting three times only burns the audit budget before the same answer.
  */
 function isTransient(error: unknown): boolean {
-  if (error instanceof HttpError) return error.status === 429 || error.status >= 500;
+  if (error instanceof HttpError) {
+    if (error.status === 429 && error.reason === "daily_budget") return false;
+    return error.status === 429 || error.status >= 500;
+  }
   return true;
 }
 
@@ -50,16 +67,36 @@ async function getJsonOnce(
     if (!response.ok) {
       const retryAfter = response.headers.get("retry-after");
       const retryAfterMs = retryAfter ? Number(retryAfter) * 1000 : undefined;
+      // A provider's own explanation ("daily_budget", "requests_per_second")
+      // decides both the retry policy and what the author is told, so read it
+      // instead of discarding it with the response.
+      let reason: string | undefined;
+      let detail = "";
+      try {
+        const text = (await response.text()).slice(0, 500);
+        if (text) {
+          try {
+            const parsed = JSON.parse(text) as Record<string, unknown>;
+            if (typeof parsed.reason === "string") reason = parsed.reason;
+            if (typeof parsed.message === "string") detail = parsed.message;
+          } catch {
+            detail = text.replace(/\s+/g, " ").trim();
+          }
+        }
+      } catch {
+        // The status alone is enough to classify the failure.
+      }
       throw new HttpError(
         response.status,
-        `HTTP ${response.status} for ${url}`,
-        Number.isFinite(retryAfterMs) ? retryAfterMs : undefined
+        `HTTP ${response.status} for ${redact(url)}${detail ? ` — ${detail.slice(0, 200)}` : ""}`,
+        Number.isFinite(retryAfterMs) ? retryAfterMs : undefined,
+        reason
       );
     }
     return (await response.json()) as Record<string, unknown>;
   } catch (error) {
     if (error instanceof HttpError) throw error;
-    throw new Error(`Request to ${url} failed: ${(error as Error).message}`);
+    throw new Error(`Request to ${redact(url)} failed: ${(error as Error).message}`);
   } finally {
     clearTimeout(timer);
   }
