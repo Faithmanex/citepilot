@@ -58,7 +58,7 @@ Last updated: 2026-11-18
 | 3.5 | API-key comparison is timing-safe | `[x]` | `timingSafeEqual` with length check. |
 | 3.6 | Health and readiness endpoints are truthful | `[x]` | `/api/health`, `/health`, cached probes. |
 | 3.7 | Provider failures never discard the manuscript | `[x]` | Error bodies state the text is preserved. |
-| 3.8 | OpenAlex API key configured in production | `[!]` | OpenAlex dropped the `mailto` polite pool in February 2026; keyless traffic shares a small budget per egress IP and returns HTTP 429 from Vercel. `OPENALEX_API_KEY` is now read from the environment and sent as `api_key`; `/api/health` reports `openalex_key_configured`. Needs a free key (openalex.org/settings/api) set in Vercel, then a redeploy. |
+| 3.8 | OpenAlex API key configured in production | `[x]` | OpenAlex dropped the `mailto` polite pool in February 2026; keyless traffic shares a small budget per egress IP and returned HTTP 429 from Vercel. `OPENALEX_API_KEY` is read from the environment and sent as `api_key`; `/api/health` reports `openalex_key_configured: true` in Production, Preview and Development, and the production audit (2026-11-18) verified Bishop 2006 through OpenAlex with no 429. |
 
 ## P3 — Subscription and billing (last)
 
@@ -83,4 +83,4 @@ Last updated: 2026-11-18
 | 5.3 | `AUDIT-FINDINGS-REGISTER.md` updated | `[x]` | §7 records this pass. |
 | 5.4 | `LEARNING.md` updated | `[x]` | Provider-latency, retry, and billing gotchas. |
 | 5.5 | Billing runbook | `[x]` | `BILLING-RUNBOOK.md` at the repo root: verify a subscription, replay a webhook, downgrade a user, common failures. |
-| 5.6 | A Vercel preview is deployed and smoke-tested | `[x]` | `https://citepilot-4hn2hlre9-echelnet.vercel.app` (target `preview`): `/` serves the landing page, `POST /api/v1/analyse` returned `partial` in 26.7s with all six checks present, and `POST /api/v1/export/pdf` returned a PDF. Production promotion and the Supabase/PayPal vars remain (3.8, 4.9). |
+| 5.6 | Production deployed to its real domain and smoke-tested | `[x]` | **https://citepilot-web.vercel.app** (production alias of project `citepilot`, team `echelnet`). `/`, `/dashboard`, `/auth/login`, `/privacy` → 200; `/api/health?probe=1` → `ai_engine_ready: true`, `gemini-3.1-flash-lite`; demo audit → `completed`, 6/6 checks, 11.9s; PDF export → 200 (3,150 bytes). The previous production build still ran the broken `gemini-3.8-flash`; it now serves the fixed build. Supabase/PayPal values remain (4.9). |
