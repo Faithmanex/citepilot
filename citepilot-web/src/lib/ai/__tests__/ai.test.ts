@@ -3,6 +3,7 @@ import { cleanDoi, titlesMatch, titlesRelated, namesMatch, journalsMatch, volume
 import { analyzeCrossrefRetraction } from "@/lib/ai/retraction";
 import { calculatePublicationRecency } from "@/lib/ai/recency";
 import { splitBodyAndReferences, parseTxtStructured } from "@/lib/ai/document-parser";
+import { countWords, FREE_TIER_WORD_LIMIT } from "@/lib/gating";
 import { extractJson } from "@/lib/ai/llm";
 import { CitationsResponseSchema } from "@/lib/ai/schemas";
 
@@ -153,11 +154,32 @@ describe("AI service port — pure helpers", () => {
       expect(refText.startsWith("Smith, J.")).toBe(true);
     });
 
-    it("falls back to full text when no references heading exists", () => {
-      const text = "Just a short body without a bibliography.";
+    it("does not duplicate body text into the reference slot when no heading exists", () => {
+      // The old fallback returned the whole document twice. Direct API callers
+      // were then rejected at half the advertised word limit, and the model
+      // audited the same paragraphs as both prose and bibliography.
+      const text =
+        "Just a short body without a bibliography. (Smith, 2020) argues this matters.\n\n" +
+        "A second paragraph of prose also cites (Doe, 2019) here.";
       const { bodyText, refText } = splitBodyAndReferences(text);
-      expect(bodyText).toBe(text);
-      expect(refText).toBe(text);
+      expect(bodyText).toBe(text.trim());
+      expect(refText).toBe("");
+    });
+
+    it("counts a headingless manuscript once against the free-tier limit", () => {
+      const text = Array.from({ length: 800 }, (_, i) => `word${i}`).join(" ");
+      const { bodyText, refText } = splitBodyAndReferences(text);
+      expect(countWords(`${bodyText}\n${refText}`)).toBe(800);
+      expect(countWords(`${bodyText}\n${refText}`)).toBeLessThan(FREE_TIER_WORD_LIMIT);
+    });
+
+    it("still recognises a bare reference list without a heading", () => {
+      const text =
+        "Bishop, C. M. (2006). Pattern recognition and machine learning. Springer.\n" +
+        "Krizhevsky, A., Sutskever, I., & Hinton, G. E. (2017). ImageNet classification. Communications of the ACM, 60(6), 84-90. https://doi.org/10.1145/3065386";
+      const { bodyText, refText } = splitBodyAndReferences(text);
+      expect(bodyText).toBe("");
+      expect(refText).toBe(text.trim());
     });
   });
 

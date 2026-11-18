@@ -36,6 +36,7 @@ Last updated: 2026-11-18
 | 1.20 | A fallback-verified reference is not also reported as unverified | `[x]` | `crossref_validation.status` now takes the fallback provider's verdict (`verified` / `discrepancies_found`) with `provider: "openalex" \| "openlibrary"`, so Bishop 2006 is no longer counted as "could not be verified" nor shown as "not found in Crossref". |
 | 1.21 | A partly checked stage reports `partial`, not `unavailable` | `[x]` | Live preview run: 5 of 6 references verified, one OpenAlex lookup failed → verification is `partial` ("1 of 6 references could not be checked by every provider"), the audit is `partial`, the summary says "incomplete coverage" and the count is not replaced by a fake zero. `pipeline-completeness` + `auditState` + widget tests. |
 | 1.22 | A rate-limited provider is reported as unverified with an action, not as a clean miss | `[x]` | OpenAlex 429 → `verification_unavailable` with "rate-limited … unverified, not confirmed correct" and the retry/manual-check guidance; `HttpError` carries the provider's `reason`, so a spent daily budget is not retried three times; `api_key` is redacted from every surfaced message. |
+| 1.23 | Free-tier word count never double-counts a pasted manuscript | `[x]` | On the live site a 1,600-word paste without a "References" heading was rejected as **3,200 words**: `splitBodyAndReferences` returned the full text as both body and references. Headingless input is now classified: a clear bibliography → reference-only; everything else → body-only, with the references check reported as not applicable. An explicit reference-only mode still exists for bare lists. |
 
 ## P1 — Delivery surface: what the researcher touches
 
@@ -60,7 +61,9 @@ Last updated: 2026-11-18
 | 3.7 | Provider failures never discard the manuscript | `[x]` | Error bodies state the text is preserved. |
 | 3.8 | OpenAlex API key configured in production | `[x]` | OpenAlex dropped the `mailto` polite pool in February 2026; keyless traffic shares a small budget per egress IP and returned HTTP 429 from Vercel. `OPENALEX_API_KEY` is read from the environment and sent as `api_key`; `/api/health` reports `openalex_key_configured: true` in Production, Preview and Development, and the production audit (2026-11-18) verified Bishop 2006 through OpenAlex with no 429. |
 
-## P3 — Subscription and billing (last)
+## P3 — Subscription and billing (deferred: the product stays free for now)
+
+Billing is intentionally not being configured as of 2026-11-19. The code fails closed, and the free tier (1,500 words per audit, every check enabled) works anonymously on production. PayPal values are only needed when the decision changes.
 
 | # | Task | Status | Evidence / acceptance |
 |---|---|---|---|
@@ -72,13 +75,13 @@ Last updated: 2026-11-18
 | 4.6 | Checkout shows success only after server confirmation | `[x]` | Button awaits `/api/subscription/activate` and surfaces failures. |
 | 4.7 | No hardcoded plan/client IDs | `[x]` | Read from `NEXT_PUBLIC_PAYPAL_*`; unconfigured → "checkout is not configured". |
 | 4.8 | Cancellation keeps access until the paid period ends | `[x]` | Webhook keeps the tier when `current_period_end` is in the future; `resolveAuditEntitlement` and `AuthContext` apply expiry lazily. |
-| 4.9 | Production env vars set and redeployed | `[!]` | Needs Vercel access. See `citepilot-web/.env.example` and `BILLING-RUNBOOK.md` §0. |
+| 4.9 | Production env vars set and redeployed | `[~]` | Deferred by the user: the site stays free for now, so no PayPal values are being requested. The AI env vars and the redeploy are done (3.8, 5.6). Supabase is still needed for accounts/history and migration 016; `NEXT_PUBLIC_APP_URL` should be `https://citepilot-web.vercel.app`. |
 
 ## P4 — Verification and documentation
 
 | # | Task | Status | Evidence / acceptance |
 |---|---|---|---|
-| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 33 files / 296 tests; typecheck and lint clean. |
+| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 33 files / 298 tests; typecheck and lint clean. |
 | 5.2 | Billing tests cover fail-closed paths | `[x]` | 9 tests: 503 (no plan, no creds), 401, plan mismatch, non-ACTIVE, happy path, webhook 503/401/bad signature. |
 | 5.3 | `AUDIT-FINDINGS-REGISTER.md` updated | `[x]` | §7 records this pass. |
 | 5.4 | `LEARNING.md` updated | `[x]` | Provider-latency, retry, and billing gotchas. |

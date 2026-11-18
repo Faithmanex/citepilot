@@ -323,10 +323,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       status: results.status,
       checks: results.checks,
       elapsed_seconds: Math.round(elapsed * 100) / 100,
-      // Echo the analysed manuscript so findings can be shown against the text
-      // (and edited) even when the document was uploaded as a file. When the
-      // splitter found no reference heading, body and reference text are the
-      // same string and must not be duplicated.
+      // Echo the analysed text so findings can be shown against it (and edited)
+      // even when the document was uploaded as a file. A reference-only input
+      // has no body, so the bibliography itself is echoed.
       manuscript_text:
         !bodyText ? refText : refText && refText !== bodyText
             ? `${bodyText}\n\nReferences\n\n${refText}`

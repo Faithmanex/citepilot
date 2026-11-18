@@ -84,6 +84,8 @@ OpenAlex removed the `mailto` polite pool in February 2026 and moved to API keys
 
 **Check statuses:** a stage that ran but could not cover every item is `partial`, not `unavailable`. One rate-limited OpenAlex lookup out of six references used to mark the whole verification stage `unavailable`, which read as "verification never ran" in the UI and the PDF. `partial` keeps the stage visible as incomplete in `auditSummary`, the findings widget, and the exported report without claiming the check failed.
 
+- **`splitBodyAndReferences` must not duplicate its input.** With no References heading it used to return the whole text as both body and references, so a 1,600-word paste was counted as 3,200 against the free limit and the model audited identical paragraphs twice. Headingless input is now classified: bare bibliography → references only; prose → body only. When in doubt, prefer body-only and report the references check as not applicable rather than inventing entries.
+
 ## Fail-closed billing (2026-11-15)
 
 Billing is the last priority in the task list but the easiest place to accidentally give away access. Every path fails closed:

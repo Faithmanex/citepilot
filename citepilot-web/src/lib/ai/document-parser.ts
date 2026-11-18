@@ -188,11 +188,32 @@ export async function parseDocument(
   return { bodyText, refText, paragraphsMeta };
 }
 
+/**
+ * Recognises a pasted bibliography that has no "References" heading. Deliberately
+ * strict: when in doubt the text is body prose, because the alternative assigns
+ * the same words to both slots and audits them twice.
+ */
+function looksLikeBareBibliography(text: string): boolean {
+  const lines = text
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (lines.length < 2 || lines.some((line) => line.length > 400)) return false;
+
+  const entries = lines.filter((line) => {
+    const startsWithAuthor = /^(?:\[\d+\]|\d+[.)]\s+)?[A-Z][\p{L}'’-]{2,}/u.test(line);
+    const hasYear = /\((?:19|20)\d{2}[a-z]?\)|\b(?:19|20)\d{2}[;:.]/.test(line);
+    const hasDoi = /10\.\d{4,9}\//.test(line);
+    return startsWithAuthor && (hasYear || hasDoi);
+  }).length;
+
+  return entries >= Math.ceil(lines.length * 0.6);
+}
+
 export function splitBodyAndReferences(text: string): {
   bodyText: string;
   refText: string;
-} {
-  const patterns = [
+} {  const patterns = [
     /(?:^|\n)#*\s*(?:\d+[\.\s]+|Chapter\s+\d+[:\s]+)?(?:References|Bibliography|Works\s+Cited|Reference\s+List)\b:?\s*(?:\n|$)/i,
     /(?:^|\n)#*\s*(?:\d+[\.\s]+)?(?:REFERENCES|BIBLIOGRAPHY|WORKS\s+CITED|REFERENCE\s+LIST)\b:?\s*(?:\n|$)/i,
   ];
@@ -212,7 +233,16 @@ export function splitBodyAndReferences(text: string): {
     }
   }
 
-  return { bodyText: text.trim(), refText: text.trim() };
+  // No heading: there is no reliable boundary. Duplicating the full text into
+  // both slots used to count every word twice against the free-tier limit and
+  // made the model audit the same paragraphs as both prose and references.
+  // Only an unmistakable bibliography is treated as reference-only input;
+  // everything else is body text, with the references check reported as not
+  // applicable. A reader who has only a reference list can choose the explicit
+  // reference-only mode.
+  return looksLikeBareBibliography(text)
+    ? { bodyText: "", refText: text.trim() }
+    : { bodyText: text.trim(), refText: "" };
 }
 
 function decodeEntities(value: string): string {

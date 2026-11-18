@@ -165,7 +165,7 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 - Free-tier enforcement: 1,608-word request → `403 word_limit_exceeded`.
 - Billing: 9 route tests (`src/app/api/__tests__/billing.test.ts`) cover fail-closed activation and signature-required webhooks.
 - Rate limiting: 7 tests (`src/lib/ai/__tests__/rate-limit.test.ts`) cover the shared counter, `Retry-After`, and the logged degradation path.
-- `npm test` — **296 passed / 33 files**; `npm run typecheck` clean; `npm run lint` clean.
+- `npm test` — **298 passed / 33 files**; `npm run typecheck` clean; `npm run lint` clean.
 
 ### 7.4 Deployed preview and provider rate limits - 2026-11-18
 
@@ -176,6 +176,7 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 - **Root cause of the 429:** OpenAlex removed the `mailto` polite pool in February 2026 and now needs a free API key; keyless traffic is counted per egress IP, and Vercel's is shared. Fixes: send `OPENALEX_API_KEY` when configured, cap OpenAlex/OpenLibrary/retraction fan-out at 3, surface 429 as "rate-limited … unverified, not confirmed correct", stop retrying a spent daily budget, and redact `api_key` from every surfaced error. The key is now set in all three Vercel environments (task 3.8), and the production audit verified Bishop 2006 through OpenAlex with no rate limit.
 - The reference-level finding for a `not_found` reference now names the fallback provider that could not be checked and carries its fix guidance, so the author knows the negative is not final.
 - **Batching was bounded.** The citation stage had been switched to 4-paragraph chunks at concurrency 2, which improved recall on the demo but would queue 60 provider calls for a 240-paragraph paper inside one 28s window. Chunk size now grows to keep the stage at ≤12 calls, and reference parsing (≤8 calls) also handles bibliographies that use one entry per line with no blank lines — previously the whole list went to a single call. `batching.test.ts` asserts the call caps and that every paragraph/line is still sent exactly once.
+- **Free-tier limit was double-counting (2026-11-19).** A 1,600-word paste with no "References" heading was rejected by the live API as "approximately 3,200 words": `splitBodyAndReferences` returned the entire text as both `bodyText` and `refText`. A headingless document is now classified conservatively — an unmistakable bibliography becomes reference-only input, everything else becomes body-only with the references check reported as not applicable. The explicit `reference_only` mode still covers bare lists. Covered by three `ai.test.ts` cases.
 
 ### 7.5 Still open
 
