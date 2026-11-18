@@ -197,6 +197,8 @@ export function adaptAuditResponseToSuggestions(
     const retractionUnconfirmed = !isRetracted && retraction?.status === "unknown";
     const hasDiscrepancies = Boolean(validation?.discrepancies?.length);
     const notFound = !validation?.crossref_verified && validation?.status === "not_found";
+    const verificationUnavailable =
+      validation?.status === "verification_unavailable";
     // A fallback that failed is the reason a "not found" result is not final.
     // Reporting it only in the aggregate check list would hide which reference
     // the author still has to check by hand.
@@ -209,7 +211,14 @@ export function adaptAuditResponseToSuggestions(
       (entry): entry is { label: string; result: ProviderValidation } =>
         entry.result?.status === "verification_unavailable"
     );
-    if (!isRetracted && !retractionUnconfirmed && !hasDiscrepancies && !notFound) return;
+    if (
+      !isRetracted &&
+      !retractionUnconfirmed &&
+      !hasDiscrepancies &&
+      !notFound &&
+      !verificationUnavailable
+    )
+      return;
 
     const incompleteFallbackNote = incompleteFallbacks.length
       ? `${incompleteFallbacks.map((f) => f.label).join(" and ")} could not be checked for this reference, so it may still be verifiable elsewhere.`
@@ -238,22 +247,49 @@ export function adaptAuditResponseToSuggestions(
           severity: "high" as const,
           impactScore: 15,
         }
-      : notFound
+      : verificationUnavailable
         ? {
             fixType: "correct_reference" as const,
-            title: "Reference not found in Crossref",
-            explanation:
-              (validation?.message ||
-                "Reference metadata could not be found in the Crossref database.") +
-              (incompleteFallbackNote ? ` ${incompleteFallbackNote}` : ""),
+            title: `Metadata verification not confirmed by ${provider}`,
+            explanation: [
+              validation?.message ||
+                `${provider} could not be reached, so this reference is unverified, not confirmed correct.`,
+              // The retraction check may also be unconfirmed for the same
+              // reason; say so here instead of implying the source is fine.
+              retractionUnconfirmed
+                ? retraction?.message ||
+                  "Retraction status could not be confirmed either."
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" "),
             educationalContext: [
               validation?.how_to_fix ||
-                "Check the author names, year, and title, or locate the official DOI at doi.org.",
+                `Retry the audit. If ${provider} stays unavailable, check this reference manually.`,
+              retractionUnconfirmed ? retraction?.how_to_fix : null,
               ...incompleteFallbackFixes,
-            ].join(" "),
-            severity: "high" as const,
-            impactScore: 10,
+            ]
+              .filter(Boolean)
+              .join(" "),
+            severity: "medium" as const,
+            impactScore: 7,
           }
+        : notFound
+          ? {
+              fixType: "correct_reference" as const,
+              title: "Reference not found in Crossref",
+              explanation:
+                (validation?.message ||
+                  "Reference metadata could not be found in the Crossref database.") +
+                (incompleteFallbackNote ? ` ${incompleteFallbackNote}` : ""),
+              educationalContext: [
+                validation?.how_to_fix ||
+                  "Check the author names, year, and title, or locate the official DOI at doi.org.",
+                ...incompleteFallbackFixes,
+              ].join(" "),
+              severity: "high" as const,
+              impactScore: 10,
+            }
         : hasDiscrepancies
           ? {
               fixType: "correct_reference" as const,
@@ -304,8 +340,10 @@ export function adaptAuditResponseToSuggestions(
           doi: ref.parsed_doi,
           crossrefVerified: validation?.crossref_verified,
           // The author has to act, but not by editing prose: no automated fix
-          // can substitute for checking the publisher's record.
-          actionRequired: retraction?.action_required === true,
+          // can substitute for checking the publisher's record or a provider
+          // that never answered.
+          actionRequired:
+            retraction?.action_required === true || verificationUnavailable,
           guidelineRef: finding.educationalContext,
         },
       });

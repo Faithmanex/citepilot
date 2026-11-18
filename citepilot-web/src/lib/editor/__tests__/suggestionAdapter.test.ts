@@ -116,6 +116,29 @@ describe("reference findings from verification results", () => {
     expect(suggestions[0].title).toBe("Metadata Discrepancy Found in OpenAlex");
   });
 
+  it("names a provider that could not verify a reference at all", () => {
+    const suggestions = adapt({
+      raw_entry: entry,
+      status: "cited",
+      crossref_validation: {
+        crossref_verified: false,
+        status: "verification_unavailable",
+        message: "Crossref verification could not complete: the provider request failed.",
+        how_to_fix: "Retry the audit. If Crossref stays unavailable, check this reference manually.",
+      },
+      retraction_info: {
+        is_retracted: false,
+        status: "unknown",
+        action_required: true,
+        message: "Retraction status could not be confirmed.",
+      },
+    });
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0].title).toContain("Metadata verification not confirmed");
+    expect(suggestions[0].explanation).toContain("Retraction status could not be confirmed");
+    expect(suggestions[0].metadata?.actionRequired).toBe(true);
+  });
   it("states which fallback provider could not be checked for a not-found reference", () => {
     const suggestions = adapt({
       raw_entry: entry,

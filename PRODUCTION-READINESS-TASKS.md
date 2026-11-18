@@ -37,6 +37,7 @@ Last updated: 2026-11-18
 | 1.21 | A partly checked stage reports `partial`, not `unavailable` | `[x]` | Live preview run: 5 of 6 references verified, one OpenAlex lookup failed → verification is `partial` ("1 of 6 references could not be checked by every provider"), the audit is `partial`, the summary says "incomplete coverage" and the count is not replaced by a fake zero. `pipeline-completeness` + `auditState` + widget tests. |
 | 1.22 | A rate-limited provider is reported as unverified with an action, not as a clean miss | `[x]` | OpenAlex 429 → `verification_unavailable` with "rate-limited … unverified, not confirmed correct" and the retry/manual-check guidance; `HttpError` carries the provider's `reason`, so a spent daily budget is not retried three times; `api_key` is redacted from every surfaced message. |
 | 1.23 | Free-tier word count never double-counts a pasted manuscript | `[x]` | On the live site a 1,600-word paste without a "References" heading was rejected as **3,200 words**: `splitBodyAndReferences` returned the full text as both body and references. Headingless input is now classified: a clear bibliography → reference-only; everything else → body-only, with the references check reported as not applicable. An explicit reference-only mode still exists for bare lists. |
+| 1.24 | A reference whose provider never answered is named in the findings | `[x]` | The live audit intermittently failed the Crossref lookup for one reference (stage `partial`); the reference previously produced only "Retraction status not confirmed". It now gets "Metadata verification not confirmed by Crossref", with the provider's reason, the retry/manual-check guidance, and `actionRequired: true`. |
 
 ## P1 — Delivery surface: what the researcher touches
 
@@ -81,7 +82,7 @@ Billing is intentionally not being configured as of 2026-11-19. The code fails c
 
 | # | Task | Status | Evidence / acceptance |
 |---|---|---|---|
-| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 33 files / 298 tests; typecheck and lint clean. |
+| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 33 files / 299 tests; typecheck and lint clean. |
 | 5.2 | Billing tests cover fail-closed paths | `[x]` | 9 tests: 503 (no plan, no creds), 401, plan mismatch, non-ACTIVE, happy path, webhook 503/401/bad signature. |
 | 5.3 | `AUDIT-FINDINGS-REGISTER.md` updated | `[x]` | §7 records this pass. |
 | 5.4 | `LEARNING.md` updated | `[x]` | Provider-latency, retry, and billing gotchas. |
