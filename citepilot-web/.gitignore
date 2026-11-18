@@ -2,3 +2,7 @@
 .next
 node_modules
 *.tsbuildinfo
+
+# Secrets stay local; the documented template must remain tracked.
+.env*
+!.env.example

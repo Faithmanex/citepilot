@@ -119,6 +119,9 @@ A failing `/health` probe almost never means the health endpoint is wrong. It me
 - **Build command**: Leave blank (defaults to `next build`).
 - **Install command**: Leave blank (defaults to `npm install` — `citepilot-web/package-lock.json` is npm; `pnpm` also works if you prefer, but do not mix lockfiles).
 - **Redeploy after env changes**: Run `npx vercel --prod` from the monorepo root (not from `citepilot-web/`) because Root Directory is already set in the project config.
+- **Deploying from `citepilot-web/` fails once Root Directory is set**: Vercel then looks for `citepilot-web/citepilot-web` ("The specified Root Directory does not exist"). The link file must live at the repo root.
+- **Re-linking after a project moves teams**: `vercel link --scope <team>` on CLI 50.x silently reports `missing_scope`; CLI 66+ works (`npx vercel@latest link --yes --project citepilot --scope <team>`). A stale `.vercel/project.json` keeps the old `orgId`, and `vercel link` at the root can then hang waiting for input — write the correct `projectId`/`orgId` from the successful subdirectory link instead.
+- **`vercel env rm` needs `--confirm-name NAME`**, not just `--yes`; otherwise the CLI returns a JSON `confirmation_required` body and exits non-zero.
 
 ## Next.js 16: middleware is now `proxy`
 
