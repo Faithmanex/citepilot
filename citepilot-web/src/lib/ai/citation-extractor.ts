@@ -69,24 +69,26 @@ export async function extractCitations(
 
   if (docStructure.length === 0) return [];
 
-  if (docStructure.length <= 30) {
-    return extractCitationsSingleBatch(docStructure, citationStyle, deadline);
-  }
-
-  const chunkSize = 25;
-  const overlap = 2;
-  const step = chunkSize - overlap;
+  // Small chunks keep each prompt focused, which improved recall on the demo
+  // manuscript. The stage still has one bounded window (28s), so the number of
+  // provider calls is capped: without it a 10-page paper becomes 50 queued calls
+  // and the tail simply never runs. Growing the chunk size keeps every paragraph
+  // covered instead of silently dropping the ones that ran out of time.
+  const MAX_CITATION_BATCHES = 12;
+  const chunkSize = Math.min(
+    25,
+    Math.max(4, Math.ceil(docStructure.length / MAX_CITATION_BATCHES))
+  );
   const batches: Array<Array<{ paragraph_index: number; text: string }>> = [];
 
-  for (let startIdx = 0; startIdx < docStructure.length; startIdx += step) {
+  for (let startIdx = 0; startIdx < docStructure.length; startIdx += chunkSize) {
     const batch = docStructure.slice(startIdx, startIdx + chunkSize);
     if (batch.length > 0) batches.push(batch);
-    if (startIdx + chunkSize >= docStructure.length) break;
   }
 
   const results = await mapWithConcurrency(
     batches,
-    3,
+    2,
     (batch) => extractCitationsSingleBatch(batch, citationStyle, deadline)
   );
 
@@ -176,28 +178,42 @@ export async function parseReferences(
   if (!referenceText || !referenceText.trim()) return [];
 
   const cleanText = referenceText.trim();
-  if (cleanText.length <= 30000) {
+  const paragraphs = cleanText
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  // Reference lists in extracted text are usually one entry per *line*, with no
+  // blank line between them, so paragraph splitting alone would hand the whole
+  // list to a single call and truncate its tail.
+  const units = paragraphs.length > 1
+    ? paragraphs
+    : cleanText
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean);
+  const separator = paragraphs.length > 1 ? "\n\n" : "\n";
+
+  if (units.length <= 5) {
     return parseReferencesSingleBatch(cleanText, 1, deadline);
   }
 
-  const lines = cleanText.split("\n");
+  // Bounded like the citation stage: the number of provider calls per stage is
+  // capped, so a long bibliography cannot queue more work than the 28s window
+  // can run and silently lose its last entries.
+  const MAX_REFERENCE_BATCHES = 8;
+  const batchSize = Math.min(
+    24,
+    Math.max(8, Math.ceil(units.length / MAX_REFERENCE_BATCHES))
+  );
   const chunks: string[] = [];
-  let curr: string[] = [];
-  let currLen = 0;
-  for (const line of lines) {
-    curr.push(line);
-    currLen += line.length + 1;
-    if (currLen >= 20000) {
-      chunks.push(curr.join("\n"));
-      curr = [];
-      currLen = 0;
-    }
+  for (let i = 0; i < units.length; i += batchSize) {
+    const slice = units.slice(i, i + batchSize);
+    if (slice.length > 0) chunks.push(slice.join(separator));
   }
-  if (curr.length > 0) chunks.push(curr.join("\n"));
 
   const results = await mapWithConcurrency(
     chunks,
-    3,
+    2,
     (c) => parseReferencesSingleBatch(c, 1, deadline)
   );
 

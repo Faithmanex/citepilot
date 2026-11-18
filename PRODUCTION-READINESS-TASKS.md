@@ -78,7 +78,7 @@ Last updated: 2026-11-18
 
 | # | Task | Status | Evidence / acceptance |
 |---|---|---|---|
-| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 32 files / 293 tests; typecheck and lint clean. |
+| 5.1 | `typecheck`, `lint`, full `test` green | `[x]` | 33 files / 296 tests; typecheck and lint clean. |
 | 5.2 | Billing tests cover fail-closed paths | `[x]` | 9 tests: 503 (no plan, no creds), 401, plan mismatch, non-ACTIVE, happy path, webhook 503/401/bad signature. |
 | 5.3 | `AUDIT-FINDINGS-REGISTER.md` updated | `[x]` | §7 records this pass. |
 | 5.4 | `LEARNING.md` updated | `[x]` | Provider-latency, retry, and billing gotchas. |

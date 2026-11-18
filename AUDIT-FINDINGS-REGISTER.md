@@ -165,7 +165,7 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 - Free-tier enforcement: 1,608-word request → `403 word_limit_exceeded`.
 - Billing: 9 route tests (`src/app/api/__tests__/billing.test.ts`) cover fail-closed activation and signature-required webhooks.
 - Rate limiting: 7 tests (`src/lib/ai/__tests__/rate-limit.test.ts`) cover the shared counter, `Retry-After`, and the logged degradation path.
-- `npm test` — **293 passed / 32 files**; `npm run typecheck` clean; `npm run lint` clean.
+- `npm test` — **296 passed / 33 files**; `npm run typecheck` clean; `npm run lint` clean.
 
 ### 7.4 Deployed preview and provider rate limits - 2026-11-18
 
@@ -174,6 +174,7 @@ These are release gates in CP-REMEDIATION-001 that cannot be closed from this en
 - **Defect: one unavailable lookup marked the whole stage `unavailable`.** The first preview audit verified 5 of 6 references; the sixth OpenAlex lookup returned HTTP 429, and the verification stage — plus every UI surface — reported "unavailable", which reads as "verification never ran". A new `partial` check status now distinguishes incomplete coverage from a failed check, and the summary says "incomplete coverage" instead of "could not complete".
 - **Root cause of the 429:** OpenAlex removed the `mailto` polite pool in February 2026 and now needs a free API key; keyless traffic is counted per egress IP, and Vercel's is shared. Fixes: send `OPENALEX_API_KEY` when configured, cap OpenAlex/OpenLibrary/retraction fan-out at 3, surface 429 as "rate-limited … unverified, not confirmed correct", stop retrying a spent daily budget, and redact `api_key` from every surfaced error. Setting the key in Vercel is still open (task 3.8).
 - The reference-level finding for a `not_found` reference now names the fallback provider that could not be checked and carries its fix guidance, so the author knows the negative is not final.
+- **Batching was bounded.** The citation stage had been switched to 4-paragraph chunks at concurrency 2, which improved recall on the demo but would queue 60 provider calls for a 240-paragraph paper inside one 28s window. Chunk size now grows to keep the stage at ≤12 calls, and reference parsing (≤8 calls) also handles bibliographies that use one entry per line with no blank lines — previously the whole list went to a single call. `batching.test.ts` asserts the call caps and that every paragraph/line is still sent exactly once.
 
 ### 7.5 Still open
 

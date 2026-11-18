@@ -30,7 +30,7 @@ DO NOT FLAG THE FOLLOWING AS UNCITED CLAIMS UNDER ANY CIRCUMSTANCES:
 ═══════════════════════════════════════════════════════
 STEP 3 — TARGET SPECIFIC UNATTRIBUTED THIRD-PARTY CLAIMS
 ═══════════════════════════════════════════════════════
-Flag ONLY specific third-party empirical claims, external statistical data/percentages, or historical facts attributed to external literature that lack a citation marker (Author, Year).`;
+Flag EVERY specific third-party empirical claim, external statistical data/percentage, or historical fact attributed to external literature that lacks a citation marker (Author, Year). If a paragraph contains multiple separate uncited statistical or empirical assertions, extract each one as a distinct item.`;
 
 export async function detectUncitedClaims(
   bodyText: string,
