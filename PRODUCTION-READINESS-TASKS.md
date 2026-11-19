@@ -76,7 +76,7 @@ Billing is intentionally not being configured as of 2026-11-19. The code fails c
 | 4.6 | Checkout shows success only after server confirmation | `[x]` | Button awaits `/api/subscription/activate` and surfaces failures. |
 | 4.7 | No hardcoded plan/client IDs | `[x]` | Read from `NEXT_PUBLIC_PAYPAL_*`; unconfigured → "checkout is not configured". |
 | 4.8 | Cancellation keeps access until the paid period ends | `[x]` | Webhook keeps the tier when `current_period_end` is in the future; `resolveAuditEntitlement` and `AuthContext` apply expiry lazily. |
-| 4.9 | Production env vars set and redeployed | `[~]` | Deferred by the user: the site stays free for now, so no PayPal values are being requested. The AI env vars and the redeploy are done (3.8, 5.6). Supabase is still needed for accounts/history and migration 016; `NEXT_PUBLIC_APP_URL` should be `https://citepilot-web.vercel.app`. |
+| 4.9 | Production env vars set and redeployed | `[~]` | Deferred by the user: the site stays free for now, so no PayPal values are being requested. AI vars, `OPENALEX_API_KEY` and `NEXT_PUBLIC_APP_URL=https://citepilot-web.vercel.app` are set in Production and deployed (3.8, 5.6). Supabase is still needed for accounts/history and migration 016. Local `.env.local` keeps `http://localhost:3000` so development redirects stay local. |
 
 ## P4 — Verification and documentation
 

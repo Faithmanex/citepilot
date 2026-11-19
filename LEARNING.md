@@ -129,7 +129,7 @@ A failing `/health` probe almost never means the health endpoint is wrong. It me
 ## Vercel monorepo deployment rules
 
 - **Root Directory** must be set to `citepilot-web/` in Vercel project settings. Do NOT use `cd citepilot-web` in any script — it will break because the working directory is already `citepilot-web/`.
-- **The production domain is `https://citepilot-web.vercel.app`** even though the Vercel project is named `citepilot` (team `echelnet`). It is the project's production alias, not a separate project; a preview URL (`citepilot-<hash>-echelnet.vercel.app`) is not the site.
+- **The production domain is `https://citepilot-web.vercel.app`** even though the Vercel project is named `citepilot` (team `echelnet`). It is the project's production alias, not a separate project; a preview URL (`citepilot-<hash>-echelnet.vercel.app`) is not the site. Set `NEXT_PUBLIC_APP_URL` to that domain in Vercel **Production** (not Preview/Development — keep `http://localhost:3000` in `.env.local`), then redeploy: `NEXT_PUBLIC_*` values are inlined at build time, so changing one in the dashboard alone does nothing.
 - **Build command**: Leave blank (defaults to `next build`).
 - **Install command**: Leave blank (defaults to `npm install` — `citepilot-web/package-lock.json` is npm; `pnpm` also works if you prefer, but do not mix lockfiles).
 - **Redeploy after env changes**: Run `npx vercel --prod` from the monorepo root (not from `citepilot-web/`) because Root Directory is already set in the project config.
